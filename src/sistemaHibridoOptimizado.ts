@@ -983,27 +983,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             const respawnsListChannelId = "9"; // ID do canal Respawns List (você precisará ajustar este ID)
             
             // Construir descrição base do canal
-            let descricao = `[img]https://i.imgur.com/respawnslist.png[/img]
-
-📋 **LISTA DE RESPAWNS DISPONÍVEIS** 📋
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚔️ **Comandos do Sistema de Claimeds** ⚔️
-
-💡 **Como usar:**
-📋 [b]!resp [código] [tempo][/b] - Iniciar timer
-� [b]!next [código] [tempo opcional][/b] - Entrar na fila
-🚪 [b]!leave [código][/b] - Sair do respawn
-📊 [b]!fila [código][/b] - Ver timer específico
-📋 [b]!fila[/b] - Ver todos os timers
-💡 [b]!help[/b] - Lista completa de comandos
-
-🔧 **Comandos de Administração:**
-�🏰 [b]!addrespplace [nome][/b] - Criar novo local
-⚔️ [b]!addresp [local] [código] [nome][/b] - Adicionar respawn
-🗑️ [b]!delresp [código][/b] - Remover respawn
-📋 [b]!listplaces[/b] - Listar todos os locais
-
-`;
+            let descricao = `📋 **LISTA DE RESPAWNS DISPONÍVEIS** 📋`;
 
             // Gerar seções dinamicamente baseadas nos respawnPlaces
             if (Object.keys(this.respawnPlaces).length === 0) {
@@ -1029,18 +1009,9 @@ ${place.emoji} **RESPAWNS ${place.nome}:**
                 }
             }
 
-            descricao += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📝 **EXEMPLOS DE USO:**
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ [b]!resp f4 02:30[/b] - Claimar F4 por 2h30min
-✅ [b]!next wz 01:45[/b] - Entrar na fila de Warzone com tempo pré-definido
-✅ [b]!next cobra[/b] - Entrar na fila de Cobra (escolher tempo depois)
-✅ [b]!fila[/b] - Ver todos os timers ativos
-✅ [b]!leave f4[/b] - Sair do claimed F4
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            descricao += `
 🕐 Última atualização: ${new Date().toLocaleString('pt-BR')}
-🤖 Sistema: Híbrido PRO
+🤖 Sistema: AliBot
 ⚡ Comandos: Disponíveis 24/7
 🎮 Use [b]!help[/b] para mais informações`;
 
