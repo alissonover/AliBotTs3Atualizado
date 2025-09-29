@@ -37,7 +37,7 @@ async function listarCanais() {
     console.log("✅ Conectado ao ServerQuery!");
 
     // Selecionar servidor virtual
-    await teamspeak.useBySid("1");
+    await teamspeak.useBySid("384");
     console.log("📡 Servidor virtual selecionado!");
 
     // Listar canais

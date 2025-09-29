@@ -49,13 +49,57 @@ async function diagnosticarConexao() {
       console.error("❌ Erro ao obter informações do usuário:", error.msg || error.message);
     }
 
-    // Tentar selecionar servidor virtual
+    // Listar servidores virtuais disponíveis
     try {
-      console.log("🏗️ Selecionando servidor virtual...");
-      await teamspeak.useBySid("1");
-      console.log("✅ Servidor virtual 1 selecionado com sucesso!\n");
+      console.log("🖥️ Listando servidores virtuais disponíveis...");
+      const servers = await teamspeak.serverList();
+      console.log(`✅ Encontrados ${servers.length} servidor(es) virtual(is):`);
+      
+      for (const server of servers) {
+        console.log(`   🖥️  ID: ${server.id}`);
+        console.log(`      Nome: ${server.name || 'Sem nome'}`);
+        console.log(`      Status: ${server.status}`);
+        console.log(`      Porta: ${server.port || 'N/A'}`);
+        console.log(`      Clientes: ${server.clientsonline || 0}/${server.maxclients || 0}`);
+        console.log('');
+      }
+      
+      // Verificar servidor ID 1
+      const servidor1 = servers.find(s => s.id === "1");
+      if (servidor1) {
+        console.log(`✅ Servidor virtual ID 1 existe: ${servidor1.name}`);
+        if (servidor1.status === 'online') {
+          console.log('✅ Status: Online - tentando selecionar...');
+          await teamspeak.useBySid("1");
+          console.log("✅ Servidor virtual 1 selecionado com sucesso!\n");
+        } else {
+          console.log(`⚠️  Status: ${servidor1.status} - servidor não está online!\n`);
+        }
+      } else {
+        console.log('❌ Servidor virtual ID 1 NÃO encontrado!');
+        
+        // Sugerir o primeiro servidor online
+        const primeiroOnline = servers.find(s => s.status === 'online');
+        if (primeiroOnline) {
+          console.log(`💡 SOLUÇÃO: Use o servidor ID ${primeiroOnline.id} (${primeiroOnline.name})`);
+          console.log(`   Altere o config.json:`);
+          console.log(`   "virtualServerID": ${primeiroOnline.id}`);
+          console.log('');
+          
+          // Tentar usar o servidor sugerido
+          try {
+            await teamspeak.useBySid(primeiroOnline.id);
+            console.log(`✅ Servidor virtual ${primeiroOnline.id} selecionado com sucesso!\n`);
+          } catch (useError: any) {
+            console.log(`❌ Erro ao usar servidor ${primeiroOnline.id}: ${useError.msg}\n`);
+          }
+        } else {
+          console.log('❌ Nenhum servidor virtual online encontrado!\n');
+        }
+      }
+      
     } catch (error: any) {
-      console.error("❌ Erro ao selecionar servidor virtual:", error.msg || error.message);
+      console.error("❌ Erro ao listar servidores virtuais:", error.msg || error.message);
     }
 
     // Testar permissões básicas

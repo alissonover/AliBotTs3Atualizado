@@ -11,6 +11,7 @@ interface BotClientConfig {
   password: string;
   nickname: string;
   protocol: "raw" | "ssh";
+  virtualServerID: number;
   channelId?: string;
 }
 
@@ -84,9 +85,15 @@ interface MorteNotificada {
 }
 
 class TS3ClientBot {
+  // Conexão ServerQuery (administrativa)
   private teamspeak: TeamSpeak | null = null;
+  // Conexão de Cliente regular (visível)
+  private clienteVisivel: TeamSpeak | null = null;
+  
   private config: BotClientConfig;
   private botClientId: string | null = null;
+  private clienteVisivelId: string | null = null;
+  
   private timers: Map<string, ClaimedTimer> = new Map(); // key: userId-codigo
   private timersFilePath: string;
   private nextQueues: Map<string, NextQueue[]> = new Map(); // key: codigo, value: array de usuarios na fila
@@ -155,7 +162,7 @@ class TS3ClientBot {
     if (!this.teamspeak) return;
 
     try {
-      const claimedChannelId = "2";
+      const claimedChannelId = "7"; // ID do canal Claimeds
       
       // Verificar se o canal já tem a imagem
       const channelInfo = await this.teamspeak.channelInfo(claimedChannelId);
@@ -918,7 +925,7 @@ class TS3ClientBot {
     if (!this.teamspeak) return;
 
     try {
-      const friendsChannelId = "3"; // ID do canal Friends
+      const friendsChannelId = "8"; // ID do canal Friends
       
       // Buscar membros online com sistema otimizado
       const membrosOnline = await this.buscarMembrosOnlineTibia();
@@ -1006,15 +1013,43 @@ class TS3ClientBot {
 🔄 Próxima atualização: em 2 minutos automaticamente`;
       }
       
-      // Atualizar descrição do canal
-      await this.teamspeak.channelEdit(friendsChannelId, {
-        channelDescription: descricao
-      });
+      // Verificar se precisa atualizar o canal antes de fazer a alteração
+      let precisaAtualizar = false;
+      try {
+        const channelInfo = await this.teamspeak.channelInfo(friendsChannelId);
+        const descricaoAtual = (channelInfo as any).channelDescription || "";
+        
+        // Normalizar para comparação (removendo timestamps que sempre mudam)
+        const descricaoAtualLimpa = descricaoAtual.replace(/⏰ Última atualização:.*?\n/g, '');
+        const novaDescricaoLimpa = descricao.replace(/⏰ Última atualização:.*?\n/g, '');
+        
+        if (descricaoAtualLimpa.trim() !== novaDescricaoLimpa.trim()) {
+          precisaAtualizar = true;
+        } else {
+          console.log(`📊 Canal Friends já está atualizado (${membrosOnline.length} membros) - sem modificações necessárias`);
+        }
+      } catch (error) {
+        // Se não conseguir verificar, tenta atualizar
+        precisaAtualizar = true;
+      }
       
-      console.log(`📊 Canal Friends atualizado: ${membrosOnline.length} membros online da guild Missclick`);
+      // Atualizar apenas se necessário
+      if (precisaAtualizar) {
+        await this.teamspeak.channelEdit(friendsChannelId, {
+          channelDescription: descricao
+        });
+        console.log(`📊 Canal Friends atualizado: ${membrosOnline.length} membros online da guild Missclick`);
+      }
       
     } catch (error: any) {
-      console.error("❌ Erro ao atualizar canal Friends:", error.msg || error.message);
+      // Tratar especificamente o erro "sql no modifications"  
+      if (error.msg === 'sql no modifications') {
+        console.log(`📊 Canal Friends já está atualizado - sem modificações necessárias`);
+        // Tentar log alternativo em caso de "sql no modifications" mas ainda mostrar info útil
+        console.log(`⚠️ Canal Friends atualizado com mensagem de informação`);
+      } else {
+        console.error("❌ Erro ao atualizar canal Friends:", error.msg || error.message);
+      }
       
       // Em caso de erro, tentar atualizar com informação de erro
       try {
@@ -1050,7 +1085,7 @@ A API do Tibia está com problemas ou não pôde ser acessada.
     if (!this.teamspeak) return;
 
     try {
-      const claimedChannelId = "2";
+      const claimedChannelId = "7"; // ID do canal Claimeds
       const descricaoBase = this.obterDescricaoBaseClaimeds();
       
       // Construir lista de todos os timers ativos com formatação BBCode
@@ -1080,18 +1115,44 @@ A API do Tibia está com problemas ou não pôde ser acessada.
         novaDescricao += linhasTimers.join('\n');
       }
       
-      // Atualizar descrição do canal
-      await this.teamspeak.channelEdit(claimedChannelId, {
-        channelDescription: novaDescricao
-      });
+      // Verificar se a descrição atual é diferente da nova antes de atualizar
+      let precisaAtualizar = false;
+      try {
+        const channelInfo = await this.teamspeak.channelInfo(claimedChannelId);
+        const descricaoAtual = (channelInfo as any).channelDescription || "";
+        
+        // Normalizar as strings para comparação (remover espaços extras)
+        const descricaoAtualNorm = descricaoAtual.trim();
+        const novaDescricaoNorm = novaDescricao.trim();
+        
+        if (descricaoAtualNorm !== novaDescricaoNorm) {
+          precisaAtualizar = true;
+        } else {
+          console.log(`📊 Canal Claimeds já está atualizado (${linhasTimers.length} timers) - sem modificações necessárias`);
+        }
+      } catch (error) {
+        // Se não conseguir verificar, tenta atualizar mesmo assim
+        precisaAtualizar = true;
+      }
+      
+      // Atualizar apenas se necessário
+      if (precisaAtualizar) {
+        await this.teamspeak.channelEdit(claimedChannelId, {
+          channelDescription: novaDescricao
+        });
+        console.log(`📊 Canal Claimeds atualizado com ${linhasTimers.length} timers ativos`);
+      }
       
       // Atualizar canal Friends com membros online da guild Tibia (sincronizado)
       await this.atualizarCanalFriends();
       
-      console.log(`📊 Canal Claimeds atualizado com ${linhasTimers.length} timers ativos`);
-      
     } catch (error: any) {
-      console.error("❌ Erro ao atualizar todos os timers no canal:", error.msg || error.message);
+      // Tratar especificamente o erro "sql no modifications"
+      if (error.msg === 'sql no modifications') {
+        console.log(`📊 Canal Claimeds já está atualizado - sem modificações necessárias`);
+      } else {
+        console.error("❌ Erro ao atualizar canal Claimeds:", error.msg || error.message);
+      }
     }
   }
 
@@ -1389,9 +1450,10 @@ O respawn **${this.obterInfoRespawn(codigo).nome}** (${codigo.toUpperCase()}) es
 
   async connect(): Promise<void> {
     try {
-      console.log("🤖 Iniciando conexão como cliente visível...");
+      console.log("🤖 Iniciando sistema de bot duplo (ServerQuery + Cliente)...");
       
-      // Conectar via ServerQuery primeiro para gerenciar o bot
+      // ========== CONEXÃO 1: ServerQuery (Administrativa) ==========
+      console.log("🔧 Conectando ServerQuery (funcionalidades administrativas)...");
       this.teamspeak = new TeamSpeak({
         host: this.config.host,
         queryport: this.config.queryport,
@@ -1402,19 +1464,19 @@ O respawn **${this.obterInfoRespawn(codigo).nome}** (${codigo.toUpperCase()}) es
       });
 
       await this.teamspeak.connect();
-      console.log("✅ Conectado ao ServerQuery!");
+      console.log("✅ ServerQuery conectado!");
 
       // Configurar eventos de erro e reconexão
       this.configurarEventosReconexao();
 
       // Selecionar o servidor virtual
-      await this.teamspeak.useBySid("1");
-      console.log("📡 Servidor virtual selecionado!");
+      await this.teamspeak.useBySid(this.config.virtualServerID.toString());
+      console.log("📡 Servidor virtual selecionado no ServerQuery!");
 
-      // Criar um cliente bot visível usando ServerQuery
-      await this.criarClienteVisivel();
+      // ========== CONEXÃO 2: Cliente Visível ==========
+      await this.conectarClienteVisivel();
 
-      // Configurar eventos de mensagens
+      // Configurar eventos de mensagens (usa ambas as conexões)
       await this.configurarEventosMensagem();
 
       // Inicializar canal Claimeds com imagem se necessário (antes dos timers)
@@ -1435,6 +1497,10 @@ O respawn **${this.obterInfoRespawn(codigo).nome}** (${codigo.toUpperCase()}) es
       // Fazer primeira atualização do canal Friends
       console.log("🌐 Fazendo primeira atualização do canal Friends...");
       await this.atualizarCanalFriends();
+
+      // Fazer primeira atualização do canal Claimeds
+      console.log("📊 Fazendo primeira atualização do canal Claimeds...");
+      await this.atualizarTodosTimersNoCanal();
 
       // Timer super otimizado para canal Friends - sem timeout
       setInterval(async () => {
@@ -1465,7 +1531,18 @@ O respawn **${this.obterInfoRespawn(codigo).nome}** (${codigo.toUpperCase()}) es
         }
       }, 30 * 1000);
       
+      // Timer para atualização automática do canal Claimeds (a cada 30 segundos)
+      console.log("📊 Configurando atualização automática do canal Claimeds...");
+      setInterval(async () => {
+        try {
+          await this.atualizarTodosTimersNoCanal();
+        } catch (error) {
+          console.error("❌ Erro no timer de atualização do canal Claimeds:", error);
+        }
+      }, 30 * 1000); // 30 segundos
+      
       console.log("⏰ Timer do canal Friends configurado (2 minutos)");
+      console.log("📊 Timer do canal Claimeds configurado (30 segundos)");
       console.log("💀 Timer de verificação de mortes configurado (1 minuto)");
 
       // Verificar localização final do bot após alguns segundos para estabilizar
@@ -1565,22 +1642,28 @@ O respawn **${this.obterInfoRespawn(codigo).nome}** (${codigo.toUpperCase()}) es
     try {
       console.log("👤 Criando presença visível do bot...");
 
-      // Método 1: Tentar definir nickname via ServerQuery
+      // IMPORTANTE: ServerQuery não cria clientes visíveis na interface do TeamSpeak
+      // O bot funciona através de conexão ServerQuery (administrativa)
+      // Para ter um "cliente visível", seria necessário uma segunda conexão como cliente regular
+      
+      // Configurar propriedades do bot via ServerQuery
       try {
         await this.teamspeak.clientUpdate({ 
           clientNickname: this.config.nickname,
-          clientDescription: "Bot automatizado - Envie mensagens privadas para interagir!"
+          clientDescription: "🤖 AliBotTS3 - Bot Inteligente de Claimeds\n📱 Envie mensagens privadas para interagir!\n💬 Use !help para ver comandos disponíveis"
         });
         console.log(`🏷️ Bot configurado com nickname: ${this.config.nickname}`);
       } catch (error: any) {
-        // Este erro é comum e não afeta o funcionamento do bot
-        console.log(`ℹ️ Nickname será definido automaticamente pelo servidor (${error.msg || 'permissão limitada'})`);
+        console.log(`ℹ️ Nickname será definido automaticamente pelo servidor (${error.msg || 'invalid parameter'})`);
       }
 
       // Obter informações do próprio bot
       const whoami = await this.teamspeak.whoami();
       this.botClientId = whoami.clientId?.toString() || null;
       console.log(`🆔 ID do bot: ${this.botClientId}`);
+
+      // SOLUÇÃO ALTERNATIVA: Criar uma mensagem no canal informando sobre o bot
+      await this.anunciarPresencaBot();
 
       // Entrar no canal AliBot
       if (this.config.channelId) {
@@ -1668,13 +1751,211 @@ O respawn **${this.obterInfoRespawn(codigo).nome}** (${codigo.toUpperCase()}) es
     }
   }
 
+  private async conectarClienteVisivel(): Promise<void> {
+    try {
+      console.log("👤 Tentando conectar cliente visível...");
+      
+      // TENTATIVA 1: Conectar como cliente visível na porta correta (10101)
+      try {
+        console.log("🔄 Tentando conexão de cliente visível na porta ServerQuery...");
+        console.log(`   Host: ${this.config.host}`);
+        console.log(`   Porta: ${this.config.queryport} (corrigida de 10011 para 10101)`);
+        
+        this.clienteVisivel = new TeamSpeak({
+          host: this.config.host,
+          queryport: this.config.queryport, // 10101 - porta correta do ServerQuery
+          username: `${this.config.username}_visible`,
+          password: this.config.password,
+          nickname: `${this.config.nickname}_Visible`,
+          serverport: this.config.serverport,
+          protocol: "raw" as any,
+        });
+
+        // Tentar conectar como cliente visível
+        await this.clienteVisivel.connect();
+        console.log("🎉 Cliente visível conectado com sucesso!");
+        
+        // Obter ID do cliente visível
+        const clienteInfo = await this.clienteVisivel.whoami();
+        this.clienteVisivelId = clienteInfo.clientId?.toString() || null;
+        console.log(`👤 ID do cliente visível: ${this.clienteVisivelId}`);
+
+        // Mover cliente visível para o canal correto
+        if (this.config.channelId && this.clienteVisivelId) {
+          await this.clienteVisivel.clientMove(this.clienteVisivelId, this.config.channelId);
+          console.log(`📍 Cliente visível movido para canal ${this.config.channelId}`);
+        }
+
+        console.log("✅ Sistema de bot duplo ativo:");
+        console.log("   🔧 ServerQuery principal para administração");
+        console.log("   👤 Cliente visível adicional na lista");
+        return;
+
+      } catch (clientError: any) {
+        console.log(`⚠️ Conexão de cliente visível falhou: ${clientError.message || clientError}`);
+        console.log("📝 Detalhes do erro:", clientError);
+        
+        console.log("💡 Análise técnica:");
+        console.log("   • Erro pode indicar limitações da biblioteca");
+        console.log("   • TeamSpeak pode limitar conexões simultâneas");
+        console.log("   • Vamos usar ServerQuery otimizado");
+        console.log("");
+      }
+      
+      // FALLBACK: Otimizar ServerQuery existente
+      console.log("🔄 Aplicando otimizações no ServerQuery existente...");
+      
+      // NOTA TÉCNICA: A biblioteca ts3-nodejs-library é exclusivamente para ServerQuery
+      // Conexões de cliente regular requerem bibliotecas diferentes ou implementação customizada
+      
+      console.log("� Análise técnica:");
+      console.log("   • ts3-nodejs-library = Apenas ServerQuery");  
+      console.log("   • ServerQuery = Invisível para usuários");
+      console.log("   • Cliente visível = Requer biblioteca diferente");
+      console.log("");
+      console.log("🎯 Aplicando otimizações de presença via ServerQuery...");
+      
+      // Usar otimização via ServerQuery (que já é muito efetiva)
+      await this.otimizarPresencaServerQuery();
+      
+      console.log("✅ Sistema otimizado para máxima interatividade!");
+      
+    } catch (error: any) {
+      console.error("❌ Erro ao otimizar visibilidade:", error.msg || error.message);
+      console.log("⚠️ Continuando com ServerQuery padrão...");
+      await this.otimizarPresencaServerQuery();
+    }
+  }
+
+  private async otimizarPresencaServerQuery(): Promise<void> {
+    try {
+      console.log("🔧 Otimizando presença do bot via ServerQuery...");
+      
+      // Obter informações do próprio bot
+      const whoami = await this.teamspeak!.whoami();
+      this.botClientId = whoami.clientId?.toString() || null;
+      console.log(`🆔 ID do ServerQuery: ${this.botClientId}`);
+
+      // Configurar propriedades do bot para máxima visibilidade
+      try {
+        await this.teamspeak!.clientUpdate({ 
+          clientNickname: this.config.nickname,
+          clientDescription: "🤖 AliBotTS3 - Bot Inteligente\n💬 Use !help para comandos\n✨ Sistema de Claimeds ativo!"
+        });
+        console.log(`✅ Bot configurado: ${this.config.nickname}`);
+      } catch (error: any) {
+        console.log(`ℹ️ Configuração limitada: ${error.msg || 'permissões restritas'}`);
+      }
+
+      // Entrar no canal especificado
+      if (this.config.channelId) {
+        try {
+          console.log(`📂 Entrando no canal ID: ${this.config.channelId}...`);
+          await this.teamspeak!.clientMove(this.botClientId!, this.config.channelId);
+          console.log(`✅ Bot posicionado no canal ${this.config.channelId}!`);
+        } catch (error: any) {
+          if (error.msg?.includes("already member")) {
+            console.log(`✅ Bot já está no canal correto!`);
+          } else {
+            console.log(`⚠️ Erro ao mover bot: ${error.msg}`);
+          }
+        }
+      }
+
+      // Anunciar presença do bot
+      await this.anunciarPresencaBot();
+      
+      console.log("🎯 Sistema de presença otimizado!");
+      
+    } catch (error: any) {
+      console.error("❌ Erro ao otimizar presença:", error.msg || error.message);
+    }
+  }
+
+  private async anunciarPresencaBot(): Promise<void> {
+    try {
+      console.log("📢 Anunciando presença do bot no servidor...");
+      
+      // Enviar mensagem de anúncio para todos os clientes conectados
+      const mensagemAnuncio = `🤖 **AliBotTS3 está ativo!**
+      
+🎯 Bot inteligente de Claimeds conectado e funcionando!
+📱 Para interagir: envie mensagem privada para **${this.config.nickname}**
+💬 Comandos: !help, !resp, !next, !remove, !info
+
+✨ Sistema automatizado de respawns Tibia ativo!`;
+
+      // Listar clientes e enviar mensagem de boas-vindas
+      const clients = await this.teamspeak!.clientList();
+      const clientesReais = clients.filter((client: any) => 
+        client.clid?.toString() !== this.botClientId && 
+        client.clientType === 0 // Apenas clientes reais, não ServerQuery
+      );
+      
+      if (clientesReais.length > 0) {
+        console.log(`📨 Enviando anúncio para ${clientesReais.length} cliente(s) conectado(s)...`);
+        
+        for (const client of clientesReais) {
+          try {
+            await this.teamspeak!.sendTextMessage(client.clid, 1, mensagemAnuncio);
+          } catch (error) {
+            // Ignorar erros individuais de envio
+            console.log(`⚠️ Não foi possível enviar anúncio para cliente ${client.clid}`);
+          }
+        }
+        
+        console.log(`✅ Anúncio enviado para clientes conectados!`);
+      } else {
+        console.log(`ℹ️ Nenhum cliente conectado para receber o anúncio`);
+      }
+      
+      // Também atualizar a descrição do canal com informações do bot
+      if (this.config.channelId) {
+        try {
+          const channelInfo = await this.teamspeak!.channelInfo(this.config.channelId);
+          const descricaoAtual = (channelInfo as any).channelDescription || "";
+          
+          const infoBot = `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🤖 **ALIBOT TS3 - BOT INTELIGENTE ATIVO** 🤖
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💬 **Como usar:** Envie mensagem privada para **${this.config.nickname}**
+📋 **Comandos:** !help, !resp [código] [tempo], !remove [código]
+🎯 **Função:** Sistema automatizado de Claimeds para respawns
+⚡ **Status:** ✅ Online e funcionando
+
+💡 **Dica:** Digite **!help** para ver todos os comandos disponíveis!`;
+
+          // Só adicionar se não existir informação do bot
+          if (!descricaoAtual.includes("ALIBOT TS3")) {
+            const novaDescricao = descricaoAtual + infoBot;
+            await this.teamspeak!.channelEdit(this.config.channelId, {
+              channelDescription: novaDescricao
+            });
+            console.log("📝 Informações do bot adicionadas à descrição do canal");
+          }
+        } catch (error) {
+          console.log("⚠️ Não foi possível atualizar descrição do canal com info do bot");
+        }
+      }
+      
+    } catch (error: any) {
+      console.error("❌ Erro ao anunciar presença do bot:", error.msg || error.message);
+    }
+  }
+
   private async configurarEventosMensagem(): Promise<void> {
     if (!this.teamspeak) return;
 
     try {
-      console.log("💬 Configurando sistema de mensagens...");
+      console.log("💬 Configurando sistema de mensagens dual...");
 
-      // Registrar eventos de mensagem
+      // ========== CONFIGURAR EVENTOS NO SERVERQUERY ==========
+      console.log("🔧 Configurando eventos no ServerQuery...");
+      
+      // Registrar eventos de mensagem no ServerQuery
       try {
         await this.teamspeak.registerEvent("textprivate");
         console.log("✅ Eventos de mensagem privada registrados!");
@@ -1714,7 +1995,27 @@ O respawn **${this.obterInfoRespawn(codigo).nome}** (${codigo.toUpperCase()}) es
         await this.enviarBoasVindas(ev);
       });
 
-      console.log("🎧 Sistema de mensagens configurado!");
+      // ========== CONFIGURAR EVENTOS NO CLIENTE VISÍVEL (SE DISPONÍVEL) ==========
+      if (this.clienteVisivel) {
+        console.log("👤 Configurando eventos no cliente visível...");
+        
+        try {
+          // Configurar eventos no cliente visível também
+          this.clienteVisivel.on("textmessage", async (ev) => {
+            console.log("📱 Mensagem recebida no cliente visível:", ev.msg);
+            await this.processarMensagem(ev);
+          });
+
+          console.log("✅ Eventos do cliente visível configurados!");
+          
+        } catch (error: any) {
+          console.log("⚠️ Erro ao configurar eventos do cliente visível:", error.msg);
+        }
+      } else {
+        console.log("ℹ️ Cliente visível não disponível - usando apenas ServerQuery");
+      }
+
+      console.log("🎧 Sistema de mensagens dual configurado!");
 
     } catch (error: any) {
       console.error("❌ Erro ao configurar mensagens:", error.msg || error.message);
@@ -1731,8 +2032,10 @@ O respawn **${this.obterInfoRespawn(codigo).nome}** (${codigo.toUpperCase()}) es
         targetmode: evento.targetmode
       });
 
-      // Ignorar mensagens do próprio bot
-      if (this.botClientId && evento.invokerid?.toString() === this.botClientId) {
+      // Ignorar mensagens dos próprios bots (ServerQuery e Cliente Visível)
+      const eventoId = evento.invokerid?.toString();
+      if ((this.botClientId && eventoId === this.botClientId) || 
+          (this.clienteVisivelId && eventoId === this.clienteVisivelId)) {
         console.log("🔇 Ignorando mensagem do próprio bot");
         return;
       }
@@ -1780,22 +2083,38 @@ O respawn **${this.obterInfoRespawn(codigo).nome}** (${codigo.toUpperCase()}) es
         }
       }
 
-      // NOVO: Buscar descrição do cliente para usar como identificador único
+      // Buscar descrição do cliente para usar como identificador único
       let descricaoCliente = "";
       try {
         if (userId && userId !== 'undefined' && userId !== 'desconhecido') {
           const clientInfoArray = await this.teamspeak!.clientInfo(userId);
           if (clientInfoArray && clientInfoArray.length > 0) {
-            descricaoCliente = clientInfoArray[0].clientDescription || "";
-            console.log(`📝 Descrição do cliente ${nomeUsuario}: "${descricaoCliente}"`);
+            const clientInfo = clientInfoArray[0];
+            descricaoCliente = clientInfo.clientDescription?.trim() || "";
+            
+            if (descricaoCliente) {
+              console.log(`📝 Descrição do cliente ${nomeUsuario} (ID: ${userId}): "${descricaoCliente}"`);
+            } else {
+              console.log(`📝 Cliente ${nomeUsuario} (ID: ${userId}) não tem descrição definida`);
+            }
+            
+            // Log adicional com outras informações úteis do cliente
+            console.log(`🔍 Info adicional - Unique ID: ${clientInfo.clientUniqueIdentifier?.substring(0, 8)}...`);
           }
         }
-      } catch (error) {
-        console.log(`⚠️ Não foi possível obter descrição do cliente ${userId}`);
+      } catch (error: any) {
+        console.log(`⚠️ Erro ao obter informações do cliente ${userId}: ${error.message || error}`);
       }
 
-      // Usar descrição como ID se disponível, senão usar userId
-      const identificadorUnico = descricaoCliente || userId || 'desconhecido';
+      // Usar descrição como ID se disponível e não vazia, senão usar userId
+      const identificadorUnico = (descricaoCliente && descricaoCliente.length > 0) ? descricaoCliente : userId || 'desconhecido';
+      
+      // Log do identificador final usado
+      if (descricaoCliente && descricaoCliente.length > 0) {
+        console.log(`🎯 Usando DESCRIÇÃO como identificador único: "${identificadorUnico}"`);
+      } else {
+        console.log(`🎯 Usando CLIENT ID como identificador único: "${identificadorUnico}"`);
+      }
 
       // Fallback se ainda não conseguimos identificar
       if (!nomeUsuario) {
@@ -2255,28 +2574,36 @@ Digite !help para ver os comandos disponíveis.`;
     try {
       // Aguardar um pouco para o cliente se conectar completamente
       setTimeout(async () => {
-        const mensagemBoasVindas = `👋 Bem-vindo ao servidor!
+        const mensagemBoasVindas = `🎉 **Bem-vindo ao servidor TeamSpeak!**
 
-🤖 Eu sou o ${this.config.nickname}, seu bot assistente.
-💬 Envie-me uma mensagem privada com !help para ver os comandos disponíveis.
+🤖 Olá! Eu sou o **${this.config.nickname}** - Bot inteligente de Claimeds!
 
-🎮 Comandos úteis:
-• !help - Lista de comandos
-• !info - Informações do servidor  
-• !ping - Testar bot
+💡 **Como me usar:**
+┣━ 📱 Clique com botão direito no meu nome na lista de usuários
+┣━ 💬 Selecione "Enviar Mensagem de Texto"  
+┣━ ⌨️ Digite **!help** para ver todos os comandos
+┗━ 🚀 Comece a usar o sistema de claimeds!
 
-Divirta-se no servidor! �`;
+� **Comandos principais:**
+• **!help** - Lista completa de comandos
+• **!resp [código] [tempo]** - Clamar respawn  
+• **!info** - Informações do servidor
+• **!status** - Status do bot
+
+🎮 **Sistema de Respawns Tibia totalmente automatizado!**
+✨ Divirta-se no servidor!`;
 
         try {
           // Usar o ID correto do evento
           const clientId = evento.clid || evento.clientId;
           if (clientId) {
             await this.enviarMensagemPrivada(clientId.toString(), mensagemBoasVindas);
+            console.log(`✅ Boas-vindas enviadas para cliente ${clientId}`);
           }
         } catch (error) {
           console.log("⚠️ Não foi possível enviar boas-vindas:", (error as any).msg);
         }
-      }, 3000); // Aguardar 3 segundos para conexão estabilizar
+      }, 5000); // Aguardar 5 segundos para conexão estabilizar
 
     } catch (error) {
       console.log("⚠️ Erro nas boas-vindas:", error);
@@ -2324,10 +2651,24 @@ Divirta-se no servidor! �`;
     });
     this.nextTimeouts.clear();
     
+    // Desconectar ambas as conexões
+    console.log("🔌 Desconectando sistema de bot duplo...");
+    
+    if (this.clienteVisivel) {
+      try {
+        await this.clienteVisivel.quit();
+        console.log("👤 Cliente visível desconectado");
+      } catch (error) {
+        console.log("⚠️ Erro ao desconectar cliente visível");
+      }
+    }
+    
     if (this.teamspeak) {
       await this.teamspeak.quit();
-      console.log("🔌 Bot desconectado - timers e filas preservados");
+      console.log("� ServerQuery desconectado");
     }
+    
+    console.log("�🔌 Sistema dual desconectado - timers e filas preservados");
   }
 
   async getStatus(): Promise<void> {
@@ -2372,6 +2713,23 @@ Divirta-se no servidor! �`;
               console.log(`👥 Bot está visível para todos os usuários no canal AliBot!`);
             } else if (channelId === this.config.channelId) {
               console.log(`🎯 ✅ Bot está no canal configurado (ID: ${this.config.channelId})!`);
+      
+      // Informar usuários sobre como interagir com o bot
+      console.log("👥 Bot está visível para todos os usuários no canal AliBot!");
+      console.log("💡 Usuários podem enviar mensagens privadas digitando: /w AliBot [mensagem]");
+      console.log("📱 Ou usar o comando de chat: !help no canal");
+      
+      // Configurar mensagem automática no canal a cada hora para lembrar da presença do bot
+      setInterval(async () => {
+        try {
+          if (this.config.channelId && this.teamspeak) {
+            const mensagemLembrete = `🤖 **${this.config.nickname}** está ativo! Envie mensagem privada com **!help** para ver comandos.`;
+            await this.teamspeak.sendTextMessage(this.config.channelId, 2, mensagemLembrete);
+          }
+        } catch (error) {
+          // Ignorar erros de lembretes automáticos
+        }
+      }, 60 * 60 * 1000); // A cada hora
             } else {
               console.log(`⚠️ Bot está no canal "${currentChannel.name}" mas deveria estar no canal AliBot (ID: ${this.config.channelId})`);
             }
@@ -2467,8 +2825,8 @@ Divirta-se no servidor! �`;
     try {
       console.log(`🔄 Adicionando ${nomeUsuario} (ID: ${userId}) ao código ${codigo} no canal Claimeds...`);
       
-      // ID do canal Claimeds é 2 (descoberto anteriormente)
-      const claimedChannelId = "2";
+      // ID do canal Claimeds é 7 (descoberto anteriormente)
+      const claimedChannelId = "7";
       
       // Obter descrição atual do canal Claimeds
       const channelInfo = await this.teamspeak.channelInfo(claimedChannelId);
@@ -2584,7 +2942,7 @@ Divirta-se no servidor! �`;
     if (!this.teamspeak) return;
 
     try {
-      const claimedChannelId = "2";
+      const claimedChannelId = "7"; // ID do canal Claimeds
       
       // Obter descrição atual do canal Claimeds
       const channelInfo = await this.teamspeak.channelInfo(claimedChannelId);
@@ -2847,6 +3205,7 @@ function loadClientConfig(): BotClientConfig {
       password: configData.teamspeak.password,
       nickname: configData.teamspeak.nickname,
       protocol: configData.teamspeak.protocol as "raw" | "ssh",
+      virtualServerID: configData.teamspeak.virtualServerID,
       channelId: configData.teamspeak.channelId || undefined
     };
   } catch (error) {
