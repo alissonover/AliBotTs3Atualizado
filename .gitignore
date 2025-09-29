@@ -14,6 +14,10 @@ build/
 .env.production
 .env.development
 
+# Persistent data files
+respawns-places.json
+respawns-backup-*.json
+
 # IDE files
 .vscode/settings.json
 .idea/

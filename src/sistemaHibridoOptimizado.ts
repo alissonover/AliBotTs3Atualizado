@@ -1,5 +1,7 @@
 import GerenciadorConexaoHibrida from './gerenciadorConexaoHibrida';
 import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
 
 interface MembroOnline {
     nome: string;
@@ -43,6 +45,16 @@ interface TimersAtivos {
     [codigo: string]: RespawnTimer;
 }
 
+interface RespawnPlace {
+    nome: string;
+    emoji: string;
+    respawns: { [codigo: string]: string };
+}
+
+interface RespawnPlaces {
+    [nomePlace: string]: RespawnPlace;
+}
+
 class SistemaHibridoOptimizado {
     private gerenciadorConexao: GerenciadorConexaoHibrida;
     private sistemaAtivo: boolean = false;
@@ -51,9 +63,11 @@ class SistemaHibridoOptimizado {
     private filasClaimeds: FilasAtivas = {};
     private nextTimers: NextTimersAtivos = {};
     private intervalTimers: NodeJS.Timeout | null = null;
+    private respawnPlaces: RespawnPlaces = {};
 
     constructor() {
         this.gerenciadorConexao = GerenciadorConexaoHibrida.obterInstancia();
+        this.carregarRespawnsPersistidos();
     }
 
     public async iniciar(): Promise<void> {
@@ -409,7 +423,15 @@ class SistemaHibridoOptimizado {
 
 🧪 Comandos de Teste:
 !testlink - Testar links BBCode
-!api - Testar API do Tibia`;
+!api - Testar API do Tibia
+
+🔧 Comandos de Administração:
+!addrespplace [nome] - Criar novo local
+!addresp [local] [código] [nome] - Adicionar respawn
+!delresp [código] - Remover respawn
+!deleteresp [código] - Remover respawn (alias)
+!listplaces - Listar todos os locais
+!backuprespawns - Fazer backup manual dos respawns`;
                     break;
                 
                 case '!status':
@@ -580,6 +602,16 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         resposta = await this.processarComandoFila(comando, remetente);
                     } else if (comando.toLowerCase().startsWith('!next ')) {
                         resposta = await this.processarComandoNext(comando, remetente);
+                    } else if (comando.toLowerCase().startsWith('!addrespplace ')) {
+                        resposta = await this.processarComandoAddRespPlace(comando, remetente);
+                    } else if (comando.toLowerCase().startsWith('!addresp ')) {
+                        resposta = await this.processarComandoAddResp(comando, remetente);
+                    } else if (comando.toLowerCase().startsWith('!delresp ') || comando.toLowerCase().startsWith('!deleteresp ')) {
+                        resposta = await this.processarComandoDelResp(comando, remetente);
+                    } else if (comando.toLowerCase() === '!listplaces') {
+                        resposta = await this.processarComandoListPlaces(comando, remetente);
+                    } else if (comando.toLowerCase() === '!backuprespawns') {
+                        resposta = await this.processarComandoBackupRespawns(comando, remetente);
                     } else {
                         resposta = `❓ Comando "${comando}" não reconhecido.
 💡 Use !help para ver comandos disponíveis.
@@ -692,6 +724,10 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         this.sistemaAtivo = false;
 
         try {
+            // Salvar respawns antes de parar
+            console.log('💾 Salvando respawns...');
+            this.salvarRespawnsPersistidos();
+            
             // Limpar timers de respawn
             if (this.intervalTimers) {
                 clearInterval(this.intervalTimers);
@@ -949,18 +985,62 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             // Construir descrição base do canal
             let descricao = `[img]https://i.imgur.com/respawnslist.png[/img]
 
-📋 LISTA DE RESPAWNS DISPONÍVEIS 📋
+📋 **LISTA DE RESPAWNS DISPONÍVEIS** 📋
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🏰 RESPAWNS DARASHIA:
+⚔️ **Comandos do Sistema de Claimeds** ⚔️
+
+💡 **Como usar:**
+📋 [b]!resp [código] [tempo][/b] - Iniciar timer
+� [b]!next [código] [tempo opcional][/b] - Entrar na fila
+🚪 [b]!leave [código][/b] - Sair do respawn
+📊 [b]!fila [código][/b] - Ver timer específico
+📋 [b]!fila[/b] - Ver todos os timers
+💡 [b]!help[/b] - Lista completa de comandos
+
+🔧 **Comandos de Administração:**
+�🏰 [b]!addrespplace [nome][/b] - Criar novo local
+⚔️ [b]!addresp [local] [código] [nome][/b] - Adicionar respawn
+🗑️ [b]!delresp [código][/b] - Remover respawn
+📋 [b]!listplaces[/b] - Listar todos os locais
+
+`;
+
+            // Gerar seções dinamicamente baseadas nos respawnPlaces
+            if (Object.keys(this.respawnPlaces).length === 0) {
+                descricao += `💤 **NENHUM RESPAWN CADASTRADO**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚔️ [b]f4[/b] - Ferumbras Ascendant (F4)
-⚔️ [b]f3[/b] - Ferumbras Mortal Shell (F3) 
-⚔️ [b]f2[/b] - Ferumbras Citadel (F2)
-⚔️ [b]f1[/b] - Ferumbras Threated Dreams (F1)
+📝 Use [b]!addrespplace [nome][/b] para criar um local
+⚔️ Use [b]!addresp [local] [código] [nome][/b] para adicionar respawns
+
+`;
+            } else {
+                for (const [key, place] of Object.entries(this.respawnPlaces)) {
+                    if (Object.keys(place.respawns).length > 0) {
+                        descricao += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${place.emoji} **RESPAWNS ${place.nome}:**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+                        
+                        for (const [codigo, nome] of Object.entries(place.respawns)) {
+                            descricao += `⚔️ [b]${codigo}[/b] - ${nome}\n`;
+                        }
+                        descricao += '\n';
+                    }
+                }
+            }
+
+            descricao += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 **EXEMPLOS DE USO:**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ [b]!resp f4 02:30[/b] - Claimar F4 por 2h30min
+✅ [b]!next wz 01:45[/b] - Entrar na fila de Warzone com tempo pré-definido
+✅ [b]!next cobra[/b] - Entrar na fila de Cobra (escolher tempo depois)
+✅ [b]!fila[/b] - Ver todos os timers ativos
+✅ [b]!leave f4[/b] - Sair do claimed F4
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🕐 Última atualização: ${new Date().toLocaleString('pt-BR')}
-🤖 Sistema: AliBot
+🤖 Sistema: Híbrido PRO
 ⚡ Comandos: Disponíveis 24/7
 🎮 Use [b]!help[/b] para mais informações`;
 
@@ -971,7 +1051,11 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     channel_description: descricao
                 });
                 
-                console.log(`📋 Canal Respawns List atualizado com todos os respawns disponíveis`);
+                const totalRespawns = Object.values(this.respawnPlaces).reduce((total, place) => 
+                    total + Object.keys(place.respawns).length, 0);
+                const totalLocais = Object.keys(this.respawnPlaces).length;
+                
+                console.log(`📋 Canal Respawns List atualizado: ${totalLocais} locais, ${totalRespawns} respawns`);
             } catch (error1: any) {
                 console.log('⚠️ Método channel_description falhou para Respawns List, tentando channel_topic...');
                 try {
@@ -1815,27 +1899,16 @@ ${statusAtual}
     }
 
     private obterConfigRespawns(): { [key: string]: string } {
-        return {
-            'f4': 'Ferumbras Ascendant (F4)',
-            'f3': 'Ferumbras Mortal Shell (F3)',
-            'f2': 'Ferumbras Citadel (F2)',
-            'f1': 'Ferumbras Threated Dreams (F1)',
-            'wz': 'Warzone',
-            'gt': 'Grave Threat',
-            'iod': 'Isle of Destiny',
-            'ff': 'Falcon Bastion',
-            'cobra': 'Cobra Bastion',
-            'lions': 'Lion\'s Rock',
-            'asura': 'Asura Palace',
-            'winter': 'Winter Court',
-            'summer': 'Summer Court',
-            'dara': 'Dara Cave',
-            'werehyaena': 'Werehyaena Cave',
-            'werewolf': 'Werewolf Cave',
-            'werebadger': 'Werebadger Cave',
-            'werebear': 'Werebear Cave',
-            'wereboar': 'Wereboar Cave'
-        };
+        // Gerar configuração dinamicamente baseada nos respawnPlaces
+        const config: { [key: string]: string } = {};
+        
+        for (const place of Object.values(this.respawnPlaces)) {
+            for (const [codigo, nome] of Object.entries(place.respawns)) {
+                config[codigo] = nome;
+            }
+        }
+        
+        return config;
     }
 
     private formatarTempo(segundos: number): string {
@@ -1846,6 +1919,306 @@ ${statusAtual}
         
         // Sempre retorna no formato HH:MM (sem segundos)
         return `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+    }
+
+    private readonly RESPAWNS_FILE = path.join(__dirname, '..', 'respawns-places.json');
+
+    private carregarRespawnsPersistidos(): void {
+        try {
+            if (fs.existsSync(this.RESPAWNS_FILE)) {
+                console.log('📂 Carregando respawns persistidos...');
+                const data = fs.readFileSync(this.RESPAWNS_FILE, 'utf8');
+                this.respawnPlaces = JSON.parse(data);
+                
+                const totalLocais = Object.keys(this.respawnPlaces).length;
+                const totalRespawns = Object.values(this.respawnPlaces).reduce((total, place) => 
+                    total + Object.keys(place.respawns).length, 0);
+                
+                console.log(`✅ Carregados ${totalLocais} locais com ${totalRespawns} respawns`);
+            } else {
+                console.log('📂 Arquivo de respawns não encontrado, inicializando com padrões...');
+                this.inicializarRespawnsPadrao();
+                this.salvarRespawnsPersistidos();
+            }
+        } catch (error: any) {
+            console.log(`❌ Erro ao carregar respawns: ${error.message}`);
+            console.log('🔄 Inicializando com respawns padrão...');
+            this.inicializarRespawnsPadrao();
+            this.salvarRespawnsPersistidos();
+        }
+    }
+
+    private salvarRespawnsPersistidos(): void {
+        try {
+            const data = JSON.stringify(this.respawnPlaces, null, 2);
+            fs.writeFileSync(this.RESPAWNS_FILE, data, 'utf8');
+            
+            const totalLocais = Object.keys(this.respawnPlaces).length;
+            const totalRespawns = Object.values(this.respawnPlaces).reduce((total, place) => 
+                total + Object.keys(place.respawns).length, 0);
+            
+            console.log(`💾 Respawns salvos: ${totalLocais} locais, ${totalRespawns} respawns`);
+        } catch (error: any) {
+            console.log(`❌ Erro ao salvar respawns: ${error.message}`);
+        }
+    }
+
+    private inicializarRespawnsPadrao(): void {
+        // Inicializar com os respawns padrão já existentes
+        this.respawnPlaces = {
+            'FERUMBRAS': {
+                nome: 'FERUMBRAS',
+                emoji: '🏰',
+                respawns: {
+                    'f4': 'Ferumbras Ascendant (F4)',
+                    'f3': 'Ferumbras Mortal Shell (F3)',
+                    'f2': 'Ferumbras Citadel (F2)',
+                    'f1': 'Ferumbras Threated Dreams (F1)'
+                }
+            },
+            'PRINCIPAIS': {
+                nome: 'PRINCIPAIS',
+                emoji: '🎯',
+                respawns: {
+                    'wz': 'Warzone',
+                    'gt': 'Grave Threat',
+                    'iod': 'Isle of Destiny',
+                    'ff': 'Falcon Bastion',
+                    'cobra': 'Cobra Bastion',
+                    'lions': 'Lion\'s Rock',
+                    'asura': 'Asura Palace'
+                }
+            },
+            'COURT': {
+                nome: 'COURT',
+                emoji: '❄️',
+                respawns: {
+                    'winter': 'Winter Court',
+                    'summer': 'Summer Court'
+                }
+            },
+            'WERE': {
+                nome: 'WERE',
+                emoji: '🐺',
+                respawns: {
+                    'dara': 'Dara Cave',
+                    'werehyaena': 'Werehyaena Cave',
+                    'werewolf': 'Werewolf Cave',
+                    'werebadger': 'Werebadger Cave',
+                    'werebear': 'Werebear Cave',
+                    'wereboar': 'Wereboar Cave'
+                }
+            }
+        };
+    }
+
+    private async processarComandoAddRespPlace(comando: string, remetente: any): Promise<string> {
+        try {
+            const partes = comando.trim().split(' ');
+            
+            if (partes.length < 2) {
+                return `❌ Formato incorreto!
+📋 Use: !addrespplace [nome]
+💡 Exemplo: !addrespplace VENORE`;
+            }
+
+            const nomePlace = partes[1].toUpperCase();
+            
+            // Verificar se já existe
+            if (this.respawnPlaces[nomePlace]) {
+                return `❌ O local "${nomePlace}" já existe!
+📋 Use !listplaces para ver todos os locais
+💡 Use !addresp para adicionar respawns ao local existente`;
+            }
+
+            // Criar novo place
+            this.respawnPlaces[nomePlace] = {
+                nome: nomePlace,
+                emoji: '🏰', // Emoji padrão, pode ser customizado depois
+                respawns: {}
+            };
+
+            // Salvar alterações
+            this.salvarRespawnsPersistidos();
+
+            // Atualizar canal
+            await this.atualizarCanalRespawnsList();
+
+            return `✅ Local criado com sucesso!
+🏰 **${nomePlace}** foi adicionado à lista
+📋 Use !addresp ${nomePlace.toLowerCase()} [código] [nome] para adicionar respawns
+🔄 Canal Respawns List atualizado automaticamente`;
+
+        } catch (error: any) {
+            return `❌ Erro ao criar local: ${error.message}`;
+        }
+    }
+
+    private async processarComandoAddResp(comando: string, remetente: any): Promise<string> {
+        try {
+            const partes = comando.trim().split(' ');
+            
+            if (partes.length < 4) {
+                return `❌ Formato incorreto!
+📋 Use: !addresp [local] [código] [nome do respawn]
+💡 Exemplo: !addresp venore v1 Dragon Lair Venore`;
+            }
+
+            const nomePlace = partes[1].toUpperCase();
+            const codigo = partes[2].toLowerCase();
+            const nomeRespawn = partes.slice(3).join(' ');
+            
+            // Verificar se o local existe
+            if (!this.respawnPlaces[nomePlace]) {
+                return `❌ Local "${nomePlace}" não existe!
+📋 Use !addrespplace ${nomePlace.toLowerCase()} para criar o local primeiro
+💡 Use !listplaces para ver todos os locais disponíveis`;
+            }
+
+            // Verificar se o código já existe em qualquer lugar
+            for (const place of Object.values(this.respawnPlaces)) {
+                if (place.respawns[codigo]) {
+                    return `❌ Código "${codigo}" já existe em "${place.nome}"!
+⚠️ Respawn existente: ${place.respawns[codigo]}
+💡 Use um código diferente`;
+                }
+            }
+
+            // Adicionar respawn ao local
+            this.respawnPlaces[nomePlace].respawns[codigo] = nomeRespawn;
+
+            // Salvar alterações
+            this.salvarRespawnsPersistidos();
+
+            // Atualizar canal
+            await this.atualizarCanalRespawnsList();
+
+            return `✅ Respawn adicionado com sucesso!
+🏰 Local: **${nomePlace}**
+⚔️ Código: **${codigo}**
+📝 Nome: **${nomeRespawn}**
+🔄 Canal Respawns List atualizado automaticamente`;
+
+        } catch (error: any) {
+            return `❌ Erro ao adicionar respawn: ${error.message}`;
+        }
+    }
+
+    private async processarComandoListPlaces(comando: string, remetente: any): Promise<string> {
+        try {
+            if (Object.keys(this.respawnPlaces).length === 0) {
+                return `📋 Nenhum local cadastrado ainda
+💡 Use !addrespplace [nome] para criar um local`;
+            }
+
+            let resposta = `📋 **LOCAIS CADASTRADOS (${Object.keys(this.respawnPlaces).length}):**\n\n`;
+
+            for (const [key, place] of Object.entries(this.respawnPlaces)) {
+                const totalRespawns = Object.keys(place.respawns).length;
+                resposta += `${place.emoji} **${place.nome}** (${totalRespawns} respawns)\n`;
+                
+                if (totalRespawns > 0) {
+                    const exemplos = Object.entries(place.respawns).slice(0, 3);
+                    exemplos.forEach(([codigo, nome]) => {
+                        resposta += `   ⚔️ ${codigo} - ${nome}\n`;
+                    });
+                    if (totalRespawns > 3) {
+                        resposta += `   ... e mais ${totalRespawns - 3} respawns\n`;
+                    }
+                }
+                resposta += '\n';
+            }
+
+            resposta += `💡 **Comandos disponíveis:**
+!addrespplace [nome] - Criar novo local
+!addresp [local] [código] [nome] - Adicionar respawn
+!delresp [código] - Remover respawn
+!deleteresp [código] - Remover respawn (alias)
+!backuprespawns - Fazer backup manual
+!respawns - Atualizar canal lista`;
+
+            return resposta.trim();
+
+        } catch (error: any) {
+            return `❌ Erro ao listar locais: ${error.message}`;
+        }
+    }
+
+    private async processarComandoDelResp(comando: string, remetente: any): Promise<string> {
+        try {
+            const partes = comando.trim().split(' ');
+            
+            if (partes.length < 2) {
+                return `❌ Formato incorreto!
+📋 Use: !delresp [código] ou !deleteresp [código]
+💡 Exemplo: !delresp v1 ou !deleteresp v1`;
+            }
+
+            const codigo = partes[1].toLowerCase();
+            
+            // Procurar o respawn em todos os locais
+            let encontrado = false;
+            let localEncontrado = '';
+            let nomeRespawn = '';
+
+            for (const [key, place] of Object.entries(this.respawnPlaces)) {
+                if (place.respawns[codigo]) {
+                    nomeRespawn = place.respawns[codigo];
+                    localEncontrado = place.nome;
+                    delete place.respawns[codigo];
+                    encontrado = true;
+                    break;
+                }
+            }
+
+            if (!encontrado) {
+                return `❌ Código "${codigo}" não encontrado!
+📋 Use !listplaces para ver todos os respawns
+💡 Verifique se o código está correto`;
+            }
+
+            // Salvar alterações
+            this.salvarRespawnsPersistidos();
+
+            // Atualizar canal
+            await this.atualizarCanalRespawnsList();
+
+            return `✅ Respawn removido com sucesso!
+🏰 Local: **${localEncontrado}**
+⚔️ Código: **${codigo}**
+📝 Nome: **${nomeRespawn}**
+🔄 Canal Respawns List atualizado automaticamente`;
+
+        } catch (error: any) {
+            return `❌ Erro ao remover respawn: ${error.message}`;
+        }
+    }
+
+    private async processarComandoBackupRespawns(comando: string, remetente: any): Promise<string> {
+        try {
+            // Fazer backup imediato
+            this.salvarRespawnsPersistidos();
+            
+            // Criar backup com timestamp
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const backupFile = path.join(__dirname, '..', `respawns-backup-${timestamp}.json`);
+            
+            const data = JSON.stringify(this.respawnPlaces, null, 2);
+            fs.writeFileSync(backupFile, data, 'utf8');
+            
+            const totalLocais = Object.keys(this.respawnPlaces).length;
+            const totalRespawns = Object.values(this.respawnPlaces).reduce((total, place) => 
+                total + Object.keys(place.respawns).length, 0);
+            
+            return `✅ Backup realizado com sucesso!
+📁 Arquivo principal: respawns-places.json
+📁 Backup timestamped: respawns-backup-${timestamp}.json
+📊 ${totalLocais} locais, ${totalRespawns} respawns salvos
+🕐 ${new Date().toLocaleString('pt-BR')}`;
+
+        } catch (error: any) {
+            return `❌ Erro ao fazer backup: ${error.message}`;
+        }
     }
 
     private obterIconeVocacao(vocation: string): string {
