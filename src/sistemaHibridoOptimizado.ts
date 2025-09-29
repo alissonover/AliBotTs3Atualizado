@@ -117,6 +117,13 @@ class SistemaHibridoOptimizado {
                 console.log('⚠️ Erro na inicialização do canal Claimeds:', error.message);
             }
 
+            try {
+                await this.atualizarCanalRespawnsList();
+                console.log('✅ Canal Respawns List inicializado');
+            } catch (error: any) {
+                console.log('⚠️ Erro na inicialização do canal Respawns List:', error.message);
+            }
+
             // Configurar handlers de saída
             this.configurarHandlersSaida();
 
@@ -375,6 +382,7 @@ class SistemaHibridoOptimizado {
 🔄 Comandos de Atualização:
 !friends - Atualizar canal Friends
 !claimeds - Atualizar canal Claimeds
+!respawns - Atualizar canal Respawns List
 !sync - Sincronizar todos os canais
 
 ⚔️ Sistema de Respawns com Fila:
@@ -386,7 +394,9 @@ class SistemaHibridoOptimizado {
 !fila [código] - Ver timer específico
 !fila - Ver todos os timers
 
-💡 Exemplos de Respawn:
+� Lista de Respawns: Veja o canal "Respawns List" para todos os códigos disponíveis
+
+�💡 Exemplos de Respawn:
 !resp f4 02:30 - F4 por 2 horas e 30 minutos
 !resp f4 00:30 - F4 por 30 minutos
 !resp f4 150 - F4 por 150 segundos
@@ -485,14 +495,28 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     }
                     break;
 
+                case '!update-respawns':
+                case '!respawns':
+                    try {
+                        await this.atualizarCanalRespawnsList();
+                        resposta = `✅ Canal Respawns List atualizado com sucesso!
+📋 Lista de respawns atualizada
+💡 Todos os códigos disponíveis listados`;
+                    } catch (error: any) {
+                        resposta = `❌ Erro ao atualizar canal Respawns List: ${error.message}`;
+                    }
+                    break;
+
                 case '!update-all':
                 case '!sync':
                     try {
                         await this.atualizarCanalFriends();
                         await this.atualizarCanalClaimeds();
+                        await this.atualizarCanalRespawnsList();
                         resposta = `✅ Todos os canais atualizados com sucesso!
 👥 Friends: Membros online sincronizados
 ⏰ Claimeds: Timers sincronizados
+📋 Respawns List: Lista de respawns atualizada
 🚀 Sistema híbrido totalmente sincronizado`;
                     } catch (error: any) {
                         resposta = `❌ Erro na sincronização: ${error.message}`;
@@ -755,7 +779,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
 👑 Level mais alto: ${levelMaisAlto}
 ⏰ Última atualização: ${new Date().toLocaleTimeString('pt-BR')}
 🎯 Guild: [b]Missclick[/b] (Tibia)
-🤖 Sistema: Híbrido PRO
+🤖 Sistema: AliBot
 📡 API: TibiaData v4`;
             }
             
@@ -805,9 +829,9 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             // Construir descrição base do canal
             let descricao = `[img]https://i.imgur.com/qzjiLZT.png[/img]
 
-🎯 **SISTEMA DE CLAIMEDS - ALIBOT** 🎯
+🎯 SISTEMA DE CLAIMEDS - ALIBOT 🎯
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚔️ **Respawns** ⚔️
+⚔️ Respawns ⚔️
 📋 Use: [b]!resp [código] [tempo][/b] - Iniciar timer
 🎯 Use: [b]!next [código][/b] - Entrar na fila
 🚪 Use: [b]!leave [código][/b] - Sair do respawn
@@ -843,7 +867,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             ];
             
             if (todosTimers.length > 0) {
-                descricao += `⏰ **CLAIMEDS ATIVOS (${todosTimers.length}):**
+                descricao += `⏰ CLAIMEDS ATIVOS (${todosTimers.length}):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 `;
@@ -889,7 +913,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             }
             
             if (todosTimers.length === 0) {
-                descricao += `💤 **NENHUM TIMER ATIVO**
+                descricao += `💤 NENHUM TIMER ATIVO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 Use [b]!resp [código] [tempo][/b] para iniciar
 
@@ -897,7 +921,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             }
             
             descricao += `🕐 Última atualização: ${new Date().toLocaleTimeString('pt-BR')}
-🤖 Sistema: Híbrido PRO
+🤖 Sistema: AliBot
 ⚡ Atualização: Automática a cada minuto`;
             
             // Atualizar canal
@@ -910,6 +934,61 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             
         } catch (error: any) {
             console.log('❌ Erro ao atualizar canal Claimeds:', error.message);
+            throw error;
+        }
+    }
+
+    private async atualizarCanalRespawnsList(): Promise<void> {
+        if (!this.serverQuery) {
+            throw new Error('ServerQuery não está conectado');
+        }
+
+        try {
+            const respawnsListChannelId = "9"; // ID do canal Respawns List (você precisará ajustar este ID)
+            
+            // Construir descrição base do canal
+            let descricao = `[img]https://i.imgur.com/respawnslist.png[/img]
+
+📋 LISTA DE RESPAWNS DISPONÍVEIS 📋
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏰 RESPAWNS DARASHIA:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚔️ [b]f4[/b] - Ferumbras Ascendant (F4)
+⚔️ [b]f3[/b] - Ferumbras Mortal Shell (F3) 
+⚔️ [b]f2[/b] - Ferumbras Citadel (F2)
+⚔️ [b]f1[/b] - Ferumbras Threated Dreams (F1)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🕐 Última atualização: ${new Date().toLocaleString('pt-BR')}
+🤖 Sistema: AliBot
+⚡ Comandos: Disponíveis 24/7
+🎮 Use [b]!help[/b] para mais informações`;
+
+            // Atualizar canal
+            try {
+                await this.serverQuery.execute('channeledit', {
+                    cid: respawnsListChannelId,
+                    channel_description: descricao
+                });
+                
+                console.log(`📋 Canal Respawns List atualizado com todos os respawns disponíveis`);
+            } catch (error1: any) {
+                console.log('⚠️ Método channel_description falhou para Respawns List, tentando channel_topic...');
+                try {
+                    await this.serverQuery.execute('channeledit', {
+                        cid: respawnsListChannelId,
+                        channel_topic: descricao
+                    });
+                    
+                    console.log(`📋 Canal Respawns List atualizado via topic`);
+                } catch (error2: any) {
+                    console.log('❌ Ambos os métodos falharam para Respawns List:', error1.message, '|', error2.message);
+                    console.log('💡 Canal não foi atualizado, mas sistema continua funcionando...');
+                }
+            }
+            
+        } catch (error: any) {
+            console.log('❌ Erro ao atualizar canal Respawns List:', error.message);
             throw error;
         }
     }
