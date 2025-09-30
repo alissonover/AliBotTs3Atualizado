@@ -394,7 +394,7 @@ class SistemaHibridoOptimizado {
 !sync - Sincronizar todos os canais
 
 ⚔️ Sistema de Respawns com Fila:
-!resp [código] [tempo] - Iniciar timer
+!resp [código] [tempo opcional] - Iniciar timer
 !resp [código] - Aceitar next (se tem tempo pré-definido)
 !next [código] - Entrar na fila (sem tempo específico)
 !next [código] [tempo] - Entrar na fila com tempo pré-definido
@@ -607,7 +607,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     } else {
                         resposta = `❓ Comando "${comando}" não reconhecido.
 💡 Use !help para ver comandos disponíveis.
-⚔️ Para respawns: !resp [código] [tempo]
+⚔️ Para respawns: !resp [código] [tempo opcional]
 🎯 Para entrar na fila: !next [código]
 📋 Para fila: !fila [código]
 🚪 Para sair: !leave [código]`;
@@ -1095,8 +1095,9 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             
             if (!codigo) {
                 return `❌ Formato incorreto!
-📋 Use: !resp [código] [tempo]
+📋 Use: !resp [código] [tempo opcional]
 💡 Exemplos:
+   !resp a1 (tempo padrão: Tier 1 = 02:30)
    !resp cobra 02:30 (2 horas e 30 minutos)
    !resp f4 00:30 (30 minutos)
    !resp wz 150 (150 segundos)
@@ -1158,22 +1159,20 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             } else {
                 // Não é aceitação de next, comando normal
                 if (partes.length < 3) {
-                    return `❌ Formato incorreto!
-📋 Use: !resp [código] [tempo]
-💡 Exemplos:
-   !resp f4 02:30 (2 horas e 30 minutos)
-   !resp f4 00:30 (30 minutos)
-   !resp f4 150 (150 segundos)`;
-                }
-                
-                const tempoTexto = partes[2];
-                tempoParaUsar = this.converterTempoParaSegundos(tempoTexto);
-                if (tempoParaUsar === null) {
-                    return `❌ Tempo inválido!
+                    // Se não especificou tempo, usar tempo padrão baseado no tier
+                    tempoParaUsar = this.obterTempopadrao(codigo);
+                    console.log(`⏰ Tempo padrão aplicado para ${codigo.toUpperCase()}: ${this.formatarTempo(tempoParaUsar)} (baseado no tier)`);
+                } else {
+                    // Jogador especificou tempo
+                    const tempoTexto = partes[2];
+                    tempoParaUsar = this.converterTempoParaSegundos(tempoTexto);
+                    if (tempoParaUsar === null) {
+                        return `❌ Tempo inválido!
 💡 Formatos aceitos:
    HH:MM → 00:30 = 30 minutos
    HH:MM:SS → 01:30:45 = 1h30min45s
    SSSS → 150 = 150 segundos`;
+                    }
                 }
             }
             
@@ -1212,8 +1211,9 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
 
             const tempoFormatado = this.formatarTempo(tempoParaUsar!);
             const tipoAceitacao = ehAceitacaoNext ? ' (Next aceito!)' : '';
+            const tipoTempo = (partes.length < 3 && !ehAceitacaoNext) ? ' (Tempo padrão aplicado)' : '';
             
-            return `✅ Timer iniciado!${tipoAceitacao}
+            return `✅ Timer iniciado!${tipoAceitacao}${tipoTempo}
 ⚔️ Respawn: ${timer.nome} (${codigo.toUpperCase()})
 ⏰ Tempo: ${tempoFormatado}
 👤 Jogador: ${timer.jogador}
@@ -1352,6 +1352,16 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                 if (this.timersRespawn[codigo].jogador === nomeJogador) {
                     return `❌ Você já está com este respawn ativo!
 ⚔️ ${configRespawns[codigo]} (${codigo.toUpperCase()})`;
+                }
+            }
+
+            // Verificar se já está no next timer (aguardando aceitar)
+            if (this.nextTimers[codigo]) {
+                if (this.nextTimers[codigo].jogador === nomeJogador) {
+                    return `❌ Você já está aguardando aceitar este respawn!
+⚔️ ${configRespawns[codigo]} (${codigo.toUpperCase()})
+⏰ Tempo para aceitar: ${this.formatarTempo(this.nextTimers[codigo].tempoRestante)}
+💡 Use !resp ${codigo} para aceitar`;
                 }
             }
 
@@ -1788,6 +1798,23 @@ ${statusAtual}
         
         // Se nenhum formato funcionar, pode ser que BBCode não seja suportado 
         // nas descrições de canal, apenas em mensagens de chat
+    }
+
+    private obterTempopadrao(codigo: string): number {
+        const nomeRespawn = this.obterNomeRespawn(codigo).toLowerCase();
+        
+        // Respawns Tier 3 (03:15 = 3 horas e 15 minutos = 11700 segundos)
+        if (nomeRespawn.includes('tier 3')) {
+            return 11700; // 03:15
+        }
+        
+        // Respawns Tier 1 e Tier 2 (02:30 = 2 horas e 30 minutos = 9000 segundos)
+        if (nomeRespawn.includes('tier 1') || nomeRespawn.includes('tier 2')) {
+            return 9000; // 02:30
+        }
+        
+        // Padrão para outros respawns (02:30)
+        return 9000; // 02:30
     }
 
     private obterNomeRespawn(codigo: string): string {
