@@ -544,46 +544,46 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     try {
                         // Debug detalhado do cliente
                         const clientId = remetente.invokerid || remetente.clid;
-                        let debugInfo = `🧪 **DEBUG COMPLETO DO CLIENTE**\n\n`;
+                        let debugInfo = `🧪 DEBUG COMPLETO DO CLIENTE\n\n`;
                         
                         // Dados do remetente
-                        debugInfo += `📋 **Dados do Remetente:**\n`;
+                        debugInfo += `📋 Dados do Remetente:\n`;
                         debugInfo += `   Raw: ${JSON.stringify(remetente, null, 2)}\n\n`;
                         
                         if (this.serverQuery && clientId) {
                             try {
                                 // ClientInfo
                                 const clientInfo = await this.serverQuery.clientInfo(clientId);
-                                debugInfo += `📡 **ClientInfo:**\n`;
+                                debugInfo += `📡 ClientInfo:\n`;
                                 debugInfo += `   Raw: ${JSON.stringify(clientInfo, null, 2)}\n\n`;
                                 
                                 // Todas as propriedades do clientInfo
-                                debugInfo += `📝 **Propriedades ClientInfo:**\n`;
+                                debugInfo += `📝 Propriedades ClientInfo:\n`;
                                 for (const [key, value] of Object.entries(clientInfo)) {
                                     debugInfo += `   ${key}: "${value}"\n`;
                                 }
                                 debugInfo += `\n`;
                                 
                             } catch (error: any) {
-                                debugInfo += `❌ **Erro ClientInfo:** ${error.message}\n\n`;
+                                debugInfo += `❌ Erro ClientInfo: ${error.message}\n\n`;
                             }
                             
                             try {
                                 // ClientList
                                 const clientes = await this.serverQuery.clientList();
                                 const cliente = clientes.find((c: any) => c.clid == clientId);
-                                debugInfo += `👥 **ClientList (cliente específico):**\n`;
+                                debugInfo += `👥 ClientList (cliente específico):\n`;
                                 debugInfo += `   Raw: ${JSON.stringify(cliente, null, 2)}\n\n`;
                                 
                                 if (cliente) {
-                                    debugInfo += `📝 **Propriedades ClientList:**\n`;
+                                    debugInfo += `📝 Propriedades ClientList:\n`;
                                     for (const [key, value] of Object.entries(cliente)) {
                                         debugInfo += `   ${key}: "${value}"\n`;
                                     }
                                 }
                                 
                             } catch (error: any) {
-                                debugInfo += `❌ **Erro ClientList:** ${error.message}\n\n`;
+                                debugInfo += `❌ Erro ClientList: ${error.message}\n\n`;
                             }
                         }
                         
@@ -599,16 +599,16 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         // Testar leitura de descrição
                         const resultadoTeste = await this.obterNomeJogadorPorDescricao(remetente);
                         
-                        let mensagemTeste = `🧪 **TESTE DE DESCRIÇÃO**\n\n`;
-                        mensagemTeste += `👤 **Nickname TS:** ${remetente.clientNickname || remetente.nickname || 'N/A'}\n`;
-                        mensagemTeste += `🔢 **Client ID:** ${remetente.invokerid || remetente.clid || 'N/A'}\n`;
-                        mensagemTeste += `📝 **Descrição válida:** ${resultadoTeste.valido ? '✅ SIM' : '❌ NÃO'}\n`;
+                        let mensagemTeste = `🧪 TESTE DE DESCRIÇÃO\n\n`;
+                        mensagemTeste += `👤 Nickname TS: ${remetente.clientNickname || remetente.nickname || 'N/A'}\n`;
+                        mensagemTeste += `🔢 Client ID: ${remetente.invokerid || remetente.clid || 'N/A'}\n`;
+                        mensagemTeste += `📝 Descrição válida: ${resultadoTeste.valido ? '✅ SIM' : '❌ NÃO'}\n`;
                         
                         if (resultadoTeste.valido) {
-                            mensagemTeste += `🎯 **Nome do jogo:** ${resultadoTeste.nome}\n`;
-                            mensagemTeste += `\n✅ **Resultado:** Comandos de claimed funcionarão normalmente!`;
+                            mensagemTeste += `🎯 Nome do jogo: ${resultadoTeste.nome}\n`;
+                            mensagemTeste += `\n✅ Resultado: Comandos de claimed funcionarão normalmente!`;
                         } else {
-                            mensagemTeste += `\n❌ **Problema:** ${resultadoTeste.erro || 'Descrição não configurada'}`;
+                            mensagemTeste += `\n❌ Problema: ${resultadoTeste.erro || 'Descrição não configurada'}`;
                         }
                         
                         resposta = mensagemTeste;
@@ -1299,11 +1299,11 @@ ${filasAtivas}`;
             if (this.timersRespawn[codigo] && !ehAceitacaoNext) {
                 const timerAtivo = this.timersRespawn[codigo];
                 return `❌ Respawn já tem claimed ativo!
-⚔️ **${timerAtivo.nome}** (${codigo.toUpperCase()})
-👤 Jogador: **${timerAtivo.jogador}**
-⏰ Tempo restante: **${this.formatarTempo(timerAtivo.tempoRestante)}**
+⚔️ ${timerAtivo.nome} (${codigo.toUpperCase()})
+👤 Jogador: ${timerAtivo.jogador}
+⏰ Tempo restante: ${this.formatarTempo(timerAtivo.tempoRestante)}
 
-💡 **Opções disponíveis:**
+💡 Opções disponíveis:
 🔄 Use !next ${codigo} [tempo] para entrar na fila
 📋 Use !claimeds para ver todos os ativos`;
             }
@@ -1935,7 +1935,7 @@ ${statusAtual}
                 return {
                     nome: nomeTS,
                     valido: false,
-                    erro: `❌ **${nomeTS}**, você precisa configurar sua descrição no TeamSpeak!
+                    erro: `❌ ${nomeTS}, você precisa configurar sua descrição no TeamSpeak!
 
 Entre em contato com a liderança para isto!
 
@@ -2184,8 +2184,8 @@ Entre em contato com a liderança para isto!
             this.salvarRespawnsPersistidos();
 
             return `✅ Respawn adicionado com sucesso!
-⚔️ Código: **${codigo}**
-📝 Nome: **${nomeRespawn}**
+⚔️ Código: ${codigo}
+📝 Nome: ${nomeRespawn}
 � Dados salvos automaticamente`;
 
         } catch (error: any) {
@@ -2200,16 +2200,16 @@ Entre em contato com a liderança para isto!
 💡 Use !addresp [código] [nome] para adicionar respawns`;
             }
 
-            let resposta = `📋 **RESPAWNS CADASTRADOS (${Object.keys(this.respawnsList).length}):**\n\n`;
+            let resposta = `📋 RESPAWNS CADASTRADOS (${Object.keys(this.respawnsList).length}):\n\n`;
 
             // Ordenar respawns por código
             const respawnsOrdenados = Object.entries(this.respawnsList).sort((a, b) => a[0].localeCompare(b[0]));
 
             for (const [codigo, nome] of respawnsOrdenados) {
-                resposta += `⚔️ **${codigo}** → ${nome}\n`;
+                resposta += `⚔️ ${codigo} → ${nome}\n`;
             }
 
-            resposta += `\n💡 **Comandos disponíveis:**
+            resposta += `\n💡 Comandos disponíveis:
 !addresp [código] [nome] - Adicionar respawn
 !delresp [código] - Remover respawn
 !deleteresp [código] - Remover respawn (alias)
@@ -2251,8 +2251,8 @@ Entre em contato com a liderança para isto!
             this.salvarRespawnsPersistidos();
 
             return `✅ Respawn removido com sucesso!
-⚔️ Código: **${codigo}**
-📝 Nome: **${nomeRespawn}**
+⚔️ Código: ${codigo}
+📝 Nome: ${nomeRespawn}
 � Dados salvos automaticamente`;
 
         } catch (error: any) {
