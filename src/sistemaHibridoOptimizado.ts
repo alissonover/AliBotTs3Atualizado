@@ -1937,14 +1937,7 @@ ${statusAtual}
                     valido: false,
                     erro: `❌ **${nomeTS}**, você precisa configurar sua descrição no TeamSpeak!
 
-📋 **Como configurar:**
-1. Clique com botão direito no seu nome
-2. Selecione "Alterar Descrição"
-3. Digite seu nome do jogo (ex: "Seu Nome Tibia")
-4. Clique em "OK"
-
-💡 **Importante:** Use seu nome exato do Tibia para evitar problemas
-🎯 **Dúvidas?** Entre em contato com a liderança
+Entre em contato com a liderança para isto!
 
 ⚠️ Comandos de claimed não funcionarão sem a descrição configurada!`
                 };
