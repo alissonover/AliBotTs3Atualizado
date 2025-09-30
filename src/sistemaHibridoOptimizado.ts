@@ -707,7 +707,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         console.log('🔄 Timers automáticos configurados:');
         console.log('   👥 Friends: A cada 1 minuto');
         console.log('   ⏰ Claimeds: A cada 30 segundos (quando sem timers ativos)');
-        console.log('   ⚔️ Respawns: A cada 5 segundos (quando há timers)');
+        console.log('   ⚔️ Respawns & Next: A cada 5 segundos (contagem regressiva precisa)');
         console.log('   💓 Status: A cada 2 minutos');
     }
 
@@ -1469,10 +1469,10 @@ ${statusAtual}
                 let timerExpirou = false;
                 let atualizacaoNecessaria = false;
                 
-                // Atualizar todos os timers de respawn (decrementar 1 minuto = 60 segundos)
+                // Atualizar todos os timers de respawn (decrementar 5 segundos)
                 for (const codigo in this.timersRespawn) {
                     const timer = this.timersRespawn[codigo];
-                    timer.tempoRestante -= 60; // Decrementar 1 minuto
+                    timer.tempoRestante -= 5; // Decrementar 5 segundos
                     
                     if (timer.tempoRestante <= 0) {
                         console.log(`⚔️ Timer expirado: ${timer.nome} (${codigo.toUpperCase()}) - ${timer.jogador}`);
@@ -1489,10 +1489,11 @@ ${statusAtual}
                     }
                 }
                 
-                // Atualizar timers de next (10 minutos para aceitar)
+                // Atualizar timers de next (10 minutos para aceitar) - contagem regressiva em tempo real
                 for (const codigo in this.nextTimers) {
                     const nextTimer = this.nextTimers[codigo];
-                    nextTimer.tempoRestante -= 60; // Decrementar 1 minuto
+                    nextTimer.tempoRestante -= 5; // Decrementar 5 segundos
+                    atualizacaoNecessaria = true; // Atualizar canal para mostrar contagem regressiva
                     
                     if (nextTimer.tempoRestante <= 0) {
                         console.log(`⏰ Timer de next expirado: ${codigo.toUpperCase()} - ${nextTimer.jogador} não aceitou`);
@@ -1508,16 +1509,13 @@ ${statusAtual}
                     }
                 }
                 
-                // Atualizar canal a cada minuto ou quando timer expira
-                atualizacaoNecessaria = true;
-                
                 // Atualizar canal apenas quando necessário
                 if (atualizacaoNecessaria) {
                     await this.atualizarCanalClaimeds();
                 }
                 
                 // Parar sistema se não há mais timers
-                if (Object.keys(this.timersRespawn).length === 0) {
+                if (Object.keys(this.timersRespawn).length === 0 && Object.keys(this.nextTimers).length === 0) {
                     console.log('⏰ Nenhum timer ativo - pausando sistema de timers');
                     if (this.intervalTimers) {
                         clearInterval(this.intervalTimers);
@@ -1528,7 +1526,7 @@ ${statusAtual}
             } catch (error: any) {
                 console.log('❌ Erro no sistema de timers:', error.message);
             }
-        }, 60000); // Atualizar a cada minuto (60 segundos)
+        }, 5000); // Atualizar a cada 5 segundos para contagem regressiva mais precisa
     }
 
     private async processarFilaAposExpiracao(codigo: string): Promise<void> {
@@ -1548,6 +1546,11 @@ ${statusAtual}
                     iniciadoEm: new Date(),
                     tempoDesejado: proximoJogador.tempoDesejado // Passar tempo desejado
                 };
+
+                // Iniciar sistema de contagem se não estiver ativo
+                if (!this.intervalTimers) {
+                    this.iniciarSistemaTimers();
+                }
                 
                 const infoTempo = proximoJogador.tempoDesejado ? 
                     ` (tempo pré-definido: ${this.formatarTempo(proximoJogador.tempoDesejado)})` : 
@@ -1588,6 +1591,11 @@ ${statusAtual}
                         iniciadoEm: new Date(),
                         tempoDesejado: proximoJogador.tempoDesejado // Passar tempo desejado
                     };
+
+                    // Iniciar sistema de contagem se não estiver ativo
+                    if (!this.intervalTimers) {
+                        this.iniciarSistemaTimers();
+                    }
                     
                     const infoTempo = proximoJogador.tempoDesejado ? 
                         ` (tempo pré-definido: ${this.formatarTempo(proximoJogador.tempoDesejado)})` : 
