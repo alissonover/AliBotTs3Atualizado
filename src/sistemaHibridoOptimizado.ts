@@ -539,6 +539,84 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     }
                     break;
 
+                case '!debug-client':
+                case '!debugclient':
+                    try {
+                        // Debug detalhado do cliente
+                        const clientId = remetente.invokerid || remetente.clid;
+                        let debugInfo = `🧪 **DEBUG COMPLETO DO CLIENTE**\n\n`;
+                        
+                        // Dados do remetente
+                        debugInfo += `📋 **Dados do Remetente:**\n`;
+                        debugInfo += `   Raw: ${JSON.stringify(remetente, null, 2)}\n\n`;
+                        
+                        if (this.serverQuery && clientId) {
+                            try {
+                                // ClientInfo
+                                const clientInfo = await this.serverQuery.clientInfo(clientId);
+                                debugInfo += `📡 **ClientInfo:**\n`;
+                                debugInfo += `   Raw: ${JSON.stringify(clientInfo, null, 2)}\n\n`;
+                                
+                                // Todas as propriedades do clientInfo
+                                debugInfo += `📝 **Propriedades ClientInfo:**\n`;
+                                for (const [key, value] of Object.entries(clientInfo)) {
+                                    debugInfo += `   ${key}: "${value}"\n`;
+                                }
+                                debugInfo += `\n`;
+                                
+                            } catch (error: any) {
+                                debugInfo += `❌ **Erro ClientInfo:** ${error.message}\n\n`;
+                            }
+                            
+                            try {
+                                // ClientList
+                                const clientes = await this.serverQuery.clientList();
+                                const cliente = clientes.find((c: any) => c.clid == clientId);
+                                debugInfo += `👥 **ClientList (cliente específico):**\n`;
+                                debugInfo += `   Raw: ${JSON.stringify(cliente, null, 2)}\n\n`;
+                                
+                                if (cliente) {
+                                    debugInfo += `📝 **Propriedades ClientList:**\n`;
+                                    for (const [key, value] of Object.entries(cliente)) {
+                                        debugInfo += `   ${key}: "${value}"\n`;
+                                    }
+                                }
+                                
+                            } catch (error: any) {
+                                debugInfo += `❌ **Erro ClientList:** ${error.message}\n\n`;
+                            }
+                        }
+                        
+                        resposta = debugInfo;
+                    } catch (error: any) {
+                        resposta = `❌ Erro no debug: ${error.message}`;
+                    }
+                    break;
+
+                case '!test-desc':
+                case '!testdesc':
+                    try {
+                        // Testar leitura de descrição
+                        const resultadoTeste = await this.obterNomeJogadorPorDescricao(remetente);
+                        
+                        let mensagemTeste = `🧪 **TESTE DE DESCRIÇÃO**\n\n`;
+                        mensagemTeste += `👤 **Nickname TS:** ${remetente.clientNickname || remetente.nickname || 'N/A'}\n`;
+                        mensagemTeste += `🔢 **Client ID:** ${remetente.invokerid || remetente.clid || 'N/A'}\n`;
+                        mensagemTeste += `📝 **Descrição válida:** ${resultadoTeste.valido ? '✅ SIM' : '❌ NÃO'}\n`;
+                        
+                        if (resultadoTeste.valido) {
+                            mensagemTeste += `🎯 **Nome do jogo:** ${resultadoTeste.nome}\n`;
+                            mensagemTeste += `\n✅ **Resultado:** Comandos de claimed funcionarão normalmente!`;
+                        } else {
+                            mensagemTeste += `\n❌ **Problema:** ${resultadoTeste.erro || 'Descrição não configurada'}`;
+                        }
+                        
+                        resposta = mensagemTeste;
+                    } catch (error: any) {
+                        resposta = `❌ Erro no teste de descrição: ${error.message}`;
+                    }
+                    break;
+
                 case '!test-bbcode':
                 case '!testlink':
                     try {
@@ -1126,7 +1204,13 @@ ${filasAtivas}`;
             const partes = comando.trim().split(' ');
             
             const codigo = partes[1]?.toLowerCase();
-            const nomeJogador = remetente.clientNickname || remetente.nickname || 'Desconhecido';
+            
+            // Obter nome do jogador através da descrição
+            const infoJogador = await this.obterNomeJogadorPorDescricao(remetente);
+            if (!infoJogador.valido) {
+                return infoJogador.erro || '❌ Erro ao obter informações do jogador';
+            }
+            const nomeJogador = infoJogador.nome;
             
             if (!codigo) {
                 return `❌ Formato incorreto!
@@ -1228,7 +1312,7 @@ ${filasAtivas}`;
             const timer: RespawnTimer = {
                 codigo: codigo,
                 nome: this.obterNomeRespawn(codigo),
-                jogador: remetente.clientNickname || remetente.nickname || 'Desconhecido',
+                jogador: nomeJogador,
                 tempoRestante: tempoParaUsar!,
                 iniciadoEm: new Date(),
                 duracaoTotal: tempoParaUsar!
@@ -1296,6 +1380,13 @@ ${filasAtivas}`;
 
             const codigo = partes[1].toLowerCase();
             
+            // Obter nome do jogador através da descrição
+            const infoJogador = await this.obterNomeJogadorPorDescricao(remetente);
+            if (!infoJogador.valido) {
+                return infoJogador.erro || '❌ Erro ao obter informações do jogador';
+            }
+            const nomeJogador = infoJogador.nome;
+            
             if (!this.timersRespawn[codigo]) {
                 return `❌ Nenhum timer ativo para o código "${codigo.toUpperCase()}"
 📋 Use !fila para ver timers ativos`;
@@ -1304,7 +1395,7 @@ ${filasAtivas}`;
             const timer = this.timersRespawn[codigo];
             
             // Verificar se é o mesmo jogador
-            if (timer.jogador !== (remetente.clientNickname || remetente.nickname || 'Desconhecido')) {
+            if (timer.jogador !== nomeJogador) {
                 return `❌ Apenas ${timer.jogador} pode sair deste respawn!
 ⚔️ Respawn: ${timer.nome} (${codigo.toUpperCase()})`;
             }
@@ -1340,7 +1431,13 @@ ${filasAtivas}`;
             }
 
             const codigo = partes[1].toLowerCase();
-            const nomeJogador = remetente.clientNickname || remetente.nickname || 'Desconhecido';
+            
+            // Obter nome do jogador através da descrição
+            const infoJogador = await this.obterNomeJogadorPorDescricao(remetente);
+            if (!infoJogador.valido) {
+                return infoJogador.erro || '❌ Erro ao obter informações do jogador';
+            }
+            const nomeJogador = infoJogador.nome;
             
             // Processar tempo desejado se especificado
             let tempoDesejado: number | undefined = undefined;
@@ -1741,6 +1838,131 @@ ${statusAtual}
             }
         } catch (error: any) {
             console.log(`❌ Erro ao enviar poke de next expirado para ${nomeJogador}:`, error.message);
+        }
+    }
+
+    private async obterNomeJogadorPorDescricao(remetente: any): Promise<{nome: string, valido: boolean, erro?: string}> {
+        try {
+            console.log('🔍 Iniciando obterNomeJogadorPorDescricao...');
+            console.log('📋 Dados do remetente:', {
+                invokerid: remetente.invokerid,
+                clid: remetente.clid,
+                clientNickname: remetente.clientNickname,
+                nickname: remetente.nickname
+            });
+
+            const clientId = remetente.invokerid || remetente.clid;
+            
+            if (!clientId) {
+                console.log('❌ ClientId não encontrado');
+                return {
+                    nome: 'Desconhecido',
+                    valido: false,
+                    erro: '❌ Não foi possível identificar o cliente'
+                };
+            }
+
+            console.log(`🔍 Buscando informações do cliente ID: ${clientId}`);
+
+            // Verificar se o serverQuery está disponível
+            if (!this.serverQuery) {
+                console.log('❌ ServerQuery não está conectado');
+                return {
+                    nome: remetente.clientNickname || remetente.nickname || 'Usuário',
+                    valido: false,
+                    erro: '❌ Conexão com TeamSpeak indisponível'
+                };
+            }
+
+            try {
+                // Método 1: Tentar clientInfo primeiro
+                console.log('📡 Tentativa 1: Chamando clientInfo...');
+                const clientInfoArray = await this.serverQuery.clientInfo(clientId);
+                console.log('📋 ClientInfo array recebido:', clientInfoArray);
+                
+                // ClientInfo retorna um array - pegar o primeiro elemento
+                const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
+                console.log('📋 ClientInfo processado:', {
+                    clientNickname: clientInfo?.clientNickname,
+                    clientDescription: clientInfo?.clientDescription,
+                    clid: clientInfo?.clid
+                });
+                
+                // Verificar se existe descrição no clientInfo
+                let descricao = clientInfo?.clientDescription?.trim() || '';
+                console.log(`📝 Descrição do clientInfo: "${descricao}"`);
+                
+                if (descricao && descricao !== '') {
+                    console.log(`✅ Descrição válida encontrada via clientInfo: "${descricao}"`);
+                    return {
+                        nome: descricao,
+                        valido: true
+                    };
+                }
+
+                // Método 2: Se clientInfo não tem descrição, usar clientList
+                console.log('📡 Tentativa 2: Buscando via clientList...');
+                const clientes = await this.serverQuery.clientList();
+                console.log(`👥 ${clientes.length} clientes encontrados`);
+                
+                const clienteEncontrado = clientes.find((c: any) => {
+                    const id = c.clid || c.clientId;
+                    return id == clientId;
+                });
+
+                if (clienteEncontrado) {
+                    console.log('📋 Cliente encontrado via clientList:', {
+                        clid: clienteEncontrado.clid,
+                        clientNickname: clienteEncontrado.clientNickname,
+                        clientDescription: clienteEncontrado.clientDescription
+                    });
+                    
+                    descricao = clienteEncontrado.clientDescription?.trim() || '';
+                    console.log(`📝 Descrição do clientList: "${descricao}"`);
+                    
+                    if (descricao && descricao !== '') {
+                        console.log(`✅ Descrição válida encontrada via clientList: "${descricao}"`);
+                        return {
+                            nome: descricao,
+                            valido: true
+                        };
+                    }
+                }
+
+                // Se chegou aqui, não tem descrição
+                console.log('❌ Descrição vazia ou inexistente em ambos os métodos');
+                const nomeTS = remetente.clientNickname || remetente.nickname || 'Usuário';
+                return {
+                    nome: nomeTS,
+                    valido: false,
+                    erro: `❌ **${nomeTS}**, você precisa configurar sua descrição no TeamSpeak!
+
+📋 **Como configurar:**
+1. Clique com botão direito no seu nome
+2. Selecione "Alterar Descrição"
+3. Digite seu nome do jogo (ex: "Seu Nome Tibia")
+4. Clique em "OK"
+
+💡 **Importante:** Use seu nome exato do Tibia para evitar problemas
+🎯 **Dúvidas?** Entre em contato com a liderança
+
+⚠️ Comandos de claimed não funcionarão sem a descrição configurada!`
+                };
+
+            } catch (apiError: any) {
+                console.log('❌ Erro nas chamadas da API:', apiError.message);
+                throw apiError;
+            }
+
+        } catch (error: any) {
+            console.log(`❌ Erro ao obter descrição do cliente:`, error.message);
+            console.log('🔍 Stack trace:', error.stack);
+            const nomeTS = remetente.clientNickname || remetente.nickname || 'Usuário';
+            return {
+                nome: nomeTS,
+                valido: false,
+                erro: `❌ Erro ao verificar sua descrição: ${error.message}`
+            };
         }
     }
 
