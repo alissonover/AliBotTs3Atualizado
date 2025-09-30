@@ -1097,10 +1097,18 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                 return `❌ Formato incorreto!
 📋 Use: !resp [código] [tempo]
 💡 Exemplos:
-   !resp f4 02:30 (2 horas e 30 minutos)
+   !resp cobra 02:30 (2 horas e 30 minutos)
    !resp f4 00:30 (30 minutos)
-   !resp f4 150 (150 segundos)
-   !resp f4 (aceitar next com tempo pré-definido)`;
+   !resp wz 150 (150 segundos)
+   !resp gt (aceitar next com tempo pré-definido)`;
+            }
+
+            // VERIFICAR SE O CÓDIGO EXISTE NO RESPAWNS-LIST.JSON
+            const nomeRespawn = this.obterNomeRespawn(codigo);
+            if (!this.respawnsList[codigo.toLowerCase()]) {
+                return `❌ Código "${codigo.toUpperCase()}" não encontrado!
+📋 Use !listplaces para ver todos os respawns disponíveis
+💡 Códigos válidos: ${Object.keys(this.respawnsList).slice(0, 10).join(', ')}${Object.keys(this.respawnsList).length > 10 ? '...' : ''}`;
             }
             
             let tempoParaUsar: number | null = null;
@@ -1171,10 +1179,15 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             
             // Verificar se já existe timer ativo (e não é aceitação de next)
             if (this.timersRespawn[codigo] && !ehAceitacaoNext) {
-                return `❌ Respawn já está ativo!
-⚔️ ${this.timersRespawn[codigo].nome} (${codigo.toUpperCase()})
-👤 Jogador: ${this.timersRespawn[codigo].jogador}
-⏰ Restante: ${this.formatarTempo(this.timersRespawn[codigo].tempoRestante)}`;
+                const timerAtivo = this.timersRespawn[codigo];
+                return `❌ Respawn já tem claimed ativo!
+⚔️ **${timerAtivo.nome}** (${codigo.toUpperCase()})
+👤 Jogador: **${timerAtivo.jogador}**
+⏰ Tempo restante: **${this.formatarTempo(timerAtivo.tempoRestante)}**
+
+💡 **Opções disponíveis:**
+🔄 Use !next ${codigo} [tempo] para entrar na fila
+📋 Use !claimeds para ver todos os ativos`;
             }
 
             // Criar timer
@@ -1770,29 +1783,15 @@ ${statusAtual}
     }
 
     private obterNomeRespawn(codigo: string): string {
-        const respawns: { [key: string]: string } = {
-            'f4': 'Ferumbras Ascendant (F4)',
-            'f3': 'Ferumbras Mortal Shell (F3)',
-            'f2': 'Ferumbras Citadel (F2)',
-            'f1': 'Ferumbras Threated Dreams (F1)',
-            'wz': 'Warzone',
-            'gt': 'Grave Threat',
-            'iod': 'Isle of Destiny',
-            'ff': 'Falcon Bastion',
-            'cobra': 'Cobra Bastion',
-            'lions': 'Lion\'s Rock',
-            'asura': 'Asura Palace',
-            'winter': 'Winter Court',
-            'summer': 'Summer Court',
-            'dara': 'Dara Cave',
-            'werehyaena': 'Werehyaena Cave',
-            'werewolf': 'Werewolf Cave',
-            'werebadger': 'Werebadger Cave',
-            'werebear': 'Werebear Cave',
-            'wereboar': 'Wereboar Cave'
-        };
+        // Usar o respawnsList carregado do arquivo respawns-list.json
+        const nomeDoArquivo = this.respawnsList[codigo.toLowerCase()];
         
-        return respawns[codigo.toLowerCase()] || `Respawn ${codigo.toUpperCase()}`;
+        if (nomeDoArquivo) {
+            return nomeDoArquivo;
+        }
+        
+        // Fallback para códigos não encontrados
+        return `Respawn ${codigo.toUpperCase()}`;
     }
 
     private obterConfigRespawns(): { [key: string]: string } {
