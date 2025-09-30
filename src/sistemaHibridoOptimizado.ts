@@ -752,7 +752,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             const membrosOnline = await this.buscarMembrosOnlineTibia();
             
             // Construir descrição do canal
-            let descricao = `[img]https://i.imgur.com/friendsimage.png[/img]
+            let descricao = `[img]https://i.imgur.com/FtrTAPu.png[/img]
 
 👥 MEMBROS ONLINE - GUILD MISSCLICK 👥
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -807,7 +807,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
 👑 Level mais alto: ${levelMaisAlto}
 ⏰ Última atualização: ${new Date().toLocaleTimeString('pt-BR')}
 🎯 Guild: [b]Missclick[/b] (Tibia)
-🤖 Sistema: AliBot
+🤖 Sistema: AliBot 🧙‍♂️
 📡 API: TibiaData v4`;
             }
             
@@ -855,13 +855,14 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             const claimedChannelId = "7"; // ID do canal Claimeds
             
             // Construir descrição base do canal
-            let descricao = `[img]https://i.imgur.com/qzjiLZT.png[/img]
+            let descricao = `[img]https://i.imgur.com/9yNr8qY.png[/img]
 
 🎯 SISTEMA DE CLAIMEDS - ALIBOT 🎯
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚔️ Respawns ⚔️
 📋 Use: [b]!resp [código] [tempo][/b] - Iniciar timer
-🎯 Use: [b]!next [código][/b] - Entrar na fila
+🎯 Use: [b]!next [código] [tempo][/b] - Entrar na fila
+        ⚠️ [i]Obs: Caso não informe tempo, resps Tier 1 e 2  serão 2:30, Tier 3 serão 03:15 por padrão![/i]
 🚪 Use: [b]!leave [código][/b] - Sair do respawn
 📊 Use: [b]!fila [código][/b] - Ver timer específico
 📋 Use: [b]!fila[/b] - Ver todos os timers
@@ -983,7 +984,7 @@ ${filasAtivas}`;
             }
             
             descricao += `🕐 Última atualização: ${new Date().toLocaleTimeString('pt-BR')}
-🤖 Sistema: AliBot
+🤖 Sistema: AliBot 🧙‍♂️
 ⚡ Atualização: Automática a cada minuto`;
             
             // Atualizar canal
