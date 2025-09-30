@@ -45,14 +45,8 @@ interface TimersAtivos {
     [codigo: string]: RespawnTimer;
 }
 
-interface RespawnPlace {
-    nome: string;
-    emoji: string;
-    respawns: { [codigo: string]: string };
-}
-
-interface RespawnPlaces {
-    [nomePlace: string]: RespawnPlace;
+interface RespawnsList {
+    [codigo: string]: string; // codigo -> nome do respawn
 }
 
 class SistemaHibridoOptimizado {
@@ -63,7 +57,7 @@ class SistemaHibridoOptimizado {
     private filasClaimeds: FilasAtivas = {};
     private nextTimers: NextTimersAtivos = {};
     private intervalTimers: NodeJS.Timeout | null = null;
-    private respawnPlaces: RespawnPlaces = {};
+    private respawnsList: RespawnsList = {};
 
     constructor() {
         this.gerenciadorConexao = GerenciadorConexaoHibrida.obterInstancia();
@@ -426,7 +420,7 @@ class SistemaHibridoOptimizado {
 !api - Testar API do Tibia
 
 🔧 Comandos de Administração:
-!addrespplace [nome] - Criar novo local
+!addresp [código] [nome] - Adicionar respawn
 !addresp [local] [código] [nome] - Adicionar respawn
 !delresp [código] - Remover respawn
 !deleteresp [código] - Remover respawn (alias)
@@ -602,8 +596,6 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         resposta = await this.processarComandoFila(comando, remetente);
                     } else if (comando.toLowerCase().startsWith('!next ')) {
                         resposta = await this.processarComandoNext(comando, remetente);
-                    } else if (comando.toLowerCase().startsWith('!addrespplace ')) {
-                        resposta = await this.processarComandoAddRespPlace(comando, remetente);
                     } else if (comando.toLowerCase().startsWith('!addresp ')) {
                         resposta = await this.processarComandoAddResp(comando, remetente);
                     } else if (comando.toLowerCase().startsWith('!delresp ') || comando.toLowerCase().startsWith('!deleteresp ')) {
@@ -975,77 +967,11 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
     }
 
     private async atualizarCanalRespawnsList(): Promise<void> {
-        if (!this.serverQuery) {
-            throw new Error('ServerQuery não está conectado');
-        }
-
-        try {
-            const respawnsListChannelId = "9"; // ID do canal Respawns List (você precisará ajustar este ID)
-            
-            // Construir descrição base do canal
-            let descricao = `📋 **LISTA DE RESPAWNS DISPONÍVEIS** 📋`;
-
-            // Gerar seções dinamicamente baseadas nos respawnPlaces
-            if (Object.keys(this.respawnPlaces).length === 0) {
-                descricao += `💤 **NENHUM RESPAWN CADASTRADO**
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📝 Use [b]!addrespplace [nome][/b] para criar um local
-⚔️ Use [b]!addresp [local] [código] [nome][/b] para adicionar respawns
-
-`;
-            } else {
-                for (const [key, place] of Object.entries(this.respawnPlaces)) {
-                    if (Object.keys(place.respawns).length > 0) {
-                        descricao += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${place.emoji} **RESPAWNS ${place.nome}:**
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-`;
-                        
-                        for (const [codigo, nome] of Object.entries(place.respawns)) {
-                            descricao += `⚔️ [b]${codigo}[/b] - ${nome}\n`;
-                        }
-                        descricao += '\n';
-                    }
-                }
-            }
-
-            descricao += `
-🕐 Última atualização: ${new Date().toLocaleString('pt-BR')}
-🤖 Sistema: AliBot
-⚡ Comandos: Disponíveis 24/7
-🎮 Use [b]!help[/b] para mais informações`;
-
-            // Atualizar canal
-            try {
-                await this.serverQuery.execute('channeledit', {
-                    cid: respawnsListChannelId,
-                    channel_description: descricao
-                });
-                
-                const totalRespawns = Object.values(this.respawnPlaces).reduce((total, place) => 
-                    total + Object.keys(place.respawns).length, 0);
-                const totalLocais = Object.keys(this.respawnPlaces).length;
-                
-                console.log(`📋 Canal Respawns List atualizado: ${totalLocais} locais, ${totalRespawns} respawns`);
-            } catch (error1: any) {
-                console.log('⚠️ Método channel_description falhou para Respawns List, tentando channel_topic...');
-                try {
-                    await this.serverQuery.execute('channeledit', {
-                        cid: respawnsListChannelId,
-                        channel_topic: descricao
-                    });
-                    
-                    console.log(`📋 Canal Respawns List atualizado via topic`);
-                } catch (error2: any) {
-                    console.log('❌ Ambos os métodos falharam para Respawns List:', error1.message, '|', error2.message);
-                    console.log('💡 Canal não foi atualizado, mas sistema continua funcionando...');
-                }
-            }
-            
-        } catch (error: any) {
-            console.log('❌ Erro ao atualizar canal Respawns List:', error.message);
-            throw error;
-        }
+        // Usuário optou por não atualizar mais a descrição do canal
+        // Usando imagem externa: https://i.imgur.com/DV0f1m3.png
+        // Esta função foi mantida para compatibilidade mas não faz mais nada
+        const totalRespawns = Object.keys(this.respawnsList).length;
+        console.log(`📋 Respawns List: ${totalRespawns} respawns em memória (canal não atualizado)`);
     }
 
     private criarBarraProgresso(progresso: number): string {
@@ -1870,16 +1796,8 @@ ${statusAtual}
     }
 
     private obterConfigRespawns(): { [key: string]: string } {
-        // Gerar configuração dinamicamente baseada nos respawnPlaces
-        const config: { [key: string]: string } = {};
-        
-        for (const place of Object.values(this.respawnPlaces)) {
-            for (const [codigo, nome] of Object.entries(place.respawns)) {
-                config[codigo] = nome;
-            }
-        }
-        
-        return config;
+        // Gerar configuração dinamicamente baseada no respawnsList
+        return { ...this.respawnsList };
     }
 
     private formatarTempo(segundos: number): string {
@@ -1892,20 +1810,18 @@ ${statusAtual}
         return `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
     }
 
-    private readonly RESPAWNS_FILE = path.join(__dirname, '..', 'respawns-places.json');
+    private readonly RESPAWNS_FILE = path.join(__dirname, '..', 'respawns-list.json');
 
     private carregarRespawnsPersistidos(): void {
         try {
             if (fs.existsSync(this.RESPAWNS_FILE)) {
                 console.log('📂 Carregando respawns persistidos...');
                 const data = fs.readFileSync(this.RESPAWNS_FILE, 'utf8');
-                this.respawnPlaces = JSON.parse(data);
+                this.respawnsList = JSON.parse(data);
                 
-                const totalLocais = Object.keys(this.respawnPlaces).length;
-                const totalRespawns = Object.values(this.respawnPlaces).reduce((total, place) => 
-                    total + Object.keys(place.respawns).length, 0);
+                const totalRespawns = Object.keys(this.respawnsList).length;
                 
-                console.log(`✅ Carregados ${totalLocais} locais com ${totalRespawns} respawns`);
+                console.log(`✅ Carregados ${totalRespawns} respawns`);
             } else {
                 console.log('📂 Arquivo de respawns não encontrado, inicializando com padrões...');
                 this.inicializarRespawnsPadrao();
@@ -1921,14 +1837,12 @@ ${statusAtual}
 
     private salvarRespawnsPersistidos(): void {
         try {
-            const data = JSON.stringify(this.respawnPlaces, null, 2);
+            const data = JSON.stringify(this.respawnsList, null, 2);
             fs.writeFileSync(this.RESPAWNS_FILE, data, 'utf8');
             
-            const totalLocais = Object.keys(this.respawnPlaces).length;
-            const totalRespawns = Object.values(this.respawnPlaces).reduce((total, place) => 
-                total + Object.keys(place.respawns).length, 0);
+            const totalRespawns = Object.keys(this.respawnsList).length;
             
-            console.log(`💾 Respawns salvos: ${totalLocais} locais, ${totalRespawns} respawns`);
+            console.log(`💾 Respawns salvos: ${totalRespawns} respawns`);
         } catch (error: any) {
             console.log(`❌ Erro ao salvar respawns: ${error.message}`);
         }
@@ -1936,139 +1850,59 @@ ${statusAtual}
 
     private inicializarRespawnsPadrao(): void {
         // Inicializar com os respawns padrão já existentes
-        this.respawnPlaces = {
-            'FERUMBRAS': {
-                nome: 'FERUMBRAS',
-                emoji: '🏰',
-                respawns: {
-                    'f4': 'Ferumbras Ascendant (F4)',
-                    'f3': 'Ferumbras Mortal Shell (F3)',
-                    'f2': 'Ferumbras Citadel (F2)',
-                    'f1': 'Ferumbras Threated Dreams (F1)'
-                }
-            },
-            'PRINCIPAIS': {
-                nome: 'PRINCIPAIS',
-                emoji: '🎯',
-                respawns: {
-                    'wz': 'Warzone',
-                    'gt': 'Grave Threat',
-                    'iod': 'Isle of Destiny',
-                    'ff': 'Falcon Bastion',
-                    'cobra': 'Cobra Bastion',
-                    'lions': 'Lion\'s Rock',
-                    'asura': 'Asura Palace'
-                }
-            },
-            'COURT': {
-                nome: 'COURT',
-                emoji: '❄️',
-                respawns: {
-                    'winter': 'Winter Court',
-                    'summer': 'Summer Court'
-                }
-            },
-            'WERE': {
-                nome: 'WERE',
-                emoji: '🐺',
-                respawns: {
-                    'dara': 'Dara Cave',
-                    'werehyaena': 'Werehyaena Cave',
-                    'werewolf': 'Werewolf Cave',
-                    'werebadger': 'Werebadger Cave',
-                    'werebear': 'Werebear Cave',
-                    'wereboar': 'Wereboar Cave'
-                }
-            }
+        this.respawnsList = {
+            'f4': 'Ferumbras Ascendant (F4)',
+            'f3': 'Ferumbras Mortal Shell (F3)',
+            'f2': 'Ferumbras Citadel (F2)',
+            'f1': 'Ferumbras Threated Dreams (F1)',
+            'wz': 'Warzone',
+            'gt': 'Grave Threat',
+            'iod': 'Isle of Destiny',
+            'ff': 'Falcon Bastion',
+            'cobra': 'Cobra Bastion',
+            'lions': 'Lion\'s Rock',
+            'asura': 'Asura Palace',
+            'winter': 'Winter Court',
+            'summer': 'Summer Court',
+            'dara': 'Dara Cave',
+            'werehyaena': 'Werehyaena Cave',
+            'werewolf': 'Werewolf Cave',
+            'werebadger': 'Werebadger Cave',
+            'werebear': 'Werebear Cave',
+            'wereboar': 'Wereboar Cave'
         };
-    }
-
-    private async processarComandoAddRespPlace(comando: string, remetente: any): Promise<string> {
-        try {
-            const partes = comando.trim().split(' ');
-            
-            if (partes.length < 2) {
-                return `❌ Formato incorreto!
-📋 Use: !addrespplace [nome]
-💡 Exemplo: !addrespplace VENORE`;
-            }
-
-            const nomePlace = partes[1].toUpperCase();
-            
-            // Verificar se já existe
-            if (this.respawnPlaces[nomePlace]) {
-                return `❌ O local "${nomePlace}" já existe!
-📋 Use !listplaces para ver todos os locais
-💡 Use !addresp para adicionar respawns ao local existente`;
-            }
-
-            // Criar novo place
-            this.respawnPlaces[nomePlace] = {
-                nome: nomePlace,
-                emoji: '🏰', // Emoji padrão, pode ser customizado depois
-                respawns: {}
-            };
-
-            // Salvar alterações
-            this.salvarRespawnsPersistidos();
-
-            // Atualizar canal
-            await this.atualizarCanalRespawnsList();
-
-            return `✅ Local criado com sucesso!
-🏰 **${nomePlace}** foi adicionado à lista
-📋 Use !addresp ${nomePlace.toLowerCase()} [código] [nome] para adicionar respawns
-🔄 Canal Respawns List atualizado automaticamente`;
-
-        } catch (error: any) {
-            return `❌ Erro ao criar local: ${error.message}`;
-        }
     }
 
     private async processarComandoAddResp(comando: string, remetente: any): Promise<string> {
         try {
             const partes = comando.trim().split(' ');
             
-            if (partes.length < 4) {
+            if (partes.length < 3) {
                 return `❌ Formato incorreto!
-📋 Use: !addresp [local] [código] [nome do respawn]
-💡 Exemplo: !addresp venore v1 Dragon Lair Venore`;
+📋 Use: !addresp [código] [nome do respawn]
+💡 Exemplo: !addresp v1 Dragon Lair Venore`;
             }
 
-            const nomePlace = partes[1].toUpperCase();
-            const codigo = partes[2].toLowerCase();
-            const nomeRespawn = partes.slice(3).join(' ');
+            const codigo = partes[1].toLowerCase();
+            const nomeRespawn = partes.slice(2).join(' ');
             
-            // Verificar se o local existe
-            if (!this.respawnPlaces[nomePlace]) {
-                return `❌ Local "${nomePlace}" não existe!
-📋 Use !addrespplace ${nomePlace.toLowerCase()} para criar o local primeiro
-💡 Use !listplaces para ver todos os locais disponíveis`;
-            }
-
-            // Verificar se o código já existe em qualquer lugar
-            for (const place of Object.values(this.respawnPlaces)) {
-                if (place.respawns[codigo]) {
-                    return `❌ Código "${codigo}" já existe em "${place.nome}"!
-⚠️ Respawn existente: ${place.respawns[codigo]}
+            // Verificar se o código já existe
+            if (this.respawnsList[codigo]) {
+                return `❌ Código "${codigo}" já existe!
+⚠️ Respawn existente: ${this.respawnsList[codigo]}
 💡 Use um código diferente`;
-                }
             }
 
-            // Adicionar respawn ao local
-            this.respawnPlaces[nomePlace].respawns[codigo] = nomeRespawn;
+            // Adicionar respawn
+            this.respawnsList[codigo] = nomeRespawn;
 
             // Salvar alterações
             this.salvarRespawnsPersistidos();
 
-            // Atualizar canal
-            await this.atualizarCanalRespawnsList();
-
             return `✅ Respawn adicionado com sucesso!
-🏰 Local: **${nomePlace}**
 ⚔️ Código: **${codigo}**
 📝 Nome: **${nomeRespawn}**
-🔄 Canal Respawns List atualizado automaticamente`;
+� Dados salvos automaticamente`;
 
         } catch (error: any) {
             return `❌ Erro ao adicionar respawn: ${error.message}`;
@@ -2077,41 +1911,31 @@ ${statusAtual}
 
     private async processarComandoListPlaces(comando: string, remetente: any): Promise<string> {
         try {
-            if (Object.keys(this.respawnPlaces).length === 0) {
-                return `📋 Nenhum local cadastrado ainda
-💡 Use !addrespplace [nome] para criar um local`;
+            if (Object.keys(this.respawnsList).length === 0) {
+                return `📋 Nenhum respawn cadastrado ainda
+💡 Use !addresp [código] [nome] para adicionar respawns`;
             }
 
-            let resposta = `📋 **LOCAIS CADASTRADOS (${Object.keys(this.respawnPlaces).length}):**\n\n`;
+            let resposta = `📋 **RESPAWNS CADASTRADOS (${Object.keys(this.respawnsList).length}):**\n\n`;
 
-            for (const [key, place] of Object.entries(this.respawnPlaces)) {
-                const totalRespawns = Object.keys(place.respawns).length;
-                resposta += `${place.emoji} **${place.nome}** (${totalRespawns} respawns)\n`;
-                
-                if (totalRespawns > 0) {
-                    const exemplos = Object.entries(place.respawns).slice(0, 3);
-                    exemplos.forEach(([codigo, nome]) => {
-                        resposta += `   ⚔️ ${codigo} - ${nome}\n`;
-                    });
-                    if (totalRespawns > 3) {
-                        resposta += `   ... e mais ${totalRespawns - 3} respawns\n`;
-                    }
-                }
-                resposta += '\n';
+            // Ordenar respawns por código
+            const respawnsOrdenados = Object.entries(this.respawnsList).sort((a, b) => a[0].localeCompare(b[0]));
+
+            for (const [codigo, nome] of respawnsOrdenados) {
+                resposta += `⚔️ **${codigo}** → ${nome}\n`;
             }
 
-            resposta += `💡 **Comandos disponíveis:**
-!addrespplace [nome] - Criar novo local
-!addresp [local] [código] [nome] - Adicionar respawn
+            resposta += `\n💡 **Comandos disponíveis:**
+!addresp [código] [nome] - Adicionar respawn
 !delresp [código] - Remover respawn
 !deleteresp [código] - Remover respawn (alias)
 !backuprespawns - Fazer backup manual
-!respawns - Atualizar canal lista`;
+!listplaces - Listar todos os respawns`;
 
             return resposta.trim();
 
         } catch (error: any) {
-            return `❌ Erro ao listar locais: ${error.message}`;
+            return `❌ Erro ao listar respawns: ${error.message}`;
         }
     }
 
@@ -2127,38 +1951,25 @@ ${statusAtual}
 
             const codigo = partes[1].toLowerCase();
             
-            // Procurar o respawn em todos os locais
-            let encontrado = false;
-            let localEncontrado = '';
-            let nomeRespawn = '';
-
-            for (const [key, place] of Object.entries(this.respawnPlaces)) {
-                if (place.respawns[codigo]) {
-                    nomeRespawn = place.respawns[codigo];
-                    localEncontrado = place.nome;
-                    delete place.respawns[codigo];
-                    encontrado = true;
-                    break;
-                }
-            }
-
-            if (!encontrado) {
+            // Verificar se o respawn existe
+            if (!this.respawnsList[codigo]) {
                 return `❌ Código "${codigo}" não encontrado!
 📋 Use !listplaces para ver todos os respawns
 💡 Verifique se o código está correto`;
             }
 
+            const nomeRespawn = this.respawnsList[codigo];
+            
+            // Remover respawn
+            delete this.respawnsList[codigo];
+
             // Salvar alterações
             this.salvarRespawnsPersistidos();
 
-            // Atualizar canal
-            await this.atualizarCanalRespawnsList();
-
             return `✅ Respawn removido com sucesso!
-🏰 Local: **${localEncontrado}**
 ⚔️ Código: **${codigo}**
 📝 Nome: **${nomeRespawn}**
-🔄 Canal Respawns List atualizado automaticamente`;
+� Dados salvos automaticamente`;
 
         } catch (error: any) {
             return `❌ Erro ao remover respawn: ${error.message}`;
@@ -2174,17 +1985,15 @@ ${statusAtual}
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
             const backupFile = path.join(__dirname, '..', `respawns-backup-${timestamp}.json`);
             
-            const data = JSON.stringify(this.respawnPlaces, null, 2);
+            const data = JSON.stringify(this.respawnsList, null, 2);
             fs.writeFileSync(backupFile, data, 'utf8');
             
-            const totalLocais = Object.keys(this.respawnPlaces).length;
-            const totalRespawns = Object.values(this.respawnPlaces).reduce((total, place) => 
-                total + Object.keys(place.respawns).length, 0);
+            const totalRespawns = Object.keys(this.respawnsList).length;
             
             return `✅ Backup realizado com sucesso!
-📁 Arquivo principal: respawns-places.json
+📁 Arquivo principal: respawns-list.json
 📁 Backup timestamped: respawns-backup-${timestamp}.json
-📊 ${totalLocais} locais, ${totalRespawns} respawns salvos
+📊 ${totalRespawns} respawns salvos
 🕐 ${new Date().toLocaleString('pt-BR')}`;
 
         } catch (error: any) {
