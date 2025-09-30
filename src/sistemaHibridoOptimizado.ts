@@ -909,18 +909,24 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     
                     // Para timers normais, verificar se há fila
                     let infoFila = '';
-                    if (timer.tipo === 'claimed' && this.filasClaimeds[timer.codigo] && this.filasClaimeds[timer.codigo].length > 0) {
+                    if (this.filasClaimeds[timer.codigo] && this.filasClaimeds[timer.codigo].length > 0) {
                         const fila = this.filasClaimeds[timer.codigo];
                         if (fila.length === 1) {
                             const clientId = await this.obterClientIdPorNome(fila[0].jogador);
                             const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId);
                             const tempoInfo = fila[0].tempoDesejado ? ` (${this.formatarTempo(fila[0].tempoDesejado)})` : '';
-                            infoFila = ` Next: ${linkJogador}${tempoInfo}`;
+                            
+                            // Se é um next timer, a fila mostra "Fila:", se é claimed normal, mostra "Next:"
+                            const labelFila = timer.tipo === 'next' ? 'Fila' : 'Next';
+                            infoFila = ` ${labelFila}: ${linkJogador}${tempoInfo}`;
                         } else if (fila.length === 2) {
                             const clientId = await this.obterClientIdPorNome(fila[0].jogador);
                             const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId);
                             const tempoInfo = fila[0].tempoDesejado ? ` (${this.formatarTempo(fila[0].tempoDesejado)})` : '';
-                            infoFila = ` Next: ${linkJogador}${tempoInfo} +1`;
+                            
+                            // Se é um next timer, a fila mostra "Fila:", se é claimed normal, mostra "Next:"
+                            const labelFila = timer.tipo === 'next' ? 'Fila' : 'Next';
+                            infoFila = ` ${labelFila}: ${linkJogador}${tempoInfo} +1`;
                         }
                     }
                     
@@ -941,11 +947,39 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             }
             
             if (todosTimers.length === 0) {
-                descricao += `💤 NENHUM TIMER ATIVO
+                // Verificar se há filas ativas mesmo sem timers
+                let filasAtivas = '';
+                for (const [codigo, fila] of Object.entries(this.filasClaimeds)) {
+                    if (fila && fila.length > 0) {
+                        const configRespawns = this.obterConfigRespawns();
+                        const nomeRespawn = configRespawns[codigo] || `Respawn ${codigo.toUpperCase()}`;
+                        
+                        filasAtivas += `${codigo} - [b]${nomeRespawn}[/b]: 💤 Livre (Fila: `;
+                        
+                        for (let i = 0; i < fila.length; i++) {
+                            const clientId = await this.obterClientIdPorNome(fila[i].jogador);
+                            const linkJogador = this.criarLinkJogador(fila[i].jogador, clientId);
+                            const tempoInfo = fila[i].tempoDesejado ? ` (${this.formatarTempo(fila[i].tempoDesejado!)})` : '';
+                            
+                            if (i > 0) filasAtivas += ', ';
+                            filasAtivas += `${linkJogador}${tempoInfo}`;
+                        }
+                        
+                        filasAtivas += ')\n\n';
+                    }
+                }
+                
+                if (filasAtivas) {
+                    descricao += `⏳ FILAS ATIVAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${filasAtivas}`;
+                } else {
+                    descricao += `💤 NENHUM TIMER ATIVO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 Use [b]!resp [código] [tempo][/b] para iniciar
 
 `;
+                }
             }
             
             descricao += `🕐 Última atualização: ${new Date().toLocaleTimeString('pt-BR')}
@@ -1584,44 +1618,44 @@ ${statusAtual}
 
     private async processarProximoNaFila(codigo: string): Promise<void> {
         try {
-            // Remover o primeiro da fila (que não aceitou)
+            // O jogador que não aceitou o next timer NÃO estava na fila
+            // Apenas verificar se há alguém na fila para assumir
             if (this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0) {
-                const jogadorQueNaoAceitou = this.filasClaimeds[codigo].shift(); // Remove o primeiro
-                console.log(`❌ ${jogadorQueNaoAceitou?.jogador} não aceitou ${codigo.toUpperCase()} - removido da fila`);
+                const proximoJogador = this.filasClaimeds[codigo][0]; // Primeiro da fila
                 
-                // Verificar se ainda há alguém na fila
-                if (this.filasClaimeds[codigo].length > 0) {
-                    const proximoJogador = this.filasClaimeds[codigo][0]; // Novo primeiro da fila
-                    
-                    // Criar novo timer de next para o próximo
-                    this.nextTimers[codigo] = {
-                        codigo: codigo,
-                        jogador: proximoJogador.jogador,
-                        tempoRestante: 600, // 10 minutos = 600 segundos
-                        iniciadoEm: new Date(),
-                        tempoDesejado: proximoJogador.tempoDesejado // Passar tempo desejado
-                    };
+                // Remover o próximo jogador da fila (ele vai virar next timer)
+                this.filasClaimeds[codigo].shift();
+                
+                console.log(`🎯 Próximo da fila assumindo: ${proximoJogador.jogador} para ${codigo.toUpperCase()}`);
+                
+                // Criar novo timer de next para o próximo
+                this.nextTimers[codigo] = {
+                    codigo: codigo,
+                    jogador: proximoJogador.jogador,
+                    tempoRestante: 600, // 10 minutos = 600 segundos
+                    iniciadoEm: new Date(),
+                    tempoDesejado: proximoJogador.tempoDesejado // Passar tempo desejado
+                };
 
-                    // Iniciar sistema de contagem se não estiver ativo
-                    if (!this.intervalTimers) {
-                        this.iniciarSistemaTimers();
-                    }
-                    
-                    const infoTempo = proximoJogador.tempoDesejado ? 
-                        ` (tempo pré-definido: ${this.formatarTempo(proximoJogador.tempoDesejado)})` : 
-                        ' (escolher tempo ao aceitar)';
-                    
-                    console.log(`🎯 Próximo da fila: ${codigo.toUpperCase()} para ${proximoJogador.jogador} (10 min para aceitar)${infoTempo}`);
-                    
-                    // ENVIAR POKE para o próximo jogador
-                    await this.enviarPokeNextIniciado(proximoJogador.jogador, codigo);
-                } else {
-                    console.log(`💤 Fila vazia para ${codigo.toUpperCase()} - claimed livre`);
+                // Iniciar sistema de contagem se não estiver ativo
+                if (!this.intervalTimers) {
+                    this.iniciarSistemaTimers();
                 }
                 
-                // Atualizar canal
-                await this.atualizarCanalClaimeds();
+                const infoTempo = proximoJogador.tempoDesejado ? 
+                    ` (tempo pré-definido: ${this.formatarTempo(proximoJogador.tempoDesejado)})` : 
+                    ' (escolher tempo ao aceitar)';
+                
+                console.log(`🎯 Próximo da fila: ${codigo.toUpperCase()} para ${proximoJogador.jogador} (10 min para aceitar)${infoTempo}`);
+                
+                // ENVIAR POKE para o próximo jogador
+                await this.enviarPokeNextIniciado(proximoJogador.jogador, codigo);
+            } else {
+                console.log(`💤 Fila vazia para ${codigo.toUpperCase()} - claimed livre`);
             }
+            
+            // Atualizar canal
+            await this.atualizarCanalClaimeds();
         } catch (error: any) {
             console.log(`❌ Erro ao processar próximo na fila (${codigo}):`, error.message);
         }
