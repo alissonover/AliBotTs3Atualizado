@@ -1508,8 +1508,9 @@ ${filasAtivas}`;
                 return `❌ Formato incorreto!
 📋 Use: !next [código] [tempo opcional]
 💡 Exemplos: 
-   !next f4 (sem tempo específico)
+   !next f4 (tempo padrão: Tier 1/2=02:30, Tier 3=03:15)
    !next f4 02:30 (com tempo de 2h30min)
+   !next a3 (tempo padrão: Tier 3=03:15)
    !next f4 150 (com tempo de 150 segundos)`;
             }
 
@@ -1553,6 +1554,10 @@ ${filasAtivas}`;
                 }
                 
                 tempoDesejado = segundos;
+            } else {
+                // Se não especificou tempo, usar tempo padrão baseado no tier
+                tempoDesejado = this.obterTempopadrao(codigo);
+                console.log(`⏰ Tempo padrão aplicado para !next ${codigo.toUpperCase()}: ${this.formatarTempo(tempoDesejado)} (baseado no tier)`);
             }
             
             // Verificar se o código existe na configuração
@@ -1617,10 +1622,10 @@ ${filasAtivas}`;
             const timerAtivo = this.timersRespawn[codigo];
             const statusAtual = timerAtivo ? `⏰ Timer atual: ${this.formatarTempo(timerAtivo.tempoRestante)} (${timerAtivo.jogador})` : '💤 Nenhum timer ativo';
             
-            // Informar sobre tempo pré-definido
-            const infoTempo = tempoDesejado ? 
-                `⏰ Tempo pré-definido: ${this.formatarTempo(tempoDesejado)}` :
-                `⏰ Sem tempo pré-definido (você escolherá ao aceitar)`;
+            // Informar sobre tempo que será usado
+            const infoTempo = partes.length === 3 ? 
+                `⏰ Tempo definido: ${this.formatarTempo(tempoDesejado!)}` :
+                `⏰ Tempo padrão (baseado no tier): ${this.formatarTempo(tempoDesejado!)}`;
 
             return `✅ Adicionado à fila!
 🎯 Posição: ${novaFila.posicao}/${this.filasClaimeds[codigo].length}
@@ -1629,7 +1634,7 @@ ${infoTempo}
 ${statusAtual}
 🔄 Canal Claimeds atualizado
 
-💡 Quando for sua vez, use apenas [b]!resp[/b] para aceitar ${tempoDesejado ? 'com o tempo pré-definido' : 'e escolher o tempo'}`;
+💡 Quando for sua vez, use apenas [b]!resp[/b] para aceitar com o tempo configurado`;
 
         } catch (error: any) {
             console.log('❌ Erro no comando next:', error.message);
