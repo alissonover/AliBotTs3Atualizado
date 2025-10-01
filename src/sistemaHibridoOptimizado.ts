@@ -785,7 +785,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         console.log('🔄 Timers automáticos configurados:');
         console.log('   👥 Friends: A cada 1 minuto');
         console.log('   ⏰ Claimeds: A cada 30 segundos (quando sem timers ativos)');
-        console.log('   ⚔️ Respawns & Next: A cada 5 segundos (contagem regressiva precisa)');
+        console.log('   ⚔️ Respawns & Next: A cada 1 minuto (processo otimizado)');
         console.log('   💓 Status: A cada 2 minutos');
     }
 
@@ -1419,7 +1419,7 @@ ${filasAtivas}`;
                         this.nextTimers[codigo] = {
                             codigo: codigo,
                             jogador: proximoJogador.jogador,
-                            tempoRestante: 60, // 1 minuto para aceitar
+                            tempoRestante: 600, // 10 minutos para aceitar
                             iniciadoEm: new Date(),
                             tempoDesejado: proximoJogador.tempoDesejado
                         };
@@ -1453,7 +1453,7 @@ ${filasAtivas}`;
                         this.nextTimers[codigo] = {
                             codigo: codigo,
                             jogador: proximoJogador.jogador,
-                            tempoRestante: 60, // 1 minuto para aceitar
+                            tempoRestante: 600, // 10 minutos para aceitar
                             iniciadoEm: new Date(),
                             tempoDesejado: proximoJogador.tempoDesejado
                         };
@@ -1699,10 +1699,11 @@ ${statusAtual}
                 let timerExpirou = false;
                 let atualizacaoNecessaria = false;
                 
-                // Atualizar todos os timers de respawn (decrementar 5 segundos)
+                // Atualizar todos os timers de respawn (decrementar 60 segundos - 1 minuto)
                 for (const codigo in this.timersRespawn) {
                     const timer = this.timersRespawn[codigo];
-                    timer.tempoRestante -= 5; // Decrementar 5 segundos
+                    timer.tempoRestante -= 60; // Decrementar 60 segundos (1 minuto)
+                    atualizacaoNecessaria = true; // Atualizar canal para mostrar contagem regressiva
                     
                     if (timer.tempoRestante <= 0) {
                         console.log(`⚔️ Timer expirado: ${timer.nome} (${codigo.toUpperCase()}) - ${timer.jogador}`);
@@ -1712,17 +1713,16 @@ ${statusAtual}
                         
                         delete this.timersRespawn[codigo];
                         timerExpirou = true;
-                        atualizacaoNecessaria = true;
                         
                         // Verificar se há fila para este claimed
                         await this.processarFilaAposExpiracao(codigo);
                     }
                 }
-                
-                // Atualizar timers de next (10 minutos para aceitar) - contagem regressiva em tempo real
+
+                // Atualizar timers de next (1 minuto para aceitar) - contagem regressiva em tempo real
                 for (const codigo in this.nextTimers) {
                     const nextTimer = this.nextTimers[codigo];
-                    nextTimer.tempoRestante -= 5; // Decrementar 5 segundos
+                    nextTimer.tempoRestante -= 60; // Decrementar 60 segundos (1 minuto)
                     atualizacaoNecessaria = true; // Atualizar canal para mostrar contagem regressiva
                     
                     if (nextTimer.tempoRestante <= 0) {
@@ -1741,6 +1741,7 @@ ${statusAtual}
                 
                 // Atualizar canal apenas quando necessário
                 if (atualizacaoNecessaria) {
+                    console.log(`⏰ Atualizando canal Claimeds (${Object.keys(this.timersRespawn).length} timers + ${Object.keys(this.nextTimers).length} nexts)`);
                     await this.atualizarCanalClaimeds();
                 }
                 
@@ -1756,7 +1757,7 @@ ${statusAtual}
             } catch (error: any) {
                 console.log('❌ Erro no sistema de timers:', error.message);
             }
-        }, 5000); // Atualizar a cada 5 segundos para contagem regressiva mais precisa
+        }, 60000); // Atualizar a cada 1 minuto para processo mais leve
     }
 
     private async processarFilaAposExpiracao(codigo: string): Promise<void> {
