@@ -2082,6 +2082,21 @@ Entre em contato com a liderança para isto!
             
             if (cliente) {
                 console.log(`✅ Cliente encontrado: "${cliente.clientNickname || cliente.nickname}" (ID: ${cliente.clid}, Type: ${cliente.type})`);
+                
+                // Se não tiver clientUniqueIdentifier no clientList, buscar via clientInfo
+                if (!cliente.clientUniqueIdentifier && cliente.clid) {
+                    try {
+                        console.log(`🔍 Buscando Unique ID via clientInfo para ${cliente.clid}...`);
+                        const clientInfoArray = await this.serverQuery.clientInfo(cliente.clid);
+                        const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
+                        if (clientInfo && clientInfo.clientUniqueIdentifier) {
+                            cliente.clientUniqueIdentifier = clientInfo.clientUniqueIdentifier;
+                            console.log(`✅ Unique ID obtido: ${cliente.clientUniqueIdentifier}`);
+                        }
+                    } catch (error: any) {
+                        console.log(`⚠️ Erro ao obter clientInfo: ${error.message}`);
+                    }
+                }
             } else {
                 console.log(`❌ Cliente "${nomeJogador}" não encontrado`);
                 console.log(`📋 Clientes reais disponíveis:`, clientesReais.map((c: any) => `"${c.clientNickname || c.nickname}" (ID: ${c.clid})`).join(', '));
@@ -2097,8 +2112,13 @@ Entre em contato com a liderança para isto!
     private async obterClientIdPorNome(nomeJogador: string): Promise<string> {
         try {
             const cliente = await this.buscarClientePorNome(nomeJogador);
+            if (cliente && cliente.clientUniqueIdentifier) {
+                console.log(`🔍 Unique ID encontrado para ${nomeJogador}: ${cliente.clientUniqueIdentifier}`);
+                return cliente.clientUniqueIdentifier;
+            }
+            // Fallback para ID numérico se não tiver Unique Identifier
             if (cliente && cliente.clid) {
-                console.log(`🔍 ID encontrado para ${nomeJogador}: ${cliente.clid}`);
+                console.log(`🔍 ID numérico usado para ${nomeJogador}: ${cliente.clid} (Unique ID não disponível)`);
                 return cliente.clid.toString();
             }
             console.log(`⚠️ Cliente ${nomeJogador} não encontrado ou sem ID válido`);
@@ -2115,28 +2135,14 @@ Entre em contato com a liderança para isto!
             return nomeJogador; // Retorna apenas o nome se não tiver ID
         }
         
-        console.log(`🔗 Criando link para ${nomeJogador} com ID ${clientId}`);
+        console.log(`🔗 Criando link para ${nomeJogador} com Unique ID: ${clientId}`);
         
-        // ATENÇÃO: Teste diferentes formatos aqui até encontrar o que funciona
-        // Descomente a linha que funcionar e comente as outras
+        // Usar formato URL com Unique Identifier para melhor compatibilidade
+        // O formato client://0/uniqueId funciona melhor que client://0/numericId
+        const linkFinal = `[url=client://0/${clientId}]${nomeJogador}[/url]`;
+        console.log(`🔗 Link final para ${nomeJogador}: ${linkFinal}`);
         
-        // Formato 1: Padrão TeamSpeak 3 (mais comum)
-        // return `[client=${clientId}]${nomeJogador}[/client]`;
-        
-        // Formato 2: URL com protocolo client
-         return `[url=client://0/${clientId}]${nomeJogador}[/url]`;
-        
-        // Formato 3: CLIENT maiúsculo
-        // return `[CLIENT=${clientId}]${nomeJogador}[/CLIENT]`;
-        
-        // Formato 4: USER tag
-        // return `[USER=${clientId}]${nomeJogador}[/USER]`;
-        
-        // Formato 5: URL simples
-        // return `[URL=client://${clientId}]${nomeJogador}[/URL]`;
-        
-        // Se nenhum formato funcionar, pode ser que BBCode não seja suportado 
-        // nas descrições de canal, apenas em mensagens de chat
+        return linkFinal;
     }
 
     private obterTempopadrao(codigo: string): number {
