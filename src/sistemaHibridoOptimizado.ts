@@ -1387,28 +1387,111 @@ ${filasAtivas}`;
             }
             const nomeJogador = infoJogador.nome;
             
-            if (!this.timersRespawn[codigo]) {
-                return `❌ Nenhum timer ativo para o código "${codigo.toUpperCase()}"
-📋 Use !fila para ver timers ativos`;
+            // Verificar se o código existe na configuração
+            const configRespawns = this.obterConfigRespawns();
+            if (!configRespawns[codigo]) {
+                return `❌ Código "${codigo.toUpperCase()}" não existe!
+📋 Use !help para ver códigos disponíveis`;
             }
 
-            const timer = this.timersRespawn[codigo];
-            
-            // Verificar se é o mesmo jogador
-            if (timer.jogador !== nomeJogador) {
-                return `❌ Apenas ${timer.jogador} pode sair deste respawn!
-⚔️ Respawn: ${timer.nome} (${codigo.toUpperCase()})`;
+            let encontrouJogador = false;
+            let tipoRemocao = '';
+            let mensagemSucesso = '';
+
+            // 1. Verificar se está no timer ativo
+            if (this.timersRespawn[codigo]) {
+                const timer = this.timersRespawn[codigo];
+                if (timer.jogador === nomeJogador) {
+                    // Remover timer ativo
+                    delete this.timersRespawn[codigo];
+                    encontrouJogador = true;
+                    tipoRemocao = 'timer';
+                    mensagemSucesso = `✅ Você saiu do respawn **${configRespawns[codigo]}**!`;
+                    
+                    // Verificar se há próximo na fila para assumir
+                    if (this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0) {
+                        const proximoJogador = this.filasClaimeds[codigo][0];
+                        
+                        // Remover da fila
+                        this.filasClaimeds[codigo].shift();
+                        
+                        // Criar next timer para o próximo
+                        this.nextTimers[codigo] = {
+                            codigo: codigo,
+                            jogador: proximoJogador.jogador,
+                            tempoRestante: 60, // 1 minuto para aceitar
+                            iniciadoEm: new Date(),
+                            tempoDesejado: proximoJogador.tempoDesejado
+                        };
+                        
+                        mensagemSucesso += ` Próximo da fila foi notificado.`;
+                        
+                        // Enviar poke para o próximo jogador
+                        await this.enviarPokeNextIniciado(proximoJogador.jogador, codigo);
+                    }
+                }
             }
 
-            // Remover timer
-            delete this.timersRespawn[codigo];
-            
+            // 2. Verificar se está no next timer (aguardando aceitar)
+            if (!encontrouJogador && this.nextTimers[codigo]) {
+                const nextTimer = this.nextTimers[codigo];
+                if (nextTimer.jogador === nomeJogador) {
+                    // Remover next timer
+                    delete this.nextTimers[codigo];
+                    encontrouJogador = true;
+                    tipoRemocao = 'next';
+                    mensagemSucesso = `✅ Você saiu do next timer **${configRespawns[codigo]}**!`;
+                    
+                    // Verificar se há próximo na fila
+                    if (this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0) {
+                        const proximoJogador = this.filasClaimeds[codigo][0];
+                        
+                        // Remover da fila
+                        this.filasClaimeds[codigo].shift();
+                        
+                        // Criar novo next timer para o próximo
+                        this.nextTimers[codigo] = {
+                            codigo: codigo,
+                            jogador: proximoJogador.jogador,
+                            tempoRestante: 60, // 1 minuto para aceitar
+                            iniciadoEm: new Date(),
+                            tempoDesejado: proximoJogador.tempoDesejado
+                        };
+                        
+                        mensagemSucesso += ` Próximo da fila assumiu.`;
+                        
+                        // Enviar poke para o próximo jogador
+                        await this.enviarPokeNextIniciado(proximoJogador.jogador, codigo);
+                    }
+                }
+            }
+
+            // 3. Verificar se está na fila
+            if (!encontrouJogador && this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0) {
+                const indiceJogador = this.filasClaimeds[codigo].findIndex(item => item.jogador === nomeJogador);
+                if (indiceJogador !== -1) {
+                    // Remover da fila
+                    this.filasClaimeds[codigo].splice(indiceJogador, 1);
+                    encontrouJogador = true;
+                    tipoRemocao = 'fila';
+                    mensagemSucesso = `✅ Você foi removido da fila **${configRespawns[codigo]}**!`;
+                    
+                    // Reajustar posições na fila
+                    this.filasClaimeds[codigo].forEach((item, index) => {
+                        item.posicao = index + 1;
+                    });
+                }
+            }
+
+            if (!encontrouJogador) {
+                return `❌ Você não está participando do respawn **${configRespawns[codigo]}**!
+� Use !fila ${codigo} para ver o status atual`;
+            }
+
             // Atualizar canal
             await this.atualizarCanalClaimeds();
 
-            return `✅ Saiu do respawn!
-⚔️ Respawn: ${timer.nome} (${codigo.toUpperCase()})
-👤 ${timer.jogador} deixou a fila
+            return mensagemSucesso + `
 🔄 Canal Claimeds atualizado`;
 
         } catch (error: any) {
