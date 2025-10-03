@@ -1894,7 +1894,7 @@ ${statusAtual}
             // Buscar o cliente pelo nome
             const cliente = await this.buscarClientePorNome(nomeJogador);
             if (cliente) {
-                const mensagem = `⏰ SEU TIMER EXPIROU! ${codigo.toUpperCase()} - ${nomeRespawn}`;
+                const mensagem = `[color=red]⏰ SEU TIMER EXPIROU! ${codigo.toUpperCase()} - ${nomeRespawn}[/color]`;
                 
                 // Tentar poke (clientpoke)
                 await this.serverQuery.clientPoke(cliente.clid, mensagem);
@@ -1925,9 +1925,9 @@ ${statusAtual}
                 let mensagem = '';
                 
                 if (nextTimer && nextTimer.tempoDesejado) {
-                    mensagem = `🎯 VOCÊ ASSUMIU O CLAIMED! ${codigo.toUpperCase()} - ${configRespawns[codigo]} | Use apenas !resp ${codigo} nos próximos 10 minutos para aceitar com tempo pré-definido: ${this.formatarTempo(nextTimer.tempoDesejado)}`;
+                    mensagem = `[color=green]🎯 VOCÊ ASSUMIU O CLAIMED! ${codigo.toUpperCase()} - ${configRespawns[codigo]} | Use apenas !resp ${codigo} nos próximos 10 minutos para aceitar com tempo pré-definido: ${this.formatarTempo(nextTimer.tempoDesejado)}[/color]`;
                 } else {
-                    mensagem = `🎯 VOCÊ ASSUMIU O CLAIMED! ${codigo.toUpperCase()} - ${configRespawns[codigo]} | Use !resp ${codigo} [tempo] nos próximos 10 minutos para confirmar`;
+                    mensagem = `[color=green]🎯 VOCÊ ASSUMIU O CLAIMED! ${codigo.toUpperCase()} - ${configRespawns[codigo]} | Use !resp ${codigo} [tempo] nos próximos 10 minutos para confirmar[/color]`;
                 }
                 
                 // Tentar poke (clientpoke)
@@ -1952,7 +1952,7 @@ ${statusAtual}
             // Buscar o cliente pelo nome
             const cliente = await this.buscarClientePorNome(nomeJogador);
             if (cliente) {
-                const mensagem = `❌ SEU NEXT EXPIROU! ${codigo.toUpperCase()} - Você não aceitou a tempo e foi removido da fila`;
+                const mensagem = `[color=red]❌ SEU NEXT EXPIROU! ${codigo.toUpperCase()} - Você não aceitou a tempo e foi removido da fila[/color]`;
                 
                 // Tentar poke (clientpoke)
                 await this.serverQuery.clientPoke(cliente.clid, mensagem);
