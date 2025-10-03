@@ -1073,7 +1073,8 @@ ${filasAtivas}`;
                 }
             }
             
-            descricao += `🕐 Última atualização: ${new Date().toLocaleTimeString('pt-BR')}
+            descricao += `
+🕐 Última atualização: ${new Date().toLocaleTimeString('pt-BR')}
 🤖 Sistema: AliBot 🧙‍♂️
 ⚡ Atualização: Automática a cada minuto`;
             
@@ -2496,9 +2497,7 @@ Entre em contato com a liderança para isto!
                 mensagem += `🎯 [b]${hunted.name}[/b] acabou de ficar online!
 📊 Level: ${hunted.level || '?'}
 ⚔️ Vocação: ${hunted.vocation || 'Unknown'}
-🌍 Mundo: Kalibra
-
-⚠️ [color=orange]Atenção redobrada![/color]`;
+⚠️ [color=orange]Amassa ele bro! 🚜[/color]`;
             } else {
                 mensagem += `🎯 [b]${novosHunteds.length} hunteds[/b] acabaram de ficar online:
 
@@ -2509,8 +2508,7 @@ Entre em contato com a liderança para isto!
                 });
                 
                 mensagem += `
-🌍 Mundo: Kalibra
-⚠️ [color=orange]Atenção redobrada![/color]`;
+⚠️ [color=orange]Amassa ele bro! 🚜[/color]`;
             }
             
             mensagem += `
@@ -2992,19 +2990,74 @@ Bom Game! 🎯✨`;
             
             const huntedsOnline = await this.buscarHuntedsOnline();
             
-            return `✅ Canal Hunteds atualizado!
+            let resposta = `✅ Canal Hunteds atualizado!
 🎯 Hunteds monitorados: ${this.huntedsList.length}
 🔥 Hunteds online: ${huntedsOnline.length}
 🌍 Mundo: Kalibra
-📡 Fonte: TibiaData v4
 
-💡 Lista é atualizada automaticamente a cada 1 minuto
-📋 Use !addhunted [nome] para adicionar
-🗑️ Use !delhunted [nome] para remover`;
+`;
+
+            // Adicionar lista completa de hunteds
+            if (this.huntedsList.length > 0) {
+                resposta += `📋 [b]LISTA COMPLETA DE HUNTEDS:[/b]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+                
+                // Separar hunteds online e offline
+                const huntedsOnlineNomes = huntedsOnline.map(h => h.name.toLowerCase());
+                
+                for (let i = 0; i < this.huntedsList.length; i++) {
+                    const hunted = this.huntedsList[i];
+                    const isOnline = huntedsOnlineNomes.includes(hunted.toLowerCase());
+                    const status = isOnline ? '[color=GREEN][b]🟢 ONLINE[/b][/color]' : '[color=RED]🔴 OFFLINE[/color]';
+                    const numero = (i + 1).toString().padStart(2, '0');
+                    
+                    // Se estiver online, buscar informações detalhadas
+                    if (isOnline) {
+                        const huntedData = huntedsOnline.find(h => h.name.toLowerCase() === hunted.toLowerCase());
+                        if (huntedData) {
+                            resposta += `${numero}. [b]${hunted}[/b] ${status}
+     📊 Level: ${huntedData.level || '?'} | ⚔️ ${huntedData.vocation || 'Unknown'}
+
+`;
+                        } else {
+                            resposta += `${numero}. [b]${hunted}[/b] ${status}
+
+`;
+                        }
+                    } else {
+                        resposta += `${numero}. [b]${hunted}[/b] ${status}
+
+`;
+                    }
+                }
+                
+                resposta += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+            } else {
+                resposta += `📋 [color=orange]Nenhum hunted na lista[/color]
+� Use !addhunted [nome] para adicionar hunteds
+
+`;
+            }
+            
+            resposta += `� Notificações: ${this.notificacoesHuntedsAtivas ? '[color=green]ATIVAS[/color]' : '[color=red]DESATIVADAS[/color]'}
+📡 Fonte: TibiaData v4
+🔄 Atualização automática: A cada 1 minuto
+
+💡 [b]COMANDOS DISPONÍVEIS:[/b]
+📋 !addhunted [nome] - Adicionar hunted([i]apenas lideres ou adms podem usar[/i])
+🗑️ !delhunted [nome] - Remover hunted([i]apenas lideres ou adms podem usar[/i])
+🔔 !alertas on/off - Ativar/desativar notificações([i]apenas lideres ou adms podem usar[/i])
+📊 !alertas - Ver status das notificações`;
+
+            return resposta;
 
         } catch (error: any) {
             console.log('❌ Erro no comando !hunteds:', error.message);
-            return `❌ Erro ao atualizar hunteds: ${error.message}`;
+            return `❌ Erro ao processar hunteds: ${error.message}`;
         }
     }
 
