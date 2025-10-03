@@ -1243,10 +1243,18 @@ ${filasAtivas}`;
                 if (nextTimer.jogador === nomeJogador) {
                     ehAceitacaoNext = true;
                     
-                    // Se tem tempo pré-definido e não especificou tempo, usar o pré-definido
-                    if (nextTimer.tempoDesejado && partes.length === 2) {
+                    // Se tem tempo pré-definido, DEVE usar apenas !resp [codigo] sem especificar tempo
+                    if (nextTimer.tempoDesejado) {
+                        if (partes.length > 2) {
+                            return `❌ Você não pode alterar o tempo pré-definido!
+⏰ Tempo pré-definido: ${this.formatarTempo(nextTimer.tempoDesejado)}
+📋 Use apenas: !resp ${codigo} (sem especificar tempo)
+💡 O tempo já foi definido quando você entrou na fila`;
+                        }
+                        
                         tempoParaUsar = nextTimer.tempoDesejado;
                         console.log(`✅ Next aceito: ${codigo.toUpperCase()} por ${nomeJogador} - usando tempo pré-definido: ${this.formatarTempo(tempoParaUsar)}`);
+                        
                     } else if (!nextTimer.tempoDesejado && partes.length < 3) {
                         return `❌ Você precisa especificar o tempo!
 📋 Use: !resp ${codigo} [tempo]
@@ -1254,8 +1262,8 @@ ${filasAtivas}`;
    !resp ${codigo} 02:30 (2 horas e 30 minutos)
    !resp ${codigo} 00:30 (30 minutos)
    !resp ${codigo} 150 (150 segundos)`;
-                    } else if (partes.length >= 3) {
-                        // Jogador especificou tempo mesmo tendo pré-definido (sobrescrever)
+                    } else {
+                        // Não tem tempo pré-definido, pode especificar
                         const tempoTexto = partes[2];
                         tempoParaUsar = this.converterTempoParaSegundos(tempoTexto);
                         if (tempoParaUsar === null) {
@@ -1265,7 +1273,7 @@ ${filasAtivas}`;
    HH:MM:SS → 01:30:45 = 1h30min45s
    SSSS → 150 = 150 segundos`;
                         }
-                        console.log(`✅ Next aceito: ${codigo.toUpperCase()} por ${nomeJogador} - sobrescrevendo com novo tempo: ${this.formatarTempo(tempoParaUsar)}`);
+                        console.log(`✅ Next aceito: ${codigo.toUpperCase()} por ${nomeJogador} - tempo especificado: ${this.formatarTempo(tempoParaUsar)}`);
                     }
                     
                     // Remover timer de next
