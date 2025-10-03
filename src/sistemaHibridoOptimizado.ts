@@ -16,6 +16,7 @@ interface RespawnTimer {
     tempoRestante: number; // em segundos
     iniciadoEm: Date;
     duracaoTotal: number; // em segundos
+    ultimoMinutoProcessado: number; // para controlar decrementos individuais
 }
 
 interface FilaItem {
@@ -31,6 +32,7 @@ interface NextTimer {
     tempoRestante: number; // 10 minutos = 600 segundos
     iniciadoEm: Date;
     tempoDesejado?: number; // tempo que o jogador quer usar quando aceitar
+    ultimoMinutoProcessado: number; // para controlar decrementos individuais
 }
 
 interface FilasAtivas {
@@ -1315,7 +1317,8 @@ ${filasAtivas}`;
                 jogador: nomeJogador,
                 tempoRestante: tempoParaUsar!,
                 iniciadoEm: new Date(),
-                duracaoTotal: tempoParaUsar!
+                duracaoTotal: tempoParaUsar!,
+                ultimoMinutoProcessado: 0
             };
 
             this.timersRespawn[codigo] = timer;
@@ -1421,7 +1424,8 @@ ${filasAtivas}`;
                             jogador: proximoJogador.jogador,
                             tempoRestante: 600, // 10 minutos para aceitar
                             iniciadoEm: new Date(),
-                            tempoDesejado: proximoJogador.tempoDesejado
+                            tempoDesejado: proximoJogador.tempoDesejado,
+                            ultimoMinutoProcessado: 0
                         };
                         
                         mensagemSucesso += ` Próximo da fila foi notificado.`;
@@ -1455,7 +1459,8 @@ ${filasAtivas}`;
                             jogador: proximoJogador.jogador,
                             tempoRestante: 600, // 10 minutos para aceitar
                             iniciadoEm: new Date(),
-                            tempoDesejado: proximoJogador.tempoDesejado
+                            tempoDesejado: proximoJogador.tempoDesejado,
+                            ultimoMinutoProcessado: 0
                         };
                         
                         mensagemSucesso += ` Próximo da fila assumiu.`;
@@ -1698,12 +1703,25 @@ ${statusAtual}
             try {
                 let timerExpirou = false;
                 let atualizacaoNecessaria = false;
+                const agora = Date.now();
                 
-                // Atualizar todos os timers de respawn (decrementar 60 segundos - 1 minuto)
+                // Atualizar todos os timers de respawn - contagem individual no minuto exato
                 for (const codigo in this.timersRespawn) {
                     const timer = this.timersRespawn[codigo];
-                    timer.tempoRestante -= 60; // Decrementar 60 segundos (1 minuto)
-                    atualizacaoNecessaria = true; // Atualizar canal para mostrar contagem regressiva
+                    
+                    // Calcular quantos minutos se passaram desde o início
+                    const tempoDecorridoMs = agora - timer.iniciadoEm.getTime();
+                    const minutosDecorridos = Math.floor(tempoDecorridoMs / 60000);
+                    
+                    // Só decrementar se passou um novo minuto completo
+                    if (minutosDecorridos > timer.ultimoMinutoProcessado) {
+                        const minutosParaDecrementar = minutosDecorridos - timer.ultimoMinutoProcessado;
+                        timer.tempoRestante -= (minutosParaDecrementar * 60);
+                        timer.ultimoMinutoProcessado = minutosDecorridos;
+                        atualizacaoNecessaria = true;
+                        
+                        console.log(`⏱️ Timer ${codigo.toUpperCase()}: decrementado ${minutosParaDecrementar} minuto(s) - restam ${this.formatarTempo(timer.tempoRestante)}`);
+                    }
                     
                     if (timer.tempoRestante <= 0) {
                         console.log(`⚔️ Timer expirado: ${timer.nome} (${codigo.toUpperCase()}) - ${timer.jogador}`);
@@ -1719,11 +1737,23 @@ ${statusAtual}
                     }
                 }
 
-                // Atualizar timers de next (1 minuto para aceitar) - contagem regressiva em tempo real
+                // Atualizar timers de next - contagem individual no minuto exato
                 for (const codigo in this.nextTimers) {
                     const nextTimer = this.nextTimers[codigo];
-                    nextTimer.tempoRestante -= 60; // Decrementar 60 segundos (1 minuto)
-                    atualizacaoNecessaria = true; // Atualizar canal para mostrar contagem regressiva
+                    
+                    // Calcular quantos minutos se passaram desde o início
+                    const tempoDecorridoMs = agora - nextTimer.iniciadoEm.getTime();
+                    const minutosDecorridos = Math.floor(tempoDecorridoMs / 60000);
+                    
+                    // Só decrementar se passou um novo minuto completo
+                    if (minutosDecorridos > nextTimer.ultimoMinutoProcessado) {
+                        const minutosParaDecrementar = minutosDecorridos - nextTimer.ultimoMinutoProcessado;
+                        nextTimer.tempoRestante -= (minutosParaDecrementar * 60);
+                        nextTimer.ultimoMinutoProcessado = minutosDecorridos;
+                        atualizacaoNecessaria = true;
+                        
+                        console.log(`⏱️ Next Timer ${codigo.toUpperCase()}: decrementado ${minutosParaDecrementar} minuto(s) - restam ${this.formatarTempo(nextTimer.tempoRestante)}`);
+                    }
                     
                     if (nextTimer.tempoRestante <= 0) {
                         console.log(`⏰ Timer de next expirado: ${codigo.toUpperCase()} - ${nextTimer.jogador} não aceitou`);
@@ -1757,7 +1787,7 @@ ${statusAtual}
             } catch (error: any) {
                 console.log('❌ Erro no sistema de timers:', error.message);
             }
-        }, 60000); // Atualizar a cada 1 minuto para processo mais leve
+        }, 15000); // Verificar a cada 15 segundos para detectar novos minutos rapidamente
     }
 
     private async processarFilaAposExpiracao(codigo: string): Promise<void> {
@@ -1775,7 +1805,8 @@ ${statusAtual}
                     jogador: proximoJogador.jogador,
                     tempoRestante: 600, // 10 minutos = 600 segundos
                     iniciadoEm: new Date(),
-                    tempoDesejado: proximoJogador.tempoDesejado // Passar tempo desejado
+                    tempoDesejado: proximoJogador.tempoDesejado, // Passar tempo desejado
+                    ultimoMinutoProcessado: 0
                 };
 
                 // Iniciar sistema de contagem se não estiver ativo
@@ -1821,7 +1852,8 @@ ${statusAtual}
                     jogador: proximoJogador.jogador,
                     tempoRestante: 600, // 10 minutos = 600 segundos
                     iniciadoEm: new Date(),
-                    tempoDesejado: proximoJogador.tempoDesejado // Passar tempo desejado
+                    tempoDesejado: proximoJogador.tempoDesejado, // Passar tempo desejado
+                    ultimoMinutoProcessado: 0
                 };
 
                 // Iniciar sistema de contagem se não estiver ativo
