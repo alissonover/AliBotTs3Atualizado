@@ -1082,11 +1082,45 @@ ${filasAtivas}`;
     }
 
     private async atualizarCanalRespawnsList(): Promise<void> {
-        // Usuário optou por não atualizar mais a descrição do canal
-        // Usando imagem externa: https://i.imgur.com/DV0f1m3.png
-        // Esta função foi mantida para compatibilidade mas não faz mais nada
-        const totalRespawns = Object.keys(this.respawnsList).length;
-        console.log(`📋 Respawns List: ${totalRespawns} respawns em memória (canal não atualizado)`);
+        if (!this.serverQuery) {
+            throw new Error('ServerQuery não está conectado');
+        }
+
+        try {
+            const respawnsChannelId = "9"; // ID do canal Respawns List - ESPECÍFICO
+            
+            console.log('📋 Definindo conteúdo estático do canal Respawns List...');
+            
+            // Conteúdo ESTÁTICO - apenas a imagem conforme solicitado
+            const descricao = `[img]https://i.imgur.com/DV0f1m3.png[/img]`;
+            
+            // Verificar se precisa atualizar (para evitar atualizações desnecessárias)
+            let precisaAtualizar = true;
+            try {
+                const channelInfo = await this.serverQuery.channelInfo(respawnsChannelId);
+                const descricaoAtual = (channelInfo as any).channel_description || "";
+                
+                if (descricaoAtual.trim() === descricao.trim()) {
+                    precisaAtualizar = false;
+                    console.log(`📋 Canal Respawns List já possui o conteúdo estático correto - sem modificações`);
+                }
+            } catch (error) {
+                precisaAtualizar = true;
+            }
+            
+            // Atualizar canal apenas se necessário
+            if (precisaAtualizar) {
+                await this.serverQuery.channelEdit(respawnsChannelId, {
+                    channel_description: descricao
+                });
+                
+                console.log(`📋 Canal Respawns List definido com conteúdo estático (apenas imagem)`);
+            }
+            
+        } catch (error: any) {
+            console.log('❌ Erro ao definir conteúdo estático do canal Respawns List:', error.message);
+            throw error;
+        }
     }
 
     private criarBarraProgresso(progresso: number): string {
