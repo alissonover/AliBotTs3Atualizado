@@ -945,7 +945,6 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         ⚠️ [i]Obs: Caso não informe tempo, resps Tier 1 e 2  serão 2:30, Tier 3 serão 03:15 por padrão![/i]
 🚪 Use: [b]!leave [código][/b] - Sair do respawn
 📊 Use: [b]!fila [código][/b] - Ver timer específico
-📋 Use: [b]!fila[/b] - Ver todos os timers
 💡 Use: [b]!help[/b] - Lista de comandos
 
 `;
@@ -1527,6 +1526,14 @@ ${filasAtivas}`;
             }
 
             const codigo = partes[1].toLowerCase();
+            
+            // VERIFICAR SE HÁ TIMER ATIVO OU NEXT TIMER PARA ESTE CÓDIGO
+            const temTimerAtivo = this.timersRespawn[codigo] || this.nextTimers[codigo];
+            if (!temTimerAtivo) {
+                return `❌ Não há timer ativo para este respawn!
+📋 Use: !resp ${codigo.toUpperCase()} [tempo] para iniciar um timer
+💡 O comando !next só pode ser usado quando há um claimed ativo`;
+            }
             
             // Obter nome do jogador através da descrição
             const infoJogador = await this.obterNomeJogadorPorDescricao(remetente);
