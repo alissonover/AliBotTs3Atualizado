@@ -1022,7 +1022,6 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     console.log(`🔗 Link final para ${timer.jogador}: ${jogadorFormatado}`);
                     
                     descricao += `${timer.codigo} - ${tempoFormatado}${nomeFormatado}: ${jogadorFormatado}${infoFila}
-
 `;
                 }
             }
