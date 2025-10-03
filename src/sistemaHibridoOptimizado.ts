@@ -67,6 +67,16 @@ interface DeathMonitorData {
     recentDeaths: PlayerDeath[];
 }
 
+interface DeathListEntry {
+    nome: string;
+    level: number;
+    vocacao: string;
+    horario: string; // formato DD/MM/AAAA HH:MM
+    causa: string;
+    tipo: 'Friend' | 'Hunted';
+    timestamp: Date; // para ordenação
+}
+
 class SistemaHibridoOptimizado {
     private gerenciadorConexao: GerenciadorConexaoHibrida;
     private sistemaAtivo: boolean = false;
@@ -80,6 +90,11 @@ class SistemaHibridoOptimizado {
     private huntedsOnlineAnterior: string[] = []; // Para rastrear mudanÃ§as de status
     private notificacoesHuntedsAtivas: boolean = true; // Controlar se notificaÃ§Ãµes estÃ£o ativas
     private deathMonitorData: Map<string, DeathMonitorData> = new Map(); // Cache de mortes por personagem
+    
+    // Sistema de Deathlist
+    private deathListEntries: DeathListEntry[] = []; // Lista de mortes do dia
+    private ultimoResetDeathlist: Date = new Date(); // Última vez que a lista foi resetada
+    private intervalResetDeathlist: NodeJS.Timeout | null = null; // Timer para reset diário às 06:00
     private deathMonitorInterval: NodeJS.Timeout | null = null; // Timer para verificaÃ§Ã£o de mortes
 
     constructor() {
@@ -87,6 +102,7 @@ class SistemaHibridoOptimizado {
         this.carregarRespawnsPersistidos();
         this.carregarHuntedsList();
         this.carregarDeathMonitorData();
+        this.inicializarSistemaDeathlist();
     }
 
     public async iniciar(): Promise<void> {
@@ -117,6 +133,18 @@ class SistemaHibridoOptimizado {
 
             // Sistema ativo
             this.sistemaAtivo = true;
+
+            // Atualizar canal deathlist na inicialização
+            console.log('💀 Atualizando canal Deathlist inicial...');
+            try {
+                // Primeiro, listar canais para debug
+                await this.listarCanaisParaDebug();
+                
+                await this.atualizarCanalDeathlist();
+                console.log('✅ Canal Deathlist atualizado na inicialização');
+            } catch (error: any) {
+                console.log('⚠️ Erro ao atualizar canal Deathlist na inicialização:', error.message);
+            }
 
             console.log('');
             console.log('🎉 ===============================================');
@@ -3341,8 +3369,16 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
             const friendsDoCanal = await this.obterPersonagensDoCanal('friends');
             const huntedsDoCanal = await this.obterPersonagensDoCanal('hunteds');
             
-            // Combinar friends e hunteds dos canais em uma lista única
-            const todosPersonagens = [...new Set([...friendsDoCanal, ...huntedsDoCanal])];
+            // Combinar friends e hunteds dos canais em uma lista única (sem duplicatas)
+            const todosPersonagens: string[] = [];
+            const personagensUnicos = new Set<string>();
+            
+            [...friendsDoCanal, ...huntedsDoCanal].forEach(personagem => {
+                if (!personagensUnicos.has(personagem)) {
+                    personagensUnicos.add(personagem);
+                    todosPersonagens.push(personagem);
+                }
+            });
 
             if (todosPersonagens.length === 0) {
                 console.log('💀 Nenhum personagem para monitorar (canais friends/hunteds vazios)');
@@ -3466,11 +3502,14 @@ ${emoji} ${tipoPersonagem}: [b]${morte.character.name}[/b]
                 // Enviar poke para todos os usuários online
                 await this.enviarPokeParaTodos(mensagem);
                 
+                // Adicionar morte na deathlist
+                await this.adicionarMorteNaDeathlist(morte, tipoPersonagem as 'Friend' | 'Hunted');
+                
                 console.log(`� Masspoke automático (!mp): ${morte.character.name} (${tipoPersonagem})`);
                 console.log(`💀 Comando executado: !mp 💀 MORTE DETECTADA! ${morte.character.name}`);
             }
         } catch (error: any) {
-            console.log('❌ Erro ao executar !mp automático para morte:', error.message);
+            console.log('❌ Erro ao notificar mortes e atualizar deathlist:', error.message);
         }
     }
 
@@ -3573,6 +3612,288 @@ ${emoji} ${tipoPersonagem}: [b]${morte.character.name}[/b]
 
         } catch (error: any) {
             console.log('❌ Erro ao enviar pokes para todos:', error.message);
+        }
+    }
+
+    // ========================================
+    // SISTEMA DE DEATHLIST
+    // ========================================
+
+    private inicializarSistemaDeathlist(): void {
+        console.log('💀 Inicializando sistema de Deathlist...');
+        
+        // Carregar lista de mortes do dia
+        this.carregarDeathlistDoDia();
+        
+        // Configurar reset diário às 06:00
+        this.configurarResetDiarioDeathlist();
+        
+        console.log('✅ Sistema de Deathlist inicializado');
+    }
+
+    private carregarDeathlistDoDia(): void {
+        try {
+            const filePath = path.join(__dirname, '..', 'deathlist-daily.json');
+            
+            if (fs.existsSync(filePath)) {
+                const data = fs.readFileSync(filePath, 'utf8');
+                const savedData = JSON.parse(data);
+                
+                // Verificar se os dados são do dia atual
+                const hoje = new Date();
+                const dataArquivo = new Date(savedData.dataReset || '1970-01-01');
+                
+                // Se for do mesmo dia, carregar a lista
+                if (hoje.toDateString() === dataArquivo.toDateString()) {
+                    this.deathListEntries = savedData.mortes || [];
+                    this.ultimoResetDeathlist = new Date(savedData.dataReset);
+                    console.log(`💀 Deathlist carregada: ${this.deathListEntries.length} morte(s) do dia`);
+                } else {
+                    // Se não for do mesmo dia, limpar lista
+                    this.deathListEntries = [];
+                    this.ultimoResetDeathlist = hoje;
+                    this.salvarDeathlistDoDia();
+                    console.log('💀 Nova deathlist criada para hoje');
+                }
+            } else {
+                // Arquivo não existe, criar novo
+                this.deathListEntries = [];
+                this.ultimoResetDeathlist = new Date();
+                this.salvarDeathlistDoDia();
+                console.log('💀 Arquivo deathlist-daily.json criado');
+            }
+        } catch (error: any) {
+            console.log('❌ Erro ao carregar deathlist do dia:', error.message);
+            this.deathListEntries = [];
+            this.ultimoResetDeathlist = new Date();
+        }
+    }
+
+    private salvarDeathlistDoDia(): void {
+        try {
+            const filePath = path.join(__dirname, '..', 'deathlist-daily.json');
+            const data = {
+                dataReset: this.ultimoResetDeathlist.toISOString(),
+                totalMortes: this.deathListEntries.length,
+                mortes: this.deathListEntries
+            };
+            
+            fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+            console.log(`💾 Deathlist salva: ${this.deathListEntries.length} morte(s)`);
+        } catch (error: any) {
+            console.log('❌ Erro ao salvar deathlist do dia:', error.message);
+        }
+    }
+
+    private configurarResetDiarioDeathlist(): void {
+        // Limpar timer anterior se existir
+        if (this.intervalResetDeathlist) {
+            clearTimeout(this.intervalResetDeathlist);
+        }
+
+        // Calcular próximo reset (06:00 do próximo dia se já passou das 06:00 hoje)
+        const agora = new Date();
+        const proximoReset = new Date();
+        proximoReset.setHours(6, 0, 0, 0);
+
+        // Se já passou das 06:00 hoje, definir para amanhã
+        if (agora.getHours() >= 6) {
+            proximoReset.setDate(proximoReset.getDate() + 1);
+        }
+
+        const tempoAteReset = proximoReset.getTime() - agora.getTime();
+        
+        console.log(`⏰ Próximo reset da Deathlist: ${proximoReset.toLocaleString('pt-BR')}`);
+        
+        // Configurar timeout para o reset
+        this.intervalResetDeathlist = setTimeout(() => {
+            this.resetarDeathlistDiaria();
+            // Reconfigurar para o próximo dia
+            this.configurarResetDiarioDeathlist();
+        }, tempoAteReset);
+    }
+
+    private resetarDeathlistDiaria(): void {
+        console.log('🌅 06:00 - Resetando Deathlist diária...');
+        
+        // Fazer backup da lista anterior
+        const backupPath = path.join(__dirname, '..', `deathlist-backup-${new Date().toISOString().split('T')[0]}.json`);
+        try {
+            const backupData = {
+                data: this.ultimoResetDeathlist.toISOString().split('T')[0],
+                totalMortes: this.deathListEntries.length,
+                mortes: this.deathListEntries
+            };
+            fs.writeFileSync(backupPath, JSON.stringify(backupData, null, 2));
+            console.log(`📁 Backup criado: ${backupPath}`);
+        } catch (error: any) {
+            console.log('⚠️ Erro ao criar backup da deathlist:', error.message);
+        }
+
+        // Resetar lista
+        this.deathListEntries = [];
+        this.ultimoResetDeathlist = new Date();
+        
+        // Salvar lista limpa
+        this.salvarDeathlistDoDia();
+        
+        // Atualizar canal
+        this.atualizarCanalDeathlist();
+        
+        console.log('✅ Deathlist resetada para novo dia');
+    }
+
+    private async adicionarMorteNaDeathlist(morte: PlayerDeath, tipoPersonagem: 'Friend' | 'Hunted'): Promise<void> {
+        try {
+            const novaEntrada: DeathListEntry = {
+                nome: morte.character.name,
+                level: morte.character.level,
+                vocacao: morte.character.vocation,
+                horario: this.formatarDataMorte(morte.time),
+                causa: morte.reason,
+                tipo: tipoPersonagem,
+                timestamp: new Date()
+            };
+
+            // Adicionar ao início da lista (mais recente primeiro)
+            this.deathListEntries.unshift(novaEntrada);
+            
+            // Limitar a 50 mortes por dia para não sobrecarregar
+            if (this.deathListEntries.length > 50) {
+                this.deathListEntries = this.deathListEntries.slice(0, 50);
+            }
+
+            // Salvar alterações
+            this.salvarDeathlistDoDia();
+            
+            // Atualizar canal
+            await this.atualizarCanalDeathlist();
+            
+            console.log(`💀 Morte adicionada à Deathlist: ${morte.character.name} (${tipoPersonagem})`);
+            
+        } catch (error: any) {
+            console.log('❌ Erro ao adicionar morte na deathlist:', error.message);
+        }
+    }
+
+    private async atualizarCanalDeathlist(): Promise<void> {
+        if (!this.serverQuery) {
+            console.log('⚠️ ServerQuery não conectado - não é possível atualizar canal Deathlist');
+            return;
+        }
+
+        try {
+            const deathlistChannelId = "11"; // ID do canal Deathlist - ajustar conforme necessário
+            
+            console.log(`💀 Atualizando canal Deathlist (ID: ${deathlistChannelId})...`);
+            
+            // Verificar se o canal existe primeiro
+            try {
+                const channelInfo = await this.serverQuery.channelInfo(deathlistChannelId);
+                console.log(`✅ Canal Deathlist encontrado: ${(channelInfo as any).channel_name || 'Nome não disponível'}`);
+            } catch (channelError: any) {
+                console.log(`❌ Erro ao verificar canal Deathlist (ID: ${deathlistChannelId}): ${channelError.message}`);
+                console.log('💡 Verifique se o ID do canal está correto');
+                return;
+            }
+            
+            // Banner fixo
+            let descricao = `[img]https://i.imgur.com/UXN95sj.png[/img]
+
+💀 DEATHLIST - MORTES DO DIA 💀
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌍 Mundo: Kalibra
+📅 Data: ${new Date().toLocaleDateString('pt-BR')}
+⏰ Último reset: ${new Date().toLocaleDateString('pt-BR')} às 06:00
+
+`;
+
+            if (this.deathListEntries.length === 0) {
+                descricao += `🕊️ [color=green]Nenhuma morte registrada hoje[/color]
+💡 As mortes aparecerão aqui automaticamente
+🔄 Lista reseta diariamente às 06:00 AM
+
+✨ [i]Sistema automático de monitoramento ativo[/i]`;
+            } else {
+                descricao += `💀 [b]${this.deathListEntries.length} MORTE(S) REGISTRADA(S):[/b]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+
+                // Adicionar cada morte à lista
+                this.deathListEntries.forEach((morte, index) => {
+                    const numero = (index + 1).toString().padStart(2, '0');
+                    const emojiTipo = morte.tipo === 'Friend' ? '👥' : '🎯';
+                    const corTipo = morte.tipo === 'Friend' ? 'blue' : 'red';
+                    
+                    descricao += `${numero}. [color=${corTipo}]${emojiTipo} ${morte.tipo}[/color]: [b]${morte.nome}[/b]
+     📊 Level ${morte.level} ${morte.vocacao}
+     🕐 ${morte.horario}
+     💥 ${morte.causa}
+
+`;
+                });
+
+                descricao += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 [b]ESTATÍSTICAS DO DIA:[/b]
+💀 Total de mortes: ${this.deathListEntries.length}
+👥 Friends: ${this.deathListEntries.filter(m => m.tipo === 'Friend').length}
+🎯 Hunteds: ${this.deathListEntries.filter(m => m.tipo === 'Hunted').length}
+🔄 Próximo reset: Amanhã às 06:00 AM
+
+🤖 Sistema: AliBot - Monitor Automático
+📡 Fonte: TibiaData v4`;
+            }
+
+            // Atualizar canal
+            console.log(`📝 Preparando para atualizar descrição do canal (${descricao.length} caracteres)...`);
+            
+            await this.serverQuery.channelEdit(deathlistChannelId, {
+                channel_description: descricao
+            });
+            
+            console.log(`✅ Canal Deathlist atualizado com sucesso: ${this.deathListEntries.length} morte(s) registrada(s)`);
+            
+        } catch (error: any) {
+            console.log('❌ Erro ao atualizar canal Deathlist:', error.message);
+            console.log('📋 Detalhes do erro:', error.stack);
+        }
+    }
+
+    private async listarCanaisParaDebug(): Promise<void> {
+        try {
+            if (!this.serverQuery) {
+                console.log('⚠️ ServerQuery não conectado');
+                return;
+            }
+
+            console.log('🔍 Listando canais disponíveis para debug...');
+            const channels = await this.serverQuery.channelList();
+            
+            console.log(`📋 Total de canais encontrados: ${channels.length}`);
+            
+            channels.forEach((channel: any) => {
+                const id = channel.cid || channel.channelId || 'N/A';
+                const name = channel.channel_name || channel.channelName || 'Sem nome';
+                console.log(`   Canal ID: ${id} - Nome: "${name}"`);
+            });
+            
+            // Tentar encontrar canal com nome similar a "deathlist"
+            const deathlistChannel = channels.find((ch: any) => {
+                const name = (ch.channel_name || ch.channelName || '').toLowerCase();
+                return name.includes('death') || name.includes('morte');
+            });
+            
+            if (deathlistChannel) {
+                const id = deathlistChannel.cid || deathlistChannel.channelId;
+                const name = deathlistChannel.channel_name || deathlistChannel.channelName;
+                console.log(`🎯 Canal Deathlist encontrado: ID=${id}, Nome="${name}"`);
+            } else {
+                console.log('❌ Nenhum canal com nome relacionado a "death" ou "morte" encontrado');
+            }
+            
+        } catch (error: any) {
+            console.log('❌ Erro ao listar canais:', error.message);
         }
     }
 }

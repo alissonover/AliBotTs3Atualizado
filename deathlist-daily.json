@@ -1,0 +1,15 @@
+{
+  "dataReset": "2025-10-03T20:26:11.630Z",
+  "totalMortes": 1,
+  "mortes": [
+    {
+      "nome": "Tbombeiw",
+      "level": 16,
+      "vocacao": "Sorcerer",
+      "horario": "03/10/2025 17:27",
+      "causa": "Died at Level 15 by cave rat.",
+      "tipo": "Friend",
+      "timestamp": "2025-10-03T20:33:29.876Z"
+    }
+  ]
+}
