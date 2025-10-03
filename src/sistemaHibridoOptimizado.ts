@@ -3019,16 +3019,13 @@ Bom Game! 🎯✨`;
                         if (huntedData) {
                             resposta += `${numero}. [b]${hunted}[/b] ${status}
      📊 Level: ${huntedData.level || '?'} | ⚔️ ${huntedData.vocation || 'Unknown'}
-
 `;
                         } else {
                             resposta += `${numero}. [b]${hunted}[/b] ${status}
-
 `;
                         }
                     } else {
                         resposta += `${numero}. [b]${hunted}[/b] ${status}
-
 `;
                     }
                 }
