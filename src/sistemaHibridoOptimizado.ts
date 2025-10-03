@@ -60,10 +60,12 @@ class SistemaHibridoOptimizado {
     private nextTimers: NextTimersAtivos = {};
     private intervalTimers: NodeJS.Timeout | null = null;
     private respawnsList: RespawnsList = {};
+    private huntedsList: string[] = [];
 
     constructor() {
         this.gerenciadorConexao = GerenciadorConexaoHibrida.obterInstancia();
         this.carregarRespawnsPersistidos();
+        this.carregarHuntedsList();
     }
 
     public async iniciar(): Promise<void> {
@@ -132,6 +134,13 @@ class SistemaHibridoOptimizado {
                 console.log('✅ Canal Respawns List inicializado');
             } catch (error: any) {
                 console.log('⚠️ Erro na inicialização do canal Respawns List:', error.message);
+            }
+
+            try {
+                await this.atualizarCanalHunteds();
+                console.log('✅ Canal Hunteds inicializado');
+            } catch (error: any) {
+                console.log('⚠️ Erro na inicialização do canal Hunteds:', error.message);
             }
 
             // Configurar handlers de saída
@@ -391,7 +400,12 @@ class SistemaHibridoOptimizado {
 
 🔧 Comandos de Administração:
 !addresp [código] [nome] - Adicionar respawn
-!delresp [código] - Remover respawn`;
+!delresp [código] - Remover respawn
+
+🎯 Comandos de Hunteds:
+!addhunted [nome] - Adicionar hunted
+!delhunted [nome] - Remover hunted
+!hunteds - Atualizar lista de hunteds`;
                     break;
                 
                 case '!status':
@@ -495,10 +509,12 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         await this.atualizarCanalFriends();
                         await this.atualizarCanalClaimeds();
                         await this.atualizarCanalRespawnsList();
+                        await this.atualizarCanalHunteds();
                         resposta = `✅ Todos os canais atualizados com sucesso!
 👥 Friends: Membros online sincronizados
 ⏰ Claimeds: Timers sincronizados
 📋 Respawns List: Lista de respawns atualizada
+🎯 Hunteds: Lista de hunteds atualizada
 🚀 Sistema híbrido totalmente sincronizado`;
                     } catch (error: any) {
                         resposta = `❌ Erro na sincronização: ${error.message}`;
@@ -650,6 +666,12 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         resposta = await this.processarComandoBackupRespawns(comando, remetente);
                     } else if (comando.toLowerCase() === '!bot') {
                         resposta = await this.processarComandoBot(comando, remetente);
+                    } else if (comando.toLowerCase().startsWith('!addhunted ')) {
+                        resposta = await this.processarComandoAddHunted(comando, remetente);
+                    } else if (comando.toLowerCase().startsWith('!delhunted ')) {
+                        resposta = await this.processarComandoDelHunted(comando, remetente);
+                    } else if (comando.toLowerCase() === '!hunteds') {
+                        resposta = await this.processarComandoHunteds(comando, remetente);
                     } else {
                         resposta = `❓ Comando "${comando}" não reconhecido.
 💡 Use !help para ver comandos disponíveis.
@@ -750,9 +772,23 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             }
         }, 30000); // 30 segundos
 
+        // Atualização automática do canal Hunteds - a cada 1 minuto
+        setInterval(async () => {
+            if (this.sistemaAtivo) {
+                try {
+                    await this.atualizarCanalHunteds();
+                    const timestamp = new Date().toLocaleTimeString();
+                    console.log(`🎯 [${timestamp}] Canal Hunteds atualizado automaticamente`);
+                } catch (error: any) {
+                    console.log('⚠️ Erro na atualização automática do canal Hunteds:', error.message);
+                }
+            }
+        }, 60000); // 1 minuto
+
         console.log('🔄 Timers automáticos configurados:');
         console.log('   👥 Friends: A cada 1 minuto');
         console.log('   ⏰ Claimeds: A cada 30 segundos (quando sem timers ativos)');
+        console.log('   🎯 Hunteds: A cada 1 minuto');
         console.log('   ⚔️ Respawns & Next: A cada 1 minuto (processo otimizado)');
         console.log('   💓 Status: A cada 2 minutos');
     }
@@ -2239,6 +2275,262 @@ Entre em contato com a liderança para isto!
         }
     }
 
+    // ===== SISTEMA DE HUNTEDS =====
+
+    private readonly HUNTEDS_FILE = path.join(__dirname, '..', 'hunteds-list.json');
+
+    private carregarHuntedsList(): void {
+        try {
+            if (fs.existsSync(this.HUNTEDS_FILE)) {
+                console.log('🎯 Carregando lista de hunteds...');
+                const data = fs.readFileSync(this.HUNTEDS_FILE, 'utf8');
+                this.huntedsList = JSON.parse(data);
+                
+                console.log(`✅ Carregados ${this.huntedsList.length} hunteds`);
+            } else {
+                console.log('🎯 Arquivo de hunteds não encontrado, criando vazio...');
+                this.huntedsList = [];
+                this.salvarHuntedsList();
+            }
+        } catch (error: any) {
+            console.log(`❌ Erro ao carregar hunteds: ${error.message}`);
+            console.log('🔄 Inicializando lista vazia...');
+            this.huntedsList = [];
+            this.salvarHuntedsList();
+        }
+    }
+
+    private salvarHuntedsList(): void {
+        try {
+            const data = JSON.stringify(this.huntedsList, null, 2);
+            fs.writeFileSync(this.HUNTEDS_FILE, data, 'utf8');
+            
+            console.log(`💾 Hunteds salvos: ${this.huntedsList.length} hunteds`);
+        } catch (error: any) {
+            console.log(`❌ Erro ao salvar hunteds: ${error.message}`);
+        }
+    }
+
+    private async buscarHuntedsOnline(): Promise<any[]> {
+        try {
+            const worldName = 'Kalibra';
+            console.log(`🔍 Buscando players online no mundo "${worldName}"...`);
+            
+            const response = await axios.get(`https://api.tibiadata.com/v4/world/${encodeURIComponent(worldName)}`, {
+                timeout: 15000,
+                headers: {
+                    'User-Agent': 'AliBotTS3-Hunteds-Monitor/1.0'
+                }
+            });
+            
+            console.log(`📡 Resposta da API recebida com status: ${response.status}`);
+            
+            // Log da estrutura da resposta para debug
+            console.log('📋 Estrutura da resposta da API:');
+            console.log('   - response.data existe:', !!response.data);
+            console.log('   - response.data.world existe:', !!(response.data && response.data.world));
+            
+            if (response.data && response.data.world) {
+                const world = response.data.world;
+                console.log(`🌍 Mundo encontrado: ${world.name || 'Nome não disponível'}`);
+                console.log(`📊 Players online total: ${world.players_online || 'N/A'}`);
+                
+                // A API v4 usa "online_players" como array de players online
+                if (world.online_players && Array.isArray(world.online_players)) {
+                    const playersOnline = world.online_players;
+                    console.log(`👥 ${playersOnline.length} players online no mundo ${worldName}`);
+                    
+                    // Log dos primeiros players para verificar estrutura (apenas quando há poucos hunteds)
+                    if (this.huntedsList.length <= 3 && playersOnline.length > 0) {
+                        console.log('📋 Estrutura do primeiro player (debug):');
+                        console.log(`   Nome: ${playersOnline[0].name}, Level: ${playersOnline[0].level}, Vocação: ${playersOnline[0].vocation}`);
+                    }
+                    
+                    // Filtrar apenas os hunteds que estão online
+                    const huntedsOnline = playersOnline.filter((player: any) => {
+                        if (!player || !player.name) {
+                            console.log('⚠️ Player sem nome encontrado:', player);
+                            return false;
+                        }
+                        
+                        const playerName = player.name.toLowerCase();
+                        const isHunted = this.huntedsList.some(hunted => hunted.toLowerCase() === playerName);
+                        
+                        if (isHunted) {
+                            console.log(`🎯 Hunted encontrado online: ${player.name} (Level ${player.level || '?'})`);
+                        }
+                        
+                        return isHunted;
+                    });
+                    
+                    console.log(`🎯 ${huntedsOnline.length} hunteds encontrados online`);
+                    
+                    return huntedsOnline;
+                } else {
+                    console.log('❌ Propriedade online_players não encontrada ou não é um array');
+                    console.log('📋 Propriedades disponíveis no world:', Object.keys(world));
+                    return [];
+                }
+            } else {
+                console.log('⚠️ Estrutura de resposta da API inesperada');
+                console.log('📋 Dados recebidos (primeiros 500 chars):', JSON.stringify(response.data, null, 2).substring(0, 500));
+                return [];
+            }
+            
+        } catch (error: any) {
+            if (error.code === 'ECONNABORTED') {
+                console.log('⏱️ Timeout na conexão com a API do Tibia (15s)');
+            } else if (error.response) {
+                console.log(`❌ Erro HTTP ${error.response.status}: ${error.response.statusText}`);
+                if (error.response.data) {
+                    console.log('📋 Resposta do erro:', JSON.stringify(error.response.data, null, 2));
+                }
+            } else if (error.request) {
+                console.log('🌐 Erro de rede - não foi possível conectar à API do Tibia');
+            } else {
+                console.log('❌ Erro inesperado ao buscar hunteds online:', error.message);
+                console.log('📋 Stack trace:', error.stack);
+            }
+            
+            return [];
+        }
+    }
+
+    private async atualizarCanalHunteds(): Promise<void> {
+        if (!this.serverQuery) {
+            throw new Error('ServerQuery não está conectado');
+        }
+
+        try {
+            const huntedsChannelId = "10"; // ID do canal Hunteds - ajustar conforme necessário
+            
+            console.log('🎯 Iniciando atualização do canal Hunteds...');
+            
+            // Buscar hunteds online com tratamento de erro
+            let huntedsOnline: any[] = [];
+            try {
+                huntedsOnline = await this.buscarHuntedsOnline();
+                console.log(`✅ Busca de hunteds concluída: ${huntedsOnline.length} encontrados`);
+            } catch (searchError: any) {
+                console.log(`❌ Erro na busca de hunteds online: ${searchError.message}`);
+                // Continuar com lista vazia em caso de erro na API
+                huntedsOnline = [];
+            }
+            
+            // Construir descrição do canal
+            let descricao = `[img]https://i.imgur.com/7Bryvk2.png[/img]
+
+🎯 SISTEMA DE HUNTEDS - ALIBOT 🎯
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚔️ Lista de Inimigos Monitorados ⚔️
+🌍 Mundo: Kalibra
+
+`;
+
+            if (huntedsOnline.length === 0) {
+                const statusMsg = this.huntedsList.length > 0 ? 
+                    'Nenhum hunted online no momento' : 
+                    'Lista de hunteds vazia - use !addhunted para adicionar';
+                    
+                descricao += `� ${statusMsg}
+�🕐 Última verificação: ${new Date().toLocaleString('pt-BR')}
+📡 API: TibiaData v4
+
+💡 Esta lista é atualizada automaticamente a cada 1 minuto.
+🔄 Sistema monitora hunteds no mundo Kalibra.
+📋 Use !addhunted [nome] para adicionar
+🗑️ Use !delhunted [nome] para remover
+🌐 Fonte: https://api.tibiadata.com/`;
+            } else {
+                descricao += `🔥 ${huntedsOnline.length} hunted(s) online:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+                
+                // Ordenar por level (maior primeiro) com validação
+                try {
+                    huntedsOnline.sort((a, b) => {
+                        const levelA = a.level || 0;
+                        const levelB = b.level || 0;
+                        return levelB - levelA;
+                    });
+                } catch (sortError) {
+                    console.log('⚠️ Erro ao ordenar hunteds por level, mantendo ordem original');
+                }
+                
+                huntedsOnline.forEach((hunted: any) => {
+                    const level = hunted.level || '?';
+                    const nome = hunted.name || 'Nome não disponível';
+                    const vocation = hunted.vocation || 'Unknown';
+                    
+                    const iconeVocacao = this.obterIconeVocacao(vocation);
+                    
+                    descricao += `${iconeVocacao} Lv.${level} [b][color=red]${nome}[/color][/b] (${vocation})
+`;
+                });
+                
+                // Estatísticas adicionais com validação
+                try {
+                    const levelsValidos = huntedsOnline.filter(h => h.level && !isNaN(h.level)).map(h => h.level);
+                    const levelMedio = levelsValidos.length > 0 ? 
+                        Math.round(levelsValidos.reduce((sum, level) => sum + level, 0) / levelsValidos.length) : 0;
+                    const levelMaisAlto = levelsValidos.length > 0 ? Math.max(...levelsValidos) : 0;
+                    
+                    descricao += `\n📊 [b]ESTATÍSTICAS:[/b]
+📈 Level médio: ${levelMedio}
+👑 Level mais alto: ${levelMaisAlto}
+⏰ Última atualização: ${new Date().toLocaleTimeString('pt-BR')}
+🎯 Mundo: [b]Kalibra[/b]
+🤖 Sistema: AliBot 🧙‍♂️
+📡 API: TibiaData v4
+
+💡 [b]COMANDOS:[/b]
+📋 !addhunted [nome] - Adicionar à lista
+🗑️ !delhunted [nome] - Remover da lista
+📊 !hunteds - Atualizar lista manualmente`;
+                } catch (statsError) {
+                    console.log('⚠️ Erro ao calcular estatísticas, adicionando informações básicas');
+                    descricao += `\n⏰ Última atualização: ${new Date().toLocaleTimeString('pt-BR')}
+🎯 Mundo: [b]Kalibra[/b]
+🤖 Sistema: AliBot 🧙‍♂️`;
+                }
+            }
+            
+            // Verificar se precisa atualizar
+            let precisaAtualizar = true;
+            try {
+                const channelInfo = await this.serverQuery.channelInfo(huntedsChannelId);
+                const descricaoAtual = (channelInfo as any).channel_description || "";
+                
+                if (descricaoAtual.trim() === descricao.trim()) {
+                    precisaAtualizar = false;
+                    console.log(`🎯 Canal Hunteds já está atualizado (${huntedsOnline.length} online) - sem modificações`);
+                }
+            } catch (error) {
+                console.log('⚠️ Erro ao verificar estado atual do canal, forçando atualização');
+                precisaAtualizar = true;
+            }
+            
+            // Atualizar canal apenas se necessário
+            if (precisaAtualizar) {
+                try {
+                    await this.serverQuery.channelEdit(huntedsChannelId, {
+                        channel_description: descricao
+                    });
+                    
+                    console.log(`🎯 Canal Hunteds atualizado: ${huntedsOnline.length} hunteds online de ${this.huntedsList.length} monitorados`);
+                } catch (updateError: any) {
+                    console.log(`❌ Erro ao atualizar canal Hunteds: ${updateError.message}`);
+                    throw updateError;
+                }
+            }
+            
+        } catch (error: any) {
+            console.log('❌ Erro geral ao atualizar canal Hunteds:', error.message);
+            throw error;
+        }
+    }
+
     private inicializarRespawnsPadrao(): void {
         // Inicializar com os respawns padrão já existentes
         this.respawnsList = {
@@ -2447,6 +2739,129 @@ Bom Game! 🎯✨`;
         } catch (error: any) {
             console.log('❌ Erro no comando !bot:', error.message);
             return `❌ Erro ao processar comando !bot: ${error.message}`;
+        }
+    }
+
+    private async processarComandoAddHunted(comando: string, remetente: any): Promise<string> {
+        try {
+            const partes = comando.trim().split(' ');
+            
+            if (partes.length < 2) {
+                return `❌ Formato incorreto!
+📋 Use: !addhunted [nome do personagem]
+💡 Exemplos:
+   !addhunted Mornarm
+   !addhunted Sin Blade (suporta nomes compostos)`;
+            }
+
+            // Pegar nome do personagem (pode ter espaços)
+            const nomeHunted = partes.slice(1).join(' ');
+            
+            // Verificar se o nome é válido
+            if (nomeHunted.length < 2) {
+                return `❌ Nome muito curto!
+💡 O nome deve ter pelo menos 2 caracteres`;
+            }
+
+            // Verificar se já existe na lista (case insensitive)
+            const nomeExistente = this.huntedsList.find(
+                hunted => hunted.toLowerCase() === nomeHunted.toLowerCase()
+            );
+            
+            if (nomeExistente) {
+                return `❌ "${nomeExistente}" já está na lista de hunteds!
+📋 Use !hunteds para ver a lista atualizada`;
+            }
+
+            // Adicionar à lista (mantém capitalização original)
+            this.huntedsList.push(nomeHunted);
+            
+            // Salvar no arquivo
+            this.salvarHuntedsList();
+            
+            // Atualizar canal Hunteds
+            await this.atualizarCanalHunteds();
+
+            return `✅ Hunted adicionado com sucesso!
+🎯 Nome: ${nomeHunted}
+📊 Total de hunteds: ${this.huntedsList.length}
+🔄 Canal Hunteds atualizado`;
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando !addhunted:', error.message);
+            return `❌ Erro ao adicionar hunted: ${error.message}`;
+        }
+    }
+
+    private async processarComandoDelHunted(comando: string, remetente: any): Promise<string> {
+        try {
+            const partes = comando.trim().split(' ');
+            
+            if (partes.length < 2) {
+                return `❌ Formato incorreto!
+📋 Use: !delhunted [nome do personagem]
+💡 Exemplos:
+   !delhunted Mornarm
+   !delhunted Sin Blade (suporta nomes compostos)`;
+            }
+
+            // Pegar nome do personagem (pode ter espaços)
+            const nomeHunted = partes.slice(1).join(' ');
+            
+            // Encontrar o hunted na lista (case insensitive)
+            const indiceHunted = this.huntedsList.findIndex(
+                hunted => hunted.toLowerCase() === nomeHunted.toLowerCase()
+            );
+            
+            if (indiceHunted === -1) {
+                return `❌ "${nomeHunted}" não está na lista de hunteds!
+📋 Use !hunteds para ver a lista atual
+💡 Nomes devem ser exatos (incluindo espaços e capitalização)`;
+            }
+
+            // Obter nome original para exibição
+            const nomeOriginal = this.huntedsList[indiceHunted];
+            
+            // Remover da lista
+            this.huntedsList.splice(indiceHunted, 1);
+            
+            // Salvar no arquivo
+            this.salvarHuntedsList();
+            
+            // Atualizar canal Hunteds
+            await this.atualizarCanalHunteds();
+
+            return `✅ Hunted removido com sucesso!
+🎯 Nome removido: ${nomeOriginal}
+📊 Total de hunteds: ${this.huntedsList.length}
+🔄 Canal Hunteds atualizado`;
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando !delhunted:', error.message);
+            return `❌ Erro ao remover hunted: ${error.message}`;
+        }
+    }
+
+    private async processarComandoHunteds(comando: string, remetente: any): Promise<string> {
+        try {
+            // Atualizar canal Hunteds manualmente
+            await this.atualizarCanalHunteds();
+            
+            const huntedsOnline = await this.buscarHuntedsOnline();
+            
+            return `✅ Canal Hunteds atualizado!
+🎯 Hunteds monitorados: ${this.huntedsList.length}
+🔥 Hunteds online: ${huntedsOnline.length}
+🌍 Mundo: Kalibra
+📡 Fonte: TibiaData v4
+
+💡 Lista é atualizada automaticamente a cada 1 minuto
+📋 Use !addhunted [nome] para adicionar
+🗑️ Use !delhunted [nome] para remover`;
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando !hunteds:', error.message);
+            return `❌ Erro ao atualizar hunteds: ${error.message}`;
         }
     }
 }
