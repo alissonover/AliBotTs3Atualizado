@@ -953,7 +953,8 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚔️ Respawns ⚔️
 📋 Use: [b]!resp [código] [tempo][/b] - Iniciar timer
-🎯 Use: [b]!next [código] [tempo][/b] - Entrar na fila
+🎯 Use: [b]!next [código] [tempo][/b] - Entrar na fila (máx 3 pessoas)
+        ⚠️ [i]Tempo mínimo: 01:00 | Incrementos: 15min | Máx: Tier1/2=02:30, Tier3=03:15[/i]
         ⚠️ [i]Obs: Caso não informe tempo, resps Tier 1 e 2  serão 2:30, Tier 3 serão 03:15 por padrão![/i]
 🚪 Use: [b]!leave [código][/b] - Sair do respawn
 📊 Use: [b]!fila [código][/b] - Ver timer específico
@@ -1265,9 +1266,13 @@ ${filasAtivas}`;
 💡 Exemplos:
    !resp a1 (tempo padrão: Tier 1 = 02:30)
    !resp cobra 02:30 (2 horas e 30 minutos)
-   !resp f4 00:30 (30 minutos)
-   !resp wz 150 (150 segundos)
-   !resp gt (aceitar next com tempo pré-definido)`;
+   !resp f4 01:15 (1 hora e 15 minutos)
+   !resp gt (aceitar next com tempo pré-definido)
+
+⏰ Regras de tempo:
+   🕐 Mínimo: 01:00 (1 hora)
+   📏 Incrementos: 15 minutos (01:00, 01:15, 01:30, etc.)
+   🎯 Máximos: Tier 1/2=02:30, Tier 3=03:15`;
             }
 
             // VERIFICAR SE O CÓDIGO EXISTE NO RESPAWNS-LIST.JSON
@@ -1306,8 +1311,12 @@ ${filasAtivas}`;
 📋 Use: !resp ${codigo} [tempo]
 💡 Exemplos:
    !resp ${codigo} 02:30 (2 horas e 30 minutos)
-   !resp ${codigo} 00:30 (30 minutos)
-   !resp ${codigo} 150 (150 segundos)`;
+   !resp ${codigo} 01:15 (1 hora e 15 minutos)
+
+⏰ Regras de tempo:
+   🕐 Mínimo: 01:00 (1 hora)
+   📏 Incrementos: 15 minutos (01:00, 01:15, 01:30, etc.)
+   🎯 Máximos: Tier 1/2=02:30, Tier 3=03:15`;
                     } else {
                         // Não tem tempo pré-definido, pode especificar
                         const tempoTexto = partes[2];
@@ -1319,6 +1328,45 @@ ${filasAtivas}`;
    HH:MM:SS → 01:30:45 = 1h30min45s
    SSSS → 150 = 150 segundos`;
                         }
+
+                        // Validar tempo mínimo de 01:00 (3600 segundos)
+                        if (tempoParaUsar < 3600) {
+                            return `❌ Tempo muito baixo!
+⏰ Tempo mínimo: 01:00 (1 hora)
+💡 Use formato HH:MM: 01:00, 01:15, 01:30, etc.`;
+                        }
+
+                        // Validar incrementos de 15 minutos (900 segundos)
+                        if (tempoParaUsar % 900 !== 0) {
+                            return `❌ Tempo deve ser em incrementos de 15 minutos!
+⏰ Exemplos válidos: 01:00, 01:15, 01:30, 01:45, 02:00, 02:15, etc.
+💡 Use apenas horários que sejam múltiplos de 15 minutos`;
+                        }
+
+                        // Validar tempo máximo baseado no tier
+                        const nomeRespawn = this.obterNomeRespawn(codigo).toLowerCase();
+                        let tempoMaximo: number;
+                        let tierInfo: string;
+
+                        if (nomeRespawn.includes('tier 3')) {
+                            tempoMaximo = 11700; // 03:15
+                            tierInfo = "Tier 3 (máx: 03:15)";
+                        } else if (nomeRespawn.includes('tier 1') || nomeRespawn.includes('tier 2')) {
+                            tempoMaximo = 9000; // 02:30
+                            tierInfo = "Tier 1/2 (máx: 02:30)";
+                        } else {
+                            tempoMaximo = 9000; // 02:30 (padrão)
+                            tierInfo = "Padrão (máx: 02:30)";
+                        }
+
+                        if (tempoParaUsar > tempoMaximo) {
+                            return `❌ Tempo muito alto para este respawn!
+⚔️ ${this.obterNomeRespawn(codigo)} (${codigo.toUpperCase()})
+🎯 ${tierInfo}
+⏰ Tempo solicitado: ${this.formatarTempo(tempoParaUsar)}
+💡 Reduza o tempo ou use o padrão sem especificar tempo`;
+                        }
+
                         console.log(`✅ Next aceito: ${codigo.toUpperCase()} por ${nomeJogador} - tempo especificado: ${this.formatarTempo(tempoParaUsar)}`);
                     }
                     
@@ -1346,6 +1394,44 @@ ${filasAtivas}`;
    HH:MM → 00:30 = 30 minutos
    HH:MM:SS → 01:30:45 = 1h30min45s
    SSSS → 150 = 150 segundos`;
+                    }
+
+                    // Validar tempo mínimo de 01:00 (3600 segundos)
+                    if (tempoParaUsar < 3600) {
+                        return `❌ Tempo muito baixo!
+⏰ Tempo mínimo: 01:00 (1 hora)
+💡 Use formato HH:MM: 01:00, 01:15, 01:30, etc.`;
+                    }
+
+                    // Validar incrementos de 15 minutos (900 segundos)
+                    if (tempoParaUsar % 900 !== 0) {
+                        return `❌ Tempo deve ser em incrementos de 15 minutos!
+⏰ Exemplos válidos: 01:00, 01:15, 01:30, 01:45, 02:00, 02:15, etc.
+💡 Use apenas horários que sejam múltiplos de 15 minutos`;
+                    }
+
+                    // Validar tempo máximo baseado no tier
+                    const nomeRespawn = this.obterNomeRespawn(codigo).toLowerCase();
+                    let tempoMaximo: number;
+                    let tierInfo: string;
+
+                    if (nomeRespawn.includes('tier 3')) {
+                        tempoMaximo = 11700; // 03:15
+                        tierInfo = "Tier 3 (máx: 03:15)";
+                    } else if (nomeRespawn.includes('tier 1') || nomeRespawn.includes('tier 2')) {
+                        tempoMaximo = 9000; // 02:30
+                        tierInfo = "Tier 1/2 (máx: 02:30)";
+                    } else {
+                        tempoMaximo = 9000; // 02:30 (padrão)
+                        tierInfo = "Padrão (máx: 02:30)";
+                    }
+
+                    if (tempoParaUsar > tempoMaximo) {
+                        return `❌ Tempo muito alto para este respawn!
+⚔️ ${this.obterNomeRespawn(codigo)} (${codigo.toUpperCase()})
+🎯 ${tierInfo}
+⏰ Tempo solicitado: ${this.formatarTempo(tempoParaUsar)}
+💡 Reduza o tempo ou use o padrão sem especificar tempo`;
                     }
                 }
             }
@@ -1568,11 +1654,23 @@ ${filasAtivas}`;
 💡 Exemplos: 
    !next f4 (tempo padrão: Tier 1/2=02:30, Tier 3=03:15)
    !next f4 02:30 (com tempo de 2h30min)
-   !next a3 (tempo padrão: Tier 3=03:15)
-   !next f4 150 (com tempo de 150 segundos)`;
+   !next a3 01:15 (com tempo de 1h15min)
+   
+⏰ Regras de tempo:
+   🕐 Mínimo: 01:00 (1 hora)
+   📏 Incrementos: 15 minutos (01:00, 01:15, 01:30, etc.)
+   🎯 Máximos: Tier 1/2=02:30, Tier 3=03:15
+   👥 Fila máxima: 3 pessoas`;
             }
 
             const codigo = partes[1].toLowerCase();
+            
+            // Verificar se o código existe na configuração
+            const configRespawns = this.obterConfigRespawns();
+            if (!configRespawns[codigo]) {
+                return `❌ Código "${codigo.toUpperCase()}" não existe!
+📋 Use !help para ver códigos disponíveis`;
+            }
             
             // VERIFICAR SE HÁ TIMER ATIVO OU NEXT TIMER PARA ESTE CÓDIGO
             const temTimerAtivo = this.timersRespawn[codigo] || this.nextTimers[codigo];
@@ -1618,6 +1716,44 @@ ${filasAtivas}`;
    HH:MM:SS → 01:30:45 = 1h30min45s
    SSSS → 150 = 150 segundos`;
                 }
+
+                // Validar tempo mínimo de 01:00 (3600 segundos)
+                if (segundos < 3600) {
+                    return `❌ Tempo muito baixo!
+⏰ Tempo mínimo: 01:00 (1 hora)
+💡 Use formato HH:MM: 01:00, 01:15, 01:30, etc.`;
+                }
+
+                // Validar incrementos de 15 minutos (900 segundos)
+                if (segundos % 900 !== 0) {
+                    return `❌ Tempo deve ser em incrementos de 15 minutos!
+⏰ Exemplos válidos: 01:00, 01:15, 01:30, 01:45, 02:00, 02:15, etc.
+💡 Use apenas horários que sejam múltiplos de 15 minutos`;
+                }
+
+                // Validar tempo máximo baseado no tier
+                const nomeRespawn = this.obterNomeRespawn(codigo).toLowerCase();
+                let tempoMaximo: number;
+                let tierInfo: string;
+
+                if (nomeRespawn.includes('tier 3')) {
+                    tempoMaximo = 11700; // 03:15
+                    tierInfo = "Tier 3 (máx: 03:15)";
+                } else if (nomeRespawn.includes('tier 1') || nomeRespawn.includes('tier 2')) {
+                    tempoMaximo = 9000; // 02:30
+                    tierInfo = "Tier 1/2 (máx: 02:30)";
+                } else {
+                    tempoMaximo = 9000; // 02:30 (padrão)
+                    tierInfo = "Padrão (máx: 02:30)";
+                }
+
+                if (segundos > tempoMaximo) {
+                    return `❌ Tempo muito alto para este respawn!
+⚔️ ${configRespawns[codigo]} (${codigo.toUpperCase()})
+🎯 ${tierInfo}
+⏰ Tempo solicitado: ${this.formatarTempo(segundos)}
+💡 Reduza o tempo ou use o padrão sem especificar tempo`;
+                }
                 
                 tempoDesejado = segundos;
             } else {
@@ -1626,13 +1762,6 @@ ${filasAtivas}`;
                 console.log(`⏰ Tempo padrão aplicado para !next ${codigo.toUpperCase()}: ${this.formatarTempo(tempoDesejado)} (baseado no tier)`);
             }
             
-            // Verificar se o código existe na configuração
-            const configRespawns = this.obterConfigRespawns();
-            if (!configRespawns[codigo]) {
-                return `❌ Código "${codigo.toUpperCase()}" não existe!
-📋 Use !help para ver códigos disponíveis`;
-            }
-
             // Verificar se já está no timer atual
             if (this.timersRespawn[codigo]) {
                 if (this.timersRespawn[codigo].jogador === nomeJogador) {
@@ -1664,10 +1793,10 @@ ${filasAtivas}`;
 ⚔️ ${configRespawns[codigo]} (${codigo.toUpperCase()})`;
             }
 
-            // LIMITAR FILA A 2 NEXTS
-            if (this.filasClaimeds[codigo].length >= 2) {
+            // LIMITAR FILA A 3 NEXTS
+            if (this.filasClaimeds[codigo].length >= 3) {
                 return `❌ Fila lotada!
-🎯 Máximo: 2 nexts por claimed
+🎯 Máximo: 3 nexts por claimed
 ⚔️ ${configRespawns[codigo]} (${codigo.toUpperCase()})
 📋 Use !fila ${codigo} para ver a fila atual`;
             }
