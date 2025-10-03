@@ -1,4 +1,4 @@
-import GerenciadorConexaoHibrida from './gerenciadorConexaoHibrida';
+﻿import GerenciadorConexaoHibrida from './gerenciadorConexaoHibrida';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -51,6 +51,22 @@ interface RespawnsList {
     [codigo: string]: string; // codigo -> nome do respawn
 }
 
+interface PlayerDeath {
+    character: {
+        name: string;
+        level: number;
+        vocation: string;
+    };
+    time: string;
+    reason: string;
+}
+
+interface DeathMonitorData {
+    character: string;
+    lastChecked: string; // ISO string da última verificação
+    recentDeaths: PlayerDeath[];
+}
+
 class SistemaHibridoOptimizado {
     private gerenciadorConexao: GerenciadorConexaoHibrida;
     private sistemaAtivo: boolean = false;
@@ -61,13 +77,16 @@ class SistemaHibridoOptimizado {
     private intervalTimers: NodeJS.Timeout | null = null;
     private respawnsList: RespawnsList = {};
     private huntedsList: string[] = [];
-    private huntedsOnlineAnterior: string[] = []; // Para rastrear mudanças de status
-    private notificacoesHuntedsAtivas: boolean = true; // Controlar se notificações estão ativas
+    private huntedsOnlineAnterior: string[] = []; // Para rastrear mudanÃ§as de status
+    private notificacoesHuntedsAtivas: boolean = true; // Controlar se notificaÃ§Ãµes estÃ£o ativas
+    private deathMonitorData: Map<string, DeathMonitorData> = new Map(); // Cache de mortes por personagem
+    private deathMonitorInterval: NodeJS.Timeout | null = null; // Timer para verificaÃ§Ã£o de mortes
 
     constructor() {
         this.gerenciadorConexao = GerenciadorConexaoHibrida.obterInstancia();
         this.carregarRespawnsPersistidos();
         this.carregarHuntedsList();
+        this.carregarDeathMonitorData();
     }
 
     public async iniciar(): Promise<void> {
@@ -795,11 +814,23 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             }
         }, 60000); // 1 minuto
 
+        // Monitoramento de mortes - a cada 1 minuto
+        setInterval(async () => {
+            if (this.sistemaAtivo) {
+                try {
+                    await this.verificarMortes();
+                } catch (error: any) {
+                    console.log('⚠️ Erro no monitoramento de mortes:', error.message);
+                }
+            }
+        }, 60000); // 1 minuto
+
         console.log('🔄 Timers automáticos configurados:');
         console.log('   👥 Friends: A cada 1 minuto');
         console.log('   ⏰ Claimeds: A cada 30 segundos (quando sem timers ativos)');
         console.log('   🎯 Hunteds: A cada 1 minuto');
         console.log('   ⚔️ Respawns & Next: A cada 1 minuto (processo otimizado)');
+        console.log('   💀 Mortes: A cada 1 minuto (Friends & Hunteds)');
         console.log('   💓 Status: A cada 2 minutos');
     }
 
@@ -2411,6 +2442,34 @@ Entre em contato com a liderança para isto!
         return `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
     }
 
+    private formatarDataMorte(timeString: string): string {
+        try {
+            // Formato esperado da API: "Dec 25 2023, 14:30:45 CET"
+            // Remover timezone para fazer o parse
+            const cleanTime = timeString.replace(' CET', '').replace(' CEST', '');
+            const date = new Date(cleanTime);
+            
+            // Verificar se a data é válida
+            if (isNaN(date.getTime())) {
+                console.log(`⚠️ Data inválida recebida: ${timeString}`);
+                return timeString; // Retorna original se não conseguir formatar
+            }
+            
+            // Formatar para DD/MM/AAAA HH:MM
+            const dia = date.getDate().toString().padStart(2, '0');
+            const mes = (date.getMonth() + 1).toString().padStart(2, '0');
+            const ano = date.getFullYear();
+            const hora = date.getHours().toString().padStart(2, '0');
+            const minuto = date.getMinutes().toString().padStart(2, '0');
+            
+            return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+            
+        } catch (error: any) {
+            console.log(`❌ Erro ao formatar data da morte: ${timeString}`, error.message);
+            return timeString; // Retorna original em caso de erro
+        }
+    }
+
     private readonly RESPAWNS_FILE = path.join(__dirname, '..', 'respawns-list.json');
 
     private carregarRespawnsPersistidos(): void {
@@ -3239,8 +3298,284 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
             return `❌ Erro ao verificar status: ${error.message}`;
         }
     }
-}
 
+    // ========================================
+    // SISTEMA DE MONITORAMENTO DE MORTES
+    // ========================================
+
+    private carregarDeathMonitorData(): void {
+        try {
+            const filePath = path.join(__dirname, '..', 'mortes-cache.json');
+            if (fs.existsSync(filePath)) {
+                const data = fs.readFileSync(filePath, 'utf8');
+                const cacheData = JSON.parse(data);
+                this.deathMonitorData = new Map(Object.entries(cacheData));
+                console.log(`💀 Cache de mortes carregado: ${this.deathMonitorData.size} personagens`);
+            } else {
+                this.deathMonitorData = new Map();
+                this.salvarDeathMonitorData();
+                console.log('💀 Arquivo mortes-cache.json criado');
+            }
+        } catch (error: any) {
+            console.log('❌ Erro ao carregar mortes-cache.json:', error.message);
+            this.deathMonitorData = new Map();
+        }
+    }
+
+    private salvarDeathMonitorData(): void {
+        try {
+            const filePath = path.join(__dirname, '..', 'mortes-cache.json');
+            const cacheData = Object.fromEntries(this.deathMonitorData);
+            fs.writeFileSync(filePath, JSON.stringify(cacheData, null, 2));
+        } catch (error: any) {
+            console.log('❌ Erro ao salvar mortes-cache.json:', error.message);
+        }
+    }
+
+    private async verificarMortes(): Promise<void> {
+        try {
+            const timestamp = new Date().toLocaleTimeString();
+            console.log(`💀 [${timestamp}] Verificando mortes de Friends & Hunteds...`);
+
+            // Obter personagens dos canais Friends e Hunteds
+            const friendsDoCanal = await this.obterPersonagensDoCanal('friends');
+            const huntedsDoCanal = await this.obterPersonagensDoCanal('hunteds');
+            
+            // Combinar friends e hunteds dos canais em uma lista única
+            const todosPersonagens = [...new Set([...friendsDoCanal, ...huntedsDoCanal])];
+
+            if (todosPersonagens.length === 0) {
+                console.log('💀 Nenhum personagem para monitorar (canais friends/hunteds vazios)');
+                return;
+            }
+
+            let mortesEncontradas = 0;
+
+            for (const personagem of todosPersonagens) {
+                try {
+                    const novasMortes = await this.verificarMortesPersonagem(personagem);
+                    if (novasMortes.length > 0) {
+                        mortesEncontradas += novasMortes.length;
+                        const tipoPersonagem = friendsDoCanal.includes(personagem) ? 'Friend' : 'Hunted';
+                        await this.notificarMortes(personagem, novasMortes, tipoPersonagem);
+                    }
+                } catch (error: any) {
+                    console.log(`⚠️ Erro ao verificar mortes de ${personagem}:`, error.message);
+                }
+            }
+
+            if (mortesEncontradas > 0) {
+                console.log(`💀 [${timestamp}] ${mortesEncontradas} nova(s) morte(s) encontrada(s)`);
+                this.salvarDeathMonitorData();
+            } else {
+                console.log(`💀 [${timestamp}] Nenhuma nova morte encontrada`);
+            }
+
+        } catch (error: any) {
+            console.log('❌ Erro geral no monitoramento de mortes:', error.message);
+        }
+    }
+
+    private async verificarMortesPersonagem(nomePersonagem: string): Promise<PlayerDeath[]> {
+        try {
+            // Buscar dados do personagem na API do Tibia
+            const response = await axios.get(`https://api.tibiadata.com/v4/character/${encodeURIComponent(nomePersonagem)}`);
+            
+            if (!response.data || !response.data.character) {
+                console.log(`⚠️ Personagem ${nomePersonagem} não encontrado na API`);
+                return [];
+            }
+
+            const deaths = response.data.character.deaths || [];
+            if (deaths.length === 0) {
+                return [];
+            }
+
+            // Obter dados do cache
+            const cacheData = this.deathMonitorData.get(nomePersonagem) || {
+                character: nomePersonagem,
+                lastChecked: new Date(0).toISOString(), // Época inicial
+                recentDeaths: []
+            };
+
+            const ultimaVerificacao = new Date(cacheData.lastChecked);
+            const novasMortes: PlayerDeath[] = [];
+
+            // Verificar mortes que aconteceram após a última verificação
+            for (const death of deaths) {
+                const timeString = death.time;
+                const deathDate = this.parseDeathTime(timeString);
+                
+                if (deathDate > ultimaVerificacao) {
+                    novasMortes.push({
+                        character: {
+                            name: response.data.character.character.name,
+                            level: response.data.character.character.level,
+                            vocation: response.data.character.character.vocation
+                        },
+                        time: timeString,
+                        reason: death.reason || 'Causa desconhecida'
+                    });
+                }
+            }
+
+            // Atualizar cache
+            this.deathMonitorData.set(nomePersonagem, {
+                character: nomePersonagem,
+                lastChecked: new Date().toISOString(),
+                recentDeaths: deaths.slice(0, 5) // Manter apenas as 5 mortes mais recentes
+            });
+
+            return novasMortes;
+
+        } catch (error: any) {
+            console.log(`❌ Erro ao verificar mortes de ${nomePersonagem}:`, error.message);
+            return [];
+        }
+    }
+
+    private parseDeathTime(timeString: string): Date {
+        try {
+            // Formato esperado: "Dec 25 2023, 14:30:45 CET"
+            // Vamos tentar parsear o formato da API do Tibia
+            const cleanTime = timeString.replace(' CET', '').replace(' CEST', '');
+            return new Date(cleanTime);
+        } catch (error: any) {
+            console.log('⚠️ Erro ao parsear tempo de morte:', timeString);
+            return new Date(0);
+        }
+    }
+
+    private async notificarMortes(personagem: string, mortes: PlayerDeath[], tipoPersonagem: string): Promise<void> {
+        try {
+            for (const morte of mortes) {
+                const emoji = tipoPersonagem === 'Friend' ? '👥' : '🎯';
+                
+                // Formatar a data da morte para padrão brasileiro: DD/MM/AAAA HH:MM
+                const dataFormatada = this.formatarDataMorte(morte.time);
+                
+                const mensagem = `💀 MORTE DETECTADA! 💀
+
+${emoji} ${tipoPersonagem}: [b]${morte.character.name}[/b]
+⚔️ Level: ${morte.character.level} ${morte.character.vocation}
+🕐 Horário: ${dataFormatada}
+💥 Causa: ${morte.reason}
+
+⚠️ [i]Monitoramento automático ativo[/i]`;
+
+                // Enviar poke para todos os usuários online
+                await this.enviarPokeParaTodos(mensagem);
+                
+                console.log(`� Masspoke automático (!mp): ${morte.character.name} (${tipoPersonagem})`);
+                console.log(`💀 Comando executado: !mp 💀 MORTE DETECTADA! ${morte.character.name}`);
+            }
+        } catch (error: any) {
+            console.log('❌ Erro ao executar !mp automático para morte:', error.message);
+        }
+    }
+
+    private async obterPersonagensDoCanal(tipoCanal: 'friends' | 'hunteds'): Promise<string[]> {
+        try {
+            // Para este sistema, vamos usar diretamente a lista de hunteds
+            // pois não temos canais separados reais de friends e hunteds
+            
+            if (tipoCanal === 'hunteds') {
+                // Retornar lista completa de hunteds para verificação de mortes
+                return [...this.huntedsList];
+            } else {
+                // Para friends, por enquanto usar a mesma lista de hunteds
+                // ou uma lista vazia se quiser separar no futuro
+                return [...this.huntedsList];
+            }
+            
+        } catch (error: any) {
+            console.log(`❌ Erro ao obter personagens do canal ${tipoCanal}:`, error.message);
+            return tipoCanal === 'hunteds' ? this.huntedsList : [];
+        }
+    }
+
+    private async enviarPokeParaTodos(mensagem: string): Promise<void> {
+        try {
+            if (!this.sistemaAtivo || !this.serverQuery) {
+                console.log('⚠️ Sistema inativo - não foi possível enviar pokes');
+                return;
+            }
+
+            // Obter lista de clientes online
+            const clientes = await this.serverQuery.clientList();
+            
+            // Filtrar apenas clientes reais (não bots/query)
+            const clientesReais = clientes.filter((cliente: any) => 
+                cliente.type === 0 && // Tipo 0 = cliente normal
+                !cliente.clientNickname?.includes('ServerQuery') && // Não é ServerQuery
+                !cliente.clientNickname?.includes('Bot') // Não é Bot
+            );
+
+            if (clientesReais.length === 0) {
+                console.log('📭 Nenhum cliente real online para poke');
+                return;
+            }
+
+            console.log(`📢 Enviando pokes para ${clientesReais.length} cliente(s) online...`);
+            
+            for (const cliente of clientesReais) {
+                try {
+                    // Enviar poke para cada cliente
+                    await this.serverQuery.clientPoke(cliente.clid, mensagem);
+                    console.log(`   ✅ Poke enviado para: ${cliente.clientNickname || cliente.nickname}`);
+                } catch (error: any) {
+                    console.log(`   ❌ Erro ao enviar poke para cliente ${cliente.clid}:`, error.message);
+                }
+            }
+
+            console.log(`📢 Total de pokes enviados: ${clientesReais.length}`);
+
+        } catch (error: any) {
+            console.log('❌ Erro ao enviar pokes para todos:', error.message);
+        }
+    }
+
+    private async enviarMasspokeParaTodos(mensagem: string): Promise<void> {
+        try {
+            if (!this.sistemaAtivo || !this.serverQuery) {
+                console.log('⚠️ Sistema inativo - não foi possível enviar pokes');
+                return;
+            }
+
+            // Obter lista de clientes online
+            const clientes = await this.serverQuery.clientList();
+            
+            // Filtrar apenas clientes reais (não bots/query)
+            const clientesReais = clientes.filter((cliente: any) => 
+                cliente.type === 0 && // Tipo 0 = cliente normal
+                !cliente.clientNickname?.includes('ServerQuery') && // Não é ServerQuery
+                !cliente.clientNickname?.includes('Bot') // Não é Bot
+            );
+
+            if (clientesReais.length === 0) {
+                console.log('📭 Nenhum cliente real online para poke');
+                return;
+            }
+
+            console.log(`📢 Enviando pokes para ${clientesReais.length} cliente(s) online...`);
+            
+            for (const cliente of clientesReais) {
+                try {
+                    // Enviar poke para cada cliente
+                    await this.serverQuery.clientPoke(cliente.clid, mensagem);
+                    console.log(`   ✅ Poke enviado para: ${cliente.clientNickname || cliente.nickname}`);
+                } catch (error: any) {
+                    console.log(`   ❌ Erro ao enviar poke para cliente ${cliente.clid}:`, error.message);
+                }
+            }
+
+            console.log(`📢 Pokes enviados para ${clientesReais.length} usuário(s)`);
+
+        } catch (error: any) {
+            console.log('❌ Erro ao enviar pokes para todos:', error.message);
+        }
+    }
+}
 // Execução principal
 async function executarSistemaOtimizado() {
     const sistema = new SistemaHibridoOptimizado();

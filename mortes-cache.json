@@ -327,5 +327,127 @@
     "Lethalzerah": [],
     "Hexed": [],
     "Fa diinha": []
+  },
+  "Uil": {
+    "character": "Uil",
+    "lastChecked": "2025-10-03T20:15:15.264Z",
+    "recentDeaths": [
+      {
+        "time": "2025-09-18T13:17:45Z",
+        "level": 958,
+        "killers": [
+          {
+            "name": "insane siren",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 958 by insane siren."
+      }
+    ]
+  },
+  "Sin Blade": {
+    "character": "Sin Blade",
+    "lastChecked": "2025-10-03T20:15:16.659Z",
+    "recentDeaths": [
+      {
+        "time": "2025-09-22T16:35:04Z",
+        "level": 1441,
+        "killers": [
+          {
+            "name": "Sin Blade",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          },
+          {
+            "name": "Chagorz",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1441 by Sin Blade and Chagorz."
+      },
+      {
+        "time": "2025-09-20T15:18:24Z",
+        "level": 1441,
+        "killers": [
+          {
+            "name": "hulking prehemoth",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1441 by hulking prehemoth."
+      }
+    ]
+  },
+  "Tbombeiw": {
+    "character": "Tbombeiw",
+    "lastChecked": "2025-10-03T20:15:21.431Z",
+    "recentDeaths": [
+      {
+        "time": "2025-10-03T20:05:52Z",
+        "level": 15,
+        "killers": [
+          {
+            "name": "rat",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 15 by rat."
+      },
+      {
+        "time": "2025-10-03T19:52:14Z",
+        "level": 16,
+        "killers": [
+          {
+            "name": "cave rat",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 16 by cave rat."
+      },
+      {
+        "time": "2025-10-03T19:50:59Z",
+        "level": 16,
+        "killers": [
+          {
+            "name": "rat",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 16 by rat."
+      },
+      {
+        "time": "2025-10-03T19:24:38Z",
+        "level": 17,
+        "killers": [
+          {
+            "name": "cave rat",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 17 by cave rat."
+      }
+    ]
   }
 }
