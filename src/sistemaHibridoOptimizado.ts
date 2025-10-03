@@ -937,7 +937,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             const claimedChannelId = "7"; // ID do canal Claimeds
             
             // Construir descrição base do canal
-            let descricao = `[img]https://i.imgur.com/9yNr8qY.png[/img]
+            let descricao = `[img]https://i.imgur.com/6yPB3ol.png[/img]
 
 🎯 SISTEMA DE CLAIMEDS - ALIBOT 🎯
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1092,7 +1092,7 @@ ${filasAtivas}`;
             console.log('📋 Definindo conteúdo estático do canal Respawns List...');
             
             // Conteúdo ESTÁTICO - apenas a imagem conforme solicitado
-            const descricao = `[img]https://i.imgur.com/DV0f1m3.png[/img]`;
+            const descricao = `[img]https://i.imgur.com/VhBwi3t.png[/img]`;
             
             // Verificar se precisa atualizar (para evitar atualizações desnecessárias)
             let precisaAtualizar = true;
