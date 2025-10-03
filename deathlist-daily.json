@@ -1,7 +1,16 @@
 {
   "dataReset": "2025-10-03T20:26:11.630Z",
-  "totalMortes": 1,
+  "totalMortes": 2,
   "mortes": [
+    {
+      "nome": "Tbombeiw",
+      "level": 16,
+      "vocacao": "Sorcerer",
+      "horario": "03/10/2025 17:40",
+      "causa": "Died at Level 14 by rat.",
+      "tipo": "Hunted",
+      "timestamp": "2025-10-03T20:45:28.316Z"
+    },
     {
       "nome": "Tbombeiw",
       "level": 16,

@@ -330,7 +330,7 @@
   },
   "Uil": {
     "character": "Uil",
-    "lastChecked": "2025-10-03T20:33:24.490Z",
+    "lastChecked": "2025-10-03T20:45:24.313Z",
     "recentDeaths": [
       {
         "time": "2025-09-18T13:17:45Z",
@@ -350,7 +350,7 @@
   },
   "Sin Blade": {
     "character": "Sin Blade",
-    "lastChecked": "2025-10-03T20:33:25.266Z",
+    "lastChecked": "2025-10-03T20:45:25.201Z",
     "recentDeaths": [
       {
         "time": "2025-09-22T16:35:04Z",
@@ -390,8 +390,22 @@
   },
   "Tbombeiw": {
     "character": "Tbombeiw",
-    "lastChecked": "2025-10-03T20:33:29.753Z",
+    "lastChecked": "2025-10-03T20:45:28.197Z",
     "recentDeaths": [
+      {
+        "time": "2025-10-03T20:40:16Z",
+        "level": 14,
+        "killers": [
+          {
+            "name": "rat",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 14 by rat."
+      },
       {
         "time": "2025-10-03T20:27:34Z",
         "level": 15,
@@ -447,20 +461,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 16 by rat."
-      },
-      {
-        "time": "2025-10-03T19:24:38Z",
-        "level": 17,
-        "killers": [
-          {
-            "name": "cave rat",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 17 by cave rat."
       }
     ]
   }

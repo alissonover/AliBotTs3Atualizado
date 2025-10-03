@@ -87,6 +87,7 @@ class SistemaHibridoOptimizado {
     private intervalTimers: NodeJS.Timeout | null = null;
     private respawnsList: RespawnsList = {};
     private huntedsList: string[] = [];
+    private friendsList: string[] = []; // Lista de friends para monitoramento de mortes
     private huntedsOnlineAnterior: string[] = []; // Para rastrear mudanÃ§as de status
     private notificacoesHuntedsAtivas: boolean = true; // Controlar se notificaÃ§Ãµes estÃ£o ativas
     private deathMonitorData: Map<string, DeathMonitorData> = new Map(); // Cache de mortes por personagem
@@ -101,6 +102,7 @@ class SistemaHibridoOptimizado {
         this.gerenciadorConexao = GerenciadorConexaoHibrida.obterInstancia();
         this.carregarRespawnsPersistidos();
         this.carregarHuntedsList();
+        this.carregarFriendsList();
         this.carregarDeathMonitorData();
         this.inicializarSistemaDeathlist();
     }
@@ -729,6 +731,12 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         resposta = await this.processarComandoHuntedAlertas(false, remetente);
                     } else if (comando.toLowerCase() === '!huntedalerts' || comando.toLowerCase() === '!alertas') {
                         resposta = await this.processarComandoHuntedAlertasStatus(remetente);
+                    } else if (comando.toLowerCase().startsWith('!addfriend ')) {
+                        resposta = await this.processarComandoAddFriend(comando, remetente);
+                    } else if (comando.toLowerCase().startsWith('!delfriend ')) {
+                        resposta = await this.processarComandoDelFriend(comando, remetente);
+                    } else if (comando.toLowerCase() === '!friends') {
+                        resposta = await this.processarComandoFriends(comando, remetente);
                     } else {
                         resposta = `❓ Comando "${comando}" não reconhecido.
 💡 Use !help para ver comandos disponíveis.
@@ -3328,6 +3336,184 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
     }
 
     // ========================================
+    // SISTEMA DE FRIENDS
+    // ========================================
+
+    private async processarComandoAddFriend(comando: string, remetente: any): Promise<string> {
+        try {
+            const partes = comando.trim().split(' ');
+            
+            if (partes.length < 2) {
+                return `❌ Formato incorreto!
+📋 Use: !addfriend [nome do personagem]
+💡 Exemplos:
+   !addfriend Jackson Knight
+   !addfriend Player Name (suporta nomes compostos)`;
+            }
+
+            // Pegar nome do personagem (pode ter espaços)
+            const nomeFriend = partes.slice(1).join(' ');
+            
+            // Verificar se o nome é válido
+            if (nomeFriend.length < 2) {
+                return `❌ Nome muito curto!
+💡 O nome deve ter pelo menos 2 caracteres`;
+            }
+
+            // Verificar se já existe na lista (case insensitive)
+            const nomeExistente = this.friendsList.find(
+                friend => friend.toLowerCase() === nomeFriend.toLowerCase()
+            );
+            
+            if (nomeExistente) {
+                return `❌ "${nomeExistente}" já está na lista de friends!
+📋 Use !friends para ver a lista atualizada`;
+            }
+
+            // Adicionar à lista (mantém capitalização original)
+            this.friendsList.push(nomeFriend);
+            
+            // Salvar no arquivo
+            this.salvarFriendsList();
+
+            return `✅ Friend adicionado com sucesso!
+👥 Nome: ${nomeFriend}
+📊 Total de friends: ${this.friendsList.length}`;
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando !addfriend:', error.message);
+            return `❌ Erro ao adicionar friend: ${error.message}`;
+        }
+    }
+
+    private async processarComandoDelFriend(comando: string, remetente: any): Promise<string> {
+        try {
+            const partes = comando.trim().split(' ');
+            
+            if (partes.length < 2) {
+                return `❌ Formato incorreto!
+📋 Use: !delfriend [nome do personagem]
+💡 Exemplos:
+   !delfriend Jackson Knight
+   !delfriend Player Name (suporta nomes compostos)`;
+            }
+
+            // Pegar nome do personagem (pode ter espaços)
+            const nomeFriend = partes.slice(1).join(' ');
+            
+            // Encontrar o friend na lista (case insensitive)
+            const indiceFriend = this.friendsList.findIndex(
+                friend => friend.toLowerCase() === nomeFriend.toLowerCase()
+            );
+            
+            if (indiceFriend === -1) {
+                return `❌ "${nomeFriend}" não está na lista de friends!
+📋 Use !friends para ver a lista atual
+💡 Nomes devem ser exatos (incluindo espaços e capitalização)`;
+            }
+
+            // Obter nome original para exibição
+            const nomeOriginal = this.friendsList[indiceFriend];
+            
+            // Remover da lista
+            this.friendsList.splice(indiceFriend, 1);
+            
+            // Salvar no arquivo
+            this.salvarFriendsList();
+
+            return `✅ Friend removido com sucesso!
+👥 Nome removido: ${nomeOriginal}
+📊 Total de friends: ${this.friendsList.length}`;
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando !delfriend:', error.message);
+            return `❌ Erro ao remover friend: ${error.message}`;
+        }
+    }
+
+    private async processarComandoFriends(comando: string, remetente: any): Promise<string> {
+        try {
+            let resposta = `✅ Lista de Friends atualizada!
+👥 Friends monitorados: ${this.friendsList.length}
+🌍 Mundo: Kalibra
+
+`;
+
+            // Adicionar lista completa de friends
+            if (this.friendsList.length > 0) {
+                resposta += `📋 [b]LISTA COMPLETA DE FRIENDS:[/b]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+                
+                for (let i = 0; i < this.friendsList.length; i++) {
+                    const friend = this.friendsList[i];
+                    const numero = (i + 1).toString().padStart(2, '0');
+                    resposta += `${numero}. [b]${friend}[/b] [color=green]👥 FRIEND[/color]
+`;
+                }
+                
+                resposta += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+            } else {
+                resposta += `📋 [color=orange]Nenhum friend na lista[/color]
+💡 Use !addfriend [nome] para adicionar friends
+
+`;
+            }
+            
+            resposta += `📡 Fonte: Sistema AliBot
+🔄 Monitoramento de mortes ativo
+
+💡 [b]COMANDOS DISPONÍVEIS:[/b]
+📋 !addfriend [nome] - Adicionar friend
+🗑️ !delfriend [nome] - Remover friend
+📊 !friends - Ver lista de friends`;
+
+            return resposta;
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando !friends:', error.message);
+            return `❌ Erro ao processar friends: ${error.message}`;
+        }
+    }
+
+    private salvarFriendsList(): void {
+        try {
+            const filePath = path.join(__dirname, '..', 'friends-list.json');
+            const data = JSON.stringify(this.friendsList, null, 2);
+            fs.writeFileSync(filePath, data, 'utf8');
+            
+            console.log(`💾 Friends salvos: ${this.friendsList.length} friends`);
+        } catch (error: any) {
+            console.log(`❌ Erro ao salvar friends: ${error.message}`);
+        }
+    }
+
+    private carregarFriendsList(): void {
+        try {
+            const filePath = path.join(__dirname, '..', 'friends-list.json');
+            if (fs.existsSync(filePath)) {
+                console.log('👥 Carregando lista de friends...');
+                const data = fs.readFileSync(filePath, 'utf8');
+                this.friendsList = JSON.parse(data);
+                
+                console.log(`✅ Carregados ${this.friendsList.length} friends`);
+            } else {
+                console.log('👥 Arquivo de friends não encontrado, criando vazio...');
+                this.friendsList = [];
+                this.salvarFriendsList();
+            }
+        } catch (error: any) {
+            console.log(`❌ Erro ao carregar friends: ${error.message}`);
+            console.log('🔄 Inicializando lista vazia...');
+            this.friendsList = [];
+            this.salvarFriendsList();
+        }
+    }
+
+    // ========================================
     // SISTEMA DE MONITORAMENTO DE MORTES
     // ========================================
 
@@ -3486,13 +3672,14 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
         try {
             for (const morte of mortes) {
                 const emoji = tipoPersonagem === 'Friend' ? '👥' : '🎯';
+                const cor = tipoPersonagem === 'Friend' ? 'green' : 'red';
                 
                 // Formatar a data da morte para padrão brasileiro: DD/MM/AAAA HH:MM
                 const dataFormatada = this.formatarDataMorte(morte.time);
                 
                 const mensagem = `💀 MORTE DETECTADA! 💀
 
-${emoji} ${tipoPersonagem}: [b]${morte.character.name}[/b]
+${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
 ⚔️ Level: ${morte.character.level} ${morte.character.vocation}
 🕐 Horário: ${dataFormatada}
 💥 Causa: ${morte.reason}
@@ -3515,21 +3702,19 @@ ${emoji} ${tipoPersonagem}: [b]${morte.character.name}[/b]
 
     private async obterPersonagensDoCanal(tipoCanal: 'friends' | 'hunteds'): Promise<string[]> {
         try {
-            // Para este sistema, vamos usar diretamente a lista de hunteds
-            // pois não temos canais separados reais de friends e hunteds
-            
             if (tipoCanal === 'hunteds') {
                 // Retornar lista completa de hunteds para verificação de mortes
                 return [...this.huntedsList];
+            } else if (tipoCanal === 'friends') {
+                // Retornar lista de friends para verificação de mortes
+                return [...this.friendsList];
             } else {
-                // Para friends, por enquanto usar a mesma lista de hunteds
-                // ou uma lista vazia se quiser separar no futuro
-                return [...this.huntedsList];
+                return [];
             }
             
         } catch (error: any) {
             console.log(`❌ Erro ao obter personagens do canal ${tipoCanal}:`, error.message);
-            return tipoCanal === 'hunteds' ? this.huntedsList : [];
+            return [];
         }
     }
 
@@ -3824,7 +4009,7 @@ ${emoji} ${tipoPersonagem}: [b]${morte.character.name}[/b]
                 this.deathListEntries.forEach((morte, index) => {
                     const numero = (index + 1).toString().padStart(2, '0');
                     const emojiTipo = morte.tipo === 'Friend' ? '👥' : '🎯';
-                    const corTipo = morte.tipo === 'Friend' ? 'blue' : 'red';
+                    const corTipo = morte.tipo === 'Friend' ? 'green' : 'red';
                     
                     descricao += `${numero}. [color=${corTipo}]${emojiTipo} ${morte.tipo}[/color]: [b]${morte.nome}[/b]
      📊 Level ${morte.level} ${morte.vocacao}
