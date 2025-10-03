@@ -61,6 +61,8 @@ class SistemaHibridoOptimizado {
     private intervalTimers: NodeJS.Timeout | null = null;
     private respawnsList: RespawnsList = {};
     private huntedsList: string[] = [];
+    private huntedsOnlineAnterior: string[] = []; // Para rastrear mudanças de status
+    private notificacoesHuntedsAtivas: boolean = true; // Controlar se notificações estão ativas
 
     constructor() {
         this.gerenciadorConexao = GerenciadorConexaoHibrida.obterInstancia();
@@ -405,7 +407,9 @@ class SistemaHibridoOptimizado {
 🎯 Comandos de Hunteds:
 !addhunted [nome] - Adicionar hunted
 !delhunted [nome] - Remover hunted
-!hunteds - Atualizar lista de hunteds`;
+!hunteds - Atualizar lista de hunteds
+!alertas on/off - Ativar/desativar notificações
+!alertas - Ver status das notificações`;
                     break;
                 
                 case '!status':
@@ -672,6 +676,12 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         resposta = await this.processarComandoDelHunted(comando, remetente);
                     } else if (comando.toLowerCase() === '!hunteds') {
                         resposta = await this.processarComandoHunteds(comando, remetente);
+                    } else if (comando.toLowerCase() === '!huntedalerts on' || comando.toLowerCase() === '!alertas on') {
+                        resposta = await this.processarComandoHuntedAlertas(true, remetente);
+                    } else if (comando.toLowerCase() === '!huntedalerts off' || comando.toLowerCase() === '!alertas off') {
+                        resposta = await this.processarComandoHuntedAlertas(false, remetente);
+                    } else if (comando.toLowerCase() === '!huntedalerts' || comando.toLowerCase() === '!alertas') {
+                        resposta = await this.processarComandoHuntedAlertasStatus(remetente);
                     } else {
                         resposta = `❓ Comando "${comando}" não reconhecido.
 💡 Use !help para ver comandos disponíveis.
@@ -2399,6 +2409,9 @@ Entre em contato com a liderança para isto!
                     
                     console.log(`🎯 ${huntedsOnline.length} hunteds encontrados online`);
                     
+                    // Verificar se há novos hunteds online desde a última verificação
+                    await this.verificarNovosHuntedsOnline(huntedsOnline);
+                    
                     return huntedsOnline;
                 } else {
                     console.log('❌ Propriedade online_players não encontrada ou não é um array');
@@ -2427,6 +2440,102 @@ Entre em contato com a liderança para isto!
             }
             
             return [];
+        }
+    }
+
+    private async verificarNovosHuntedsOnline(huntedsOnlineAtual: any[]): Promise<void> {
+        try {
+            // Obter nomes dos hunteds que estão online agora
+            const nomesHuntedsAtual = huntedsOnlineAtual.map(hunted => hunted.name.toLowerCase());
+            
+            // Verificar se há novos hunteds online (que não estavam na verificação anterior)
+            const novosHuntedsOnline = huntedsOnlineAtual.filter(hunted => {
+                const nomeHunted = hunted.name.toLowerCase();
+                return !this.huntedsOnlineAnterior.includes(nomeHunted);
+            });
+            
+            if (novosHuntedsOnline.length > 0) {
+                console.log(`🚨 ${novosHuntedsOnline.length} novo(s) hunted(s) detectado(s) online!`);
+                
+                // Só enviar notificações se estiverem ativas
+                if (this.notificacoesHuntedsAtivas) {
+                    await this.enviarNotificacaoHuntedOnline(novosHuntedsOnline);
+                } else {
+                    console.log('🔕 Notificações de hunteds desativadas - não enviando alertas');
+                }
+            }
+            
+            // Atualizar lista de hunteds online para próxima verificação
+            this.huntedsOnlineAnterior = nomesHuntedsAtual;
+            
+        } catch (error: any) {
+            console.log('❌ Erro ao verificar novos hunteds online:', error.message);
+        }
+    }
+
+    private async enviarNotificacaoHuntedOnline(novosHunteds: any[]): Promise<void> {
+        try {
+            if (!this.serverQuery) {
+                console.log('⚠️ ServerQuery não conectado, não é possível enviar notificações');
+                return;
+            }
+
+            // Obter lista de todos os clientes conectados
+            const clients = await this.serverQuery.clientList();
+            const realClients = clients.filter((c: any) => c.type === 0); // Apenas clientes reais (não bots)
+            
+            console.log(`📢 Enviando notificação de hunted online para ${realClients.length} usuários conectados`);
+            
+            // Construir mensagem de alerta
+            let mensagem = `🚨 [color=red][b]ALERTA DE HUNTED ONLINE![/b][/color] 🚨
+
+`;
+            
+            if (novosHunteds.length === 1) {
+                const hunted = novosHunteds[0];
+                mensagem += `🎯 [b]${hunted.name}[/b] acabou de ficar online!
+📊 Level: ${hunted.level || '?'}
+⚔️ Vocação: ${hunted.vocation || 'Unknown'}
+🌍 Mundo: Kalibra
+
+⚠️ [color=orange]Atenção redobrada![/color]`;
+            } else {
+                mensagem += `🎯 [b]${novosHunteds.length} hunteds[/b] acabaram de ficar online:
+
+`;
+                novosHunteds.forEach(hunted => {
+                    mensagem += `• [b]${hunted.name}[/b] (Lv.${hunted.level || '?'}) - ${hunted.vocation || 'Unknown'}
+`;
+                });
+                
+                mensagem += `
+🌍 Mundo: Kalibra
+⚠️ [color=orange]Atenção redobrada![/color]`;
+            }
+            
+            mensagem += `
+
+🔍 Use !hunteds para ver lista completa
+🤖 Sistema: AliBot - Monitor de Hunteds`;
+
+            // Enviar mensagem privada para cada cliente conectado
+            const promises = realClients.map(async (client: any) => {
+                try {
+                    await this.serverQuery.sendTextMessage(client.clid, 1, mensagem);
+                    console.log(`✅ Notificação enviada para: ${client.nickname} (ID: ${client.clid})`);
+                } catch (error: any) {
+                    console.log(`❌ Erro ao enviar notificação para ${client.nickname}:`, error.message);
+                }
+            });
+            
+            // Aguardar todos os envios
+            await Promise.allSettled(promises);
+            
+            const nomeHunteds = novosHunteds.map(h => h.name).join(', ');
+            console.log(`📢 Notificações enviadas sobre hunted(s): ${nomeHunteds}`);
+            
+        } catch (error: any) {
+            console.log('❌ Erro ao enviar notificações de hunted online:', error.message);
         }
     }
 
@@ -2896,6 +3005,59 @@ Bom Game! 🎯✨`;
         } catch (error: any) {
             console.log('❌ Erro no comando !hunteds:', error.message);
             return `❌ Erro ao atualizar hunteds: ${error.message}`;
+        }
+    }
+
+    private async processarComandoHuntedAlertas(ativar: boolean, remetente: any): Promise<string> {
+        try {
+            this.notificacoesHuntedsAtivas = ativar;
+            
+            const status = ativar ? 'ativadas' : 'desativadas';
+            const emoji = ativar ? '🔔' : '🔕';
+            
+            console.log(`${emoji} Notificações de hunteds ${status} por usuário: ${remetente.clientNickname || 'Desconhecido'}`);
+            
+            return `✅ Notificações de hunteds ${status}!
+${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
+
+💡 Configuração aplicada globalmente para todos os usuários
+🎯 Use !alertas para verificar status atual
+📋 Use !addhunted [nome] para gerenciar lista de hunteds`;
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando de alertas de hunteds:', error.message);
+            return `❌ Erro ao ${ativar ? 'ativar' : 'desativar'} alertas: ${error.message}`;
+        }
+    }
+
+    private async processarComandoHuntedAlertasStatus(remetente: any): Promise<string> {
+        try {
+            const status = this.notificacoesHuntedsAtivas ? 'ATIVAS' : 'DESATIVADAS';
+            const emoji = this.notificacoesHuntedsAtivas ? '🔔' : '🔕';
+            const cor = this.notificacoesHuntedsAtivas ? 'green' : 'red';
+            
+            return `${emoji} [b]Status das Notificações de Hunteds[/b]
+
+[color=${cor}]${status}[/color]
+
+📊 [b]Informações:[/b]
+🎯 Hunteds monitorados: ${this.huntedsList.length}
+🌍 Mundo: Kalibra
+🔄 Verificação: A cada 1 minuto
+📡 Fonte: TibiaData v4
+
+💡 [b]Comandos:[/b]
+🔔 !alertas on - Ativar notificações
+🔕 !alertas off - Desativar notificações
+📋 !addhunted [nome] - Adicionar hunted
+🗑️ !delhunted [nome] - Remover hunted
+📊 !hunteds - Atualizar lista manual
+
+⚠️ [i]Notificações são enviadas para todos os usuários conectados quando um hunted fica online.[/i]`;
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando de status de alertas:', error.message);
+            return `❌ Erro ao verificar status: ${error.message}`;
         }
     }
 }
