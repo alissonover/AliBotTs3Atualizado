@@ -381,53 +381,17 @@ class SistemaHibridoOptimizado {
             switch (comando.toLowerCase()) {
                 case '!help':
                 case '!ajuda':
-                    resposta = `🤖 Bot Híbrido Otimizado - Comandos:
+                    resposta = `
+🤖 AliBot - Comandos:
 !help - Esta ajuda
 !status - Status do sistema
 !ping - Teste de resposta
-!info - Informações do servidor
 !users - Usuários online
 !time - Horário atual
 
-🔄 Comandos de Atualização:
-!friends - Atualizar canal Friends
-!claimeds - Atualizar canal Claimeds
-!respawns - Atualizar canal Respawns List
-!sync - Sincronizar todos os canais
-
-⚔️ Sistema de Respawns com Fila:
-!resp [código] [tempo opcional] - Iniciar timer
-!resp [código] - Aceitar next (se tem tempo pré-definido)
-!next [código] - Entrar na fila (sem tempo específico)
-!next [código] [tempo] - Entrar na fila com tempo pré-definido
-!leave [código] - Sair do respawn
-!fila [código] - Ver timer específico
-!fila - Ver todos os timers
-
-� Lista de Respawns: Veja o canal "Respawns List" para todos os códigos disponíveis
-
-�💡 Exemplos de Respawn:
-!resp f4 02:30 - F4 por 2 horas e 30 minutos
-!resp f4 00:30 - F4 por 30 minutos
-!resp f4 150 - F4 por 150 segundos
-!resp f4 - Aceitar next (se tem tempo pré-definido)
-
-🎯 Exemplos de Next:
-!next f4 - Entrar na fila (escolher tempo depois)
-!next f4 02:30 - Entrar na fila com 2h30min pré-definido
-!next wz 150 - Entrar na fila com 150s pré-definido
-
-🧪 Comandos de Teste:
-!testlink - Testar links BBCode
-!api - Testar API do Tibia
-
 🔧 Comandos de Administração:
 !addresp [código] [nome] - Adicionar respawn
-!addresp [local] [código] [nome] - Adicionar respawn
-!delresp [código] - Remover respawn
-!deleteresp [código] - Remover respawn (alias)
-!listplaces - Listar todos os locais
-!backuprespawns - Fazer backup manual dos respawns`;
+!delresp [código] - Remover respawn`;
                     break;
                 
                 case '!status':
@@ -684,6 +648,8 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         resposta = await this.processarComandoListPlaces(comando, remetente);
                     } else if (comando.toLowerCase() === '!backuprespawns') {
                         resposta = await this.processarComandoBackupRespawns(comando, remetente);
+                    } else if (comando.toLowerCase() === '!bot') {
+                        resposta = await this.processarComandoBot(comando, remetente);
                     } else {
                         resposta = `❓ Comando "${comando}" não reconhecido.
 💡 Use !help para ver comandos disponíveis.
@@ -2441,6 +2407,46 @@ Entre em contato com a liderança para isto!
             return '🥊'; // Monk
         } else {
             return '❓'; // Desconhecido
+        }
+    }
+
+    private async processarComandoBot(comando: string, remetente: any): Promise<string> {
+        try {
+            // Obter nome do jogador através da descrição
+            const infoJogador = await this.obterNomeJogadorPorDescricao(remetente);
+            if (!infoJogador.valido) {
+                return infoJogador.erro || '❌ Erro ao obter informações do jogador';
+            }
+            const nomeJogador = infoJogador.nome;
+            
+            // Abrir chat privado com mensagem de boas-vindas
+            try {
+                const mensagemBoasVindas = `[color=blue]🤖 ALIBOT - BOAS-VINDAS! 🤖[/color]
+
+Olá ${nomeJogador}! 👋
+
+Seja bem-vindo ao AliBot!
+
+❗ IMPORTANTE:
+• Use !help para ver todos os comandos disponíveis
+• Use os canal "Claimeds" para observar/gerenciar seus claimeds
+• Configure sua descrição no TeamSpeak com o nome do personagem para usar comandos de claimeds!
+Bom Game! 🎯✨`;
+
+                // Abrir chat privado (targetmode 1 = chat privado)
+                await this.serverQuery.sendTextMessage(remetente.clid, 1, mensagemBoasVindas);
+                console.log(`🤖 Chat privado aberto com ${nomeJogador} (ID: ${remetente.clid})`);
+                
+                return `✅ Chat privado aberto! Verifique sua aba de mensagens privadas 💬`;
+                
+            } catch (error: any) {
+                console.log(`❌ Erro ao abrir chat privado com ${nomeJogador}:`, error.message);
+                return `❌ Erro ao abrir chat privado. Tente novamente.`;
+            }
+            
+        } catch (error: any) {
+            console.log('❌ Erro no comando !bot:', error.message);
+            return `❌ Erro ao processar comando !bot: ${error.message}`;
         }
     }
 }
