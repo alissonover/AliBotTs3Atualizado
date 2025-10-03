@@ -148,6 +148,15 @@ class SistemaHibridoOptimizado {
                 console.log('⚠️ Erro ao atualizar canal Deathlist na inicialização:', error.message);
             }
 
+            // Sincronizar friends do canal na inicialização
+            console.log('👥 Sincronizando friends do canal na inicialização...');
+            try {
+                await this.sincronizarFriendsDoCanal();
+                console.log('✅ Friends sincronizados na inicialização');
+            } catch (error: any) {
+                console.log('⚠️ Erro ao sincronizar friends na inicialização:', error.message);
+            }
+
             console.log('');
             console.log('🎉 ===============================================');
             console.log('🎉  SISTEMA HÍBRIDO OTIMIZADO ATIVO!');
@@ -737,6 +746,8 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         resposta = await this.processarComandoDelFriend(comando, remetente);
                     } else if (comando.toLowerCase() === '!friends') {
                         resposta = await this.processarComandoFriends(comando, remetente);
+                    } else if (comando.toLowerCase() === '!syncfriends') {
+                        resposta = await this.processarComandoSyncFriends(comando, remetente);
                     } else {
                         resposta = `❓ Comando "${comando}" não reconhecido.
 💡 Use !help para ver comandos disponíveis.
@@ -3467,15 +3478,74 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
 🔄 Monitoramento de mortes ativo
 
 💡 [b]COMANDOS DISPONÍVEIS:[/b]
-📋 !addfriend [nome] - Adicionar friend
+📋 !addfriend [nome] - Adicionar friend manualmente
 🗑️ !delfriend [nome] - Remover friend
-📊 !friends - Ver lista de friends`;
+📊 !friends - Ver lista de friends
+🔄 !syncfriends - Sincronizar com canal Friends`;
 
             return resposta;
 
         } catch (error: any) {
             console.log('❌ Erro no comando !friends:', error.message);
             return `❌ Erro ao processar friends: ${error.message}`;
+        }
+    }
+
+    private async processarComandoSyncFriends(comando: string, remetente: any): Promise<string> {
+        try {
+            console.log(`🔄 Comando !syncfriends executado por: ${remetente.clientNickname || 'Desconhecido'}`);
+            
+            const listAnterior = [...this.friendsList];
+            const totalAnterior = listAnterior.length;
+            
+            // Sincronizar com o canal Friends
+            await this.sincronizarFriendsDoCanal();
+            
+            const totalAtual = this.friendsList.length;
+            const novosAdicionados = totalAtual - totalAnterior;
+            
+            let resposta = `🔄 [b]SINCRONIZAÇÃO DE FRIENDS CONCLUÍDA![/b]
+
+📊 [b]Resultado:[/b]
+👥 Friends antes: ${totalAnterior}
+👥 Friends agora: ${totalAtual}
+➕ Novos adicionados: ${novosAdicionados}
+
+`;
+
+            if (novosAdicionados > 0) {
+                resposta += `✅ [color=green]${novosAdicionados} novo(s) friend(s) encontrado(s) no canal![/color]
+
+📋 [b]Novos friends adicionados:[/b]
+`;
+                const novosNomes = this.friendsList.slice(-novosAdicionados);
+                novosNomes.forEach((nome, index) => {
+                    resposta += `${index + 1}. ${nome}
+`;
+                });
+                
+                resposta += `
+💾 Lista salva automaticamente em friends-list.json`;
+            } else {
+                resposta += `✅ [color=blue]Lista já estava atualizada - nenhum novo friend encontrado[/color]`;
+            }
+            
+            resposta += `
+
+💡 [b]Comandos relacionados:[/b]
+📋 !friends - Ver lista completa
+🔄 !syncfriends - Sincronizar novamente
+📋 !addfriend [nome] - Adicionar manualmente
+🗑️ !delfriend [nome] - Remover friend`;
+
+            return resposta;
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando !syncfriends:', error.message);
+            return `❌ Erro ao sincronizar friends: ${error.message}
+
+💡 Verifique se o ID do canal Friends está correto
+🔧 Use !listarcanais para ver IDs disponíveis`;
         }
     }
 
@@ -3706,7 +3776,9 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
                 // Retornar lista completa de hunteds para verificação de mortes
                 return [...this.huntedsList];
             } else if (tipoCanal === 'friends') {
-                // Retornar lista de friends para verificação de mortes
+                // Primeiro, sincronizar com o canal Friends
+                await this.sincronizarFriendsDoCanal();
+                // Retornar lista atualizada de friends
                 return [...this.friendsList];
             } else {
                 return [];
@@ -3714,6 +3786,134 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
             
         } catch (error: any) {
             console.log(`❌ Erro ao obter personagens do canal ${tipoCanal}:`, error.message);
+            return [];
+        }
+    }
+
+    private async sincronizarFriendsDoCanal(): Promise<void> {
+        try {
+            const friendsChannelId = "9"; // ID do canal Friends - ajustar conforme necessário
+            
+            console.log(`👥 Sincronizando lista de friends com canal (ID: ${friendsChannelId})...`);
+            
+            // Verificar se o canal existe
+            let channelInfo: any;
+            try {
+                channelInfo = await this.serverQuery.channelInfo(friendsChannelId);
+                console.log(`✅ Canal Friends encontrado: ${(channelInfo as any).channel_name || 'Nome não disponível'}`);
+            } catch (channelError: any) {
+                console.log(`❌ Erro ao verificar canal Friends (ID: ${friendsChannelId}): ${channelError.message}`);
+                console.log('💡 Verifique se o ID do canal está correto');
+                return;
+            }
+
+            // Extrair nomes do canal
+            const nomesDoCanal = await this.extrairNomesDoCanal(friendsChannelId);
+            
+            if (nomesDoCanal.length === 0) {
+                console.log('📭 Nenhum nome encontrado no canal Friends');
+                return;
+            }
+
+            // Adicionar apenas nomes novos à lista
+            let novosAdicionados = 0;
+            const listOriginal = [...this.friendsList];
+
+            for (const nome of nomesDoCanal) {
+                // Verificar se já existe (case insensitive)
+                const jaExiste = this.friendsList.some(friend => 
+                    friend.toLowerCase() === nome.toLowerCase()
+                );
+
+                if (!jaExiste) {
+                    this.friendsList.push(nome);
+                    novosAdicionados++;
+                    console.log(`   ➕ Novo friend adicionado: ${nome}`);
+                }
+            }
+
+            // Salvar apenas se houve mudanças
+            if (novosAdicionados > 0) {
+                this.salvarFriendsList();
+                console.log(`✅ Sincronização concluída: ${novosAdicionados} novo(s) friend(s) adicionado(s)`);
+                console.log(`📊 Total de friends: ${this.friendsList.length} (era ${listOriginal.length})`);
+            } else {
+                console.log(`✅ Sincronização concluída: Lista já está atualizada (${this.friendsList.length} friends)`);
+            }
+
+        } catch (error: any) {
+            console.log('❌ Erro ao sincronizar friends do canal:', error.message);
+        }
+    }
+
+    private async extrairNomesDoCanal(channelId: string): Promise<string[]> {
+        try {
+            const channelInfo = await this.serverQuery.channelInfo(channelId);
+            const descricao = (channelInfo as any).channel_description || '';
+            
+            if (!descricao) {
+                console.log('⚠️ Descrição do canal Friends está vazia');
+                return [];
+            }
+
+            console.log(`📝 Analisando descrição do canal (${descricao.length} caracteres)...`);
+            
+            // Buscar diferentes padrões comuns em canais Friends
+            const nomes: string[] = [];
+            
+            // Padrão 1: "🟢 Level XXX Nome do Personagem (Vocação)"
+            const regex1 = /🟢[^(]*Level\s+\d+\s+([^(]+)/gi;
+            let match;
+            while ((match = regex1.exec(descricao)) !== null) {
+                const nome = match[1].trim();
+                if (nome && nome.length >= 2 && !nomes.includes(nome)) {
+                    nomes.push(nome);
+                }
+            }
+
+            // Padrão 2: "[b]Nome do Personagem[/b]" 
+            const regex2 = /\[b\]([^[\]]+)\[\/b\]/gi;
+            while ((match = regex2.exec(descricao)) !== null) {
+                const nome = match[1].trim();
+                // Filtrar nomes válidos (não números, não muito curtos)
+                if (nome && nome.length >= 2 && !/^\d+$/.test(nome) && !nomes.includes(nome)) {
+                    nomes.push(nome);
+                }
+            }
+
+            // Padrão 3: Links de cliente "client://0/uid]Nome[/url]"
+            const regex3 = /client:\/\/[^]]+\]([^[]+)\[\/url\]/gi;
+            while ((match = regex3.exec(descricao)) !== null) {
+                const nome = match[1].trim();
+                if (nome && nome.length >= 2 && !nomes.includes(nome)) {
+                    nomes.push(nome);
+                }
+            }
+
+            // Remover duplicatas e filtrar nomes válidos
+            const nomesUnicos: string[] = [];
+            const nomesVistos = new Set<string>();
+            
+            for (const nome of nomes) {
+                if (!nomesVistos.has(nome)) {
+                    nomesVistos.add(nome);
+                    nomesUnicos.push(nome);
+                }
+            }
+            
+            const nomesLimpos = nomesUnicos.filter(nome => {
+                // Filtrar apenas nomes que parecem ser nomes de personagens
+                return nome.length >= 2 && 
+                       nome.length <= 30 && 
+                       !/^(level|online|offline|vocação|guild)$/i.test(nome) &&
+                       !/^\d+$/.test(nome);
+            });
+
+            console.log(`🔍 Nomes extraídos do canal: ${nomesLimpos.join(', ')}`);
+            return nomesLimpos;
+
+        } catch (error: any) {
+            console.log(`❌ Erro ao extrair nomes do canal ${channelId}:`, error.message);
             return [];
         }
     }

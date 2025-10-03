@@ -330,7 +330,7 @@
   },
   "Uil": {
     "character": "Uil",
-    "lastChecked": "2025-10-03T20:45:24.313Z",
+    "lastChecked": "2025-10-03T21:05:37.248Z",
     "recentDeaths": [
       {
         "time": "2025-09-18T13:17:45Z",
@@ -350,7 +350,7 @@
   },
   "Sin Blade": {
     "character": "Sin Blade",
-    "lastChecked": "2025-10-03T20:45:25.201Z",
+    "lastChecked": "2025-10-03T21:05:38.072Z",
     "recentDeaths": [
       {
         "time": "2025-09-22T16:35:04Z",
@@ -390,8 +390,22 @@
   },
   "Tbombeiw": {
     "character": "Tbombeiw",
-    "lastChecked": "2025-10-03T20:45:28.197Z",
+    "lastChecked": "2025-10-03T21:05:27.406Z",
     "recentDeaths": [
+      {
+        "time": "2025-10-03T20:54:23Z",
+        "level": 14,
+        "killers": [
+          {
+            "name": "rat",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 14 by rat."
+      },
       {
         "time": "2025-10-03T20:40:16Z",
         "level": 14,
@@ -447,20 +461,128 @@
         ],
         "assists": [],
         "reason": "Died at Level 16 by cave rat."
-      },
+      }
+    ]
+  },
+  "Celsiin": {
+    "character": "Celsiin",
+    "lastChecked": "2025-10-03T21:05:31.134Z",
+    "recentDeaths": [
       {
-        "time": "2025-10-03T19:50:59Z",
-        "level": 16,
+        "time": "2025-10-03T00:15:42Z",
+        "level": 1342,
         "killers": [
           {
-            "name": "rat",
+            "name": "mummy",
             "player": false,
             "traded": false,
             "summon": ""
           }
         ],
         "assists": [],
-        "reason": "Died at Level 16 by rat."
+        "reason": "Died at Level 1342 by mummy."
+      },
+      {
+        "time": "2025-10-02T02:40:16Z",
+        "level": 1344,
+        "killers": [
+          {
+            "name": "mould phantom",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1344 by mould phantom."
+      },
+      {
+        "time": "2025-09-18T01:58:09Z",
+        "level": 1341,
+        "killers": [
+          {
+            "name": "nighthunter",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1341 by nighthunter."
+      }
+    ]
+  },
+  "Red Vesgo": {
+    "character": "Red Vesgo",
+    "lastChecked": "2025-10-03T21:05:33.208Z",
+    "recentDeaths": [
+      {
+        "time": "2025-09-10T12:50:10Z",
+        "level": 1265,
+        "killers": [
+          {
+            "name": "sparkion",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1265 by sparkion."
+      }
+    ]
+  },
+  "Vic In Debit": {
+    "character": "Vic In Debit",
+    "lastChecked": "2025-10-03T21:05:34.030Z",
+    "recentDeaths": [
+      {
+        "time": "2025-09-19T21:09:53Z",
+        "level": 1199,
+        "killers": [
+          {
+            "name": "oozing carcass",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1199 by oozing carcass."
+      },
+      {
+        "time": "2025-09-16T20:23:38Z",
+        "level": 1200,
+        "killers": [
+          {
+            "name": "Vic In Debit",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          },
+          {
+            "name": "Goshnar's Spite",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1200 by Vic In Debit and Goshnar's Spite."
+      },
+      {
+        "time": "2025-09-05T13:23:25Z",
+        "level": 1195,
+        "killers": [
+          {
+            "name": "animated feather",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1195 by animated feather."
       }
     ]
   }
