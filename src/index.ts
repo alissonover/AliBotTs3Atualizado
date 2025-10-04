@@ -1,28 +1,27 @@
-import { TS3ClientBot, loadClientConfig } from './botCliente';
+import SistemaHibridoOptimizado from './sistemaHibridoOptimizado';
 
 // Função principal
 async function main() {
-  // Carregar configuração do bot cliente
-  const config = loadClientConfig();
-  const bot = new TS3ClientBot(config);
+  console.log("🚀 Iniciando AliBotTS3...");
+  
+  const sistema = new SistemaHibridoOptimizado();
 
   // Lidar com sinais de interrupção
   process.on('SIGINT', async () => {
     console.log("\n🛑 Interrompendo bot...");
-    await bot.disconnect();
+    await sistema.parar();
     process.exit(0);
   });
 
   process.on('SIGTERM', async () => {
     console.log("\n🛑 Terminando bot...");
-    await bot.disconnect();
+    await sistema.parar();
     process.exit(0);
   });
 
   try {
-    await bot.connect();
-    
-    console.log("🤖 Bot AliBotTS3 Cliente está rodando! Pressione Ctrl+C para parar.");
+    await sistema.iniciar();
+    console.log("🤖 Bot AliBotTS3 está rodando! Pressione Ctrl+C para parar.");
     
   } catch (error) {
     console.error("💥 Falha ao iniciar o bot:", error);
