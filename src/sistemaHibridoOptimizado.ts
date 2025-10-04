@@ -1252,18 +1252,7 @@ ${filasAtivas}`;
                 // Na API v4, precisamos filtrar os membros que estão online
                 if (guild.members && Array.isArray(guild.members)) {
                     const membrosOnline = guild.members.filter((membro: any) => membro.status === 'online');
-                    console.log(`👥 ${membrosOnline.length} membros online encontrados (de ${guild.members.length} totais)`);
-                    
-                    // Log detalhado dos membros encontrados (primeiros 10)
-                    const maxLog = Math.min(10, membrosOnline.length);
-                    for (let i = 0; i < maxLog; i++) {
-                        const membro = membrosOnline[i];
-                        console.log(`   ${i + 1}. ${membro.name} (Level ${membro.level}) - ${membro.vocation} [${membro.rank}]`);
-                    }
-                    if (membrosOnline.length > 10) {
-                        console.log(`   ... e mais ${membrosOnline.length - 10} membros`);
-                    }
-                    
+
                     return membrosOnline;
                 } else {
                     console.log('👥 Campo members não encontrado ou não é um array');
@@ -2827,14 +2816,7 @@ Entre em contato com a liderança para isto!
                     'User-Agent': 'AliBotTS3-Hunteds-Monitor/1.0'
                 }
             });
-            
-            console.log(`📡 Resposta da API recebida com status: ${response.status}`);
-            
-            // Log da estrutura da resposta para debug
-            console.log('📋 Estrutura da resposta da API:');
-            console.log('   - response.data existe:', !!response.data);
-            console.log('   - response.data.world existe:', !!(response.data && response.data.world));
-            
+
             if (response.data && response.data.world) {
                 const world = response.data.world;
                 console.log(`🌍 Mundo encontrado: ${world.name || 'Nome não disponível'}`);
@@ -3920,8 +3902,6 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
             const limiteTempoMorte = this.LIMITE_TEMPO_MORTE_MINUTOS * 60 * 1000; // Converter minutos para millisegundos
             const novasMortes: PlayerDeath[] = [];
 
-            console.log(`🕐 Verificando mortes de ${nomePersonagem} - Limite: ${this.LIMITE_TEMPO_MORTE_MINUTOS} minutos`);
-
             // Verificar mortes que aconteceram após a última verificação E dentro do limite de tempo
             for (const death of deaths) {
                 const timeString = death.time;
@@ -3946,12 +3926,6 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
                         time: timeString,
                         reason: death.reason || 'Causa desconhecida'
                     });
-                } else if (deathDate > ultimaVerificacao && tempoDesDaMorte > limiteTempoMorte) {
-                    // Morte nova mas fora do limite de tempo
-                    console.log(`💀 ⏰ Morte ignorada (fora do limite): ${response.data.character.character.name} - ${minutosDesDaMorte} min atrás (limite: ${this.LIMITE_TEMPO_MORTE_MINUTOS} min)`);
-                } else if (deathDate <= ultimaVerificacao) {
-                    // Morte já verificada anteriormente
-                    console.log(`💀 📋 Morte já conhecida: ${response.data.character.character.name} - ${minutosDesDaMorte} min atrás`);
                 }
             }
 
@@ -3972,9 +3946,6 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
 
     private parseDeathTime(timeString: string): Date {
         try {
-            // Formato esperado da API TibiaData: "Dec 25 2023, 14:30:45 CET"
-            console.log(`🕐 Parseando tempo de morte: "${timeString}"`);
-            
             // Remover timezone para parsing mais confiável
             let cleanTime = timeString.replace(/ CET$/, '').replace(/ CEST$/, '');
             
@@ -3997,11 +3968,9 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
             const umaHoraNaFrente = new Date(agora.getTime() + 60 * 60 * 1000);
             
             if (isNaN(deathDate.getTime()) || deathDate < umAnoAtras || deathDate > umaHoraNaFrente) {
-                console.log(`⚠️ Data de morte inválida ou fora do range válido: ${timeString}`);
                 return new Date(0);
             }
             
-            console.log(`✅ Data de morte parseada: ${deathDate.toISOString()} (${Math.round((agora.getTime() - deathDate.getTime()) / 60000)} min atrás)`);
             return deathDate;
             
         } catch (error: any) {
@@ -4033,9 +4002,6 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
                 
                 // Adicionar morte na deathlist
                 await this.adicionarMorteNaDeathlist(morte, tipoPersonagem as 'Friend' | 'Hunted');
-                
-                console.log(`� Masspoke automático (!mp): ${morte.character.name} (${tipoPersonagem})`);
-                console.log(`💀 Comando executado: !mp 💀 MORTE DETECTADA! ${morte.character.name}`);
             }
         } catch (error: any) {
             console.log('❌ Erro ao notificar mortes e atualizar deathlist:', error.message);
