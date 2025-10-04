@@ -710,6 +710,97 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         resposta = `❌ Erro ao testar API: ${error.message}`;
                     }
                     break;
+
+                case '!test-link':
+                case '!testlink-janio':
+                    try {
+                        // Testar linkagem específica para o usuário JANIO
+                        const clienteJanio = await this.buscarClientePorNome('JANIO');
+                        let debugMsg = `🧪 TESTE DE LINKAGEM - JANIO\n\n`;
+                        
+                        if (clienteJanio) {
+                            debugMsg += `✅ Cliente JANIO encontrado:\n`;
+                            debugMsg += `   Nickname: ${clienteJanio.clientNickname || clienteJanio.nickname}\n`;
+                            debugMsg += `   ID Numérico: ${clienteJanio.clid}\n`;
+                            debugMsg += `   Unique ID: ${clienteJanio.clientUniqueIdentifier || 'N/A'}\n`;
+                            debugMsg += `   Type: ${clienteJanio.type}\n\n`;
+                            
+                            const clientId = await this.obterClientIdPorNome('JANIO');
+                            debugMsg += `🔍 ID Obtido: "${clientId}"\n`;
+                            
+                            const linkFinal = this.criarLinkJogador('JANIO', clientId);
+                            debugMsg += `🔗 Link Final: ${linkFinal}\n\n`;
+                            
+                            debugMsg += `📋 Teste de clique: ${linkFinal}`;
+                        } else {
+                            debugMsg += `❌ Cliente JANIO não encontrado!\n\n`;
+                            
+                            // Listar todos os clientes para debug
+                            const clientes = await this.serverQuery.clientList();
+                            const clientesReais = clientes.filter((c: any) => c.type === 0);
+                            
+                            debugMsg += `👥 Clientes reais online (${clientesReais.length}):\n`;
+                            clientesReais.forEach((c: any, index: number) => {
+                                debugMsg += `   ${index + 1}. "${c.clientNickname || c.nickname}" (ID: ${c.clid})\n`;
+                            });
+                        }
+                        
+                        resposta = debugMsg;
+                    } catch (error: any) {
+                        resposta = `❌ Erro no teste de linkagem: ${error.message}`;
+                    }
+                    break;
+
+                case '!test-desc':
+                case '!test-personagem':
+                    try {
+                        // Testar busca por descrição/personagem
+                        const partesComando = comando.trim().split(' ');
+                        const nomePersonagem = partesComando.length > 1 ? partesComando.slice(1).join(' ') : 'Jan Heal';
+                        let debugMsg = `🧪 TESTE DE BUSCA POR PERSONAGEM\n\n`;
+                        debugMsg += `🔍 Buscando personagem: "${nomePersonagem}"\n\n`;
+                        
+                        const cliente = await this.buscarClientePorDescricao(nomePersonagem);
+                        if (cliente) {
+                            debugMsg += `✅ Cliente encontrado:\n`;
+                            debugMsg += `   Nickname: ${cliente.clientNickname || cliente.nickname}\n`;
+                            debugMsg += `   ID Numérico: ${cliente.clid}\n`;
+                            debugMsg += `   Unique ID: ${cliente.clientUniqueIdentifier || 'N/A'}\n`;
+                            debugMsg += `   Descrição: ${cliente.clientDescription || 'N/A'}\n\n`;
+                            
+                            const clientId = await this.obterClientIdPorPersonagem(nomePersonagem);
+                            debugMsg += `🔍 ID Obtido por Personagem: "${clientId}"\n`;
+                            
+                            const linkFinal = this.criarLinkJogador(nomePersonagem, clientId);
+                            debugMsg += `🔗 Link Final: ${linkFinal}\n\n`;
+                            
+                            debugMsg += `📋 Teste de clique: ${linkFinal}`;
+                        } else {
+                            debugMsg += `❌ Nenhum cliente encontrado com personagem "${nomePersonagem}"!\n\n`;
+                            
+                            // Listar descrições de todos os clientes
+                            const clientes = await this.serverQuery.clientList();
+                            const clientesReais = clientes.filter((c: any) => c.type === 0);
+                            
+                            debugMsg += `👥 Clientes e suas descrições:\n`;
+                            for (let i = 0; i < clientesReais.length; i++) {
+                                const c = clientesReais[i];
+                                try {
+                                    const clientInfoArray = await this.serverQuery.clientInfo(c.clid);
+                                    const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
+                                    const desc = clientInfo?.clientDescription || 'Sem descrição';
+                                    debugMsg += `   ${i + 1}. "${c.clientNickname || c.nickname}" → "${desc}"\n`;
+                                } catch (error) {
+                                    debugMsg += `   ${i + 1}. "${c.clientNickname || c.nickname}" → Erro ao obter descrição\n`;
+                                }
+                            }
+                        }
+                        
+                        resposta = debugMsg;
+                    } catch (error: any) {
+                        resposta = `❌ Erro no teste de personagem: ${error.message}`;
+                    }
+                    break;
                 
                 default:
                     // Verificar se é comando !resp
@@ -1086,7 +1177,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     if (this.filasClaimeds[timer.codigo] && this.filasClaimeds[timer.codigo].length > 0) {
                         const fila = this.filasClaimeds[timer.codigo];
                         if (fila.length === 1) {
-                            const clientId = await this.obterClientIdPorNome(fila[0].jogador);
+                            const clientId = await this.obterClientIdPorPersonagem(fila[0].jogador);
                             const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId);
                             const tempoInfo = fila[0].tempoDesejado ? ` (${this.formatarTempo(fila[0].tempoDesejado)})` : '';
                             
@@ -1094,7 +1185,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                             const labelFila = timer.tipo === 'next' ? 'Fila' : 'Next';
                             infoFila = ` ${labelFila}: ${linkJogador}${tempoInfo}`;
                         } else if (fila.length === 2) {
-                            const clientId = await this.obterClientIdPorNome(fila[0].jogador);
+                            const clientId = await this.obterClientIdPorPersonagem(fila[0].jogador);
                             const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId);
                             const tempoInfo = fila[0].tempoDesejado ? ` (${this.formatarTempo(fila[0].tempoDesejado)})` : '';
                             
@@ -1108,11 +1199,13 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     const tempoFormatado = `[color=darkorange][b][${tempoRestante}][/b][/color]`;
                     const nomeFormatado = `[b]${timer.nome}[/b]`;
                     
-                    // Obter ID do cliente para link clicável
-                    const clientId = await this.obterClientIdPorNome(timer.jogador);
+                    // Obter ID do cliente para link clicável (usando nome do personagem)
+                    const clientId = await this.obterClientIdPorPersonagem(timer.jogador);
                     const jogadorFormatado = this.criarLinkJogador(timer.jogador, clientId);
                     
-                    console.log(`🔗 Link final para ${timer.jogador}: ${jogadorFormatado}`);
+                    // Log detalhado sobre o tipo de ID usado
+                    const isUniqueId = clientId && !/^\d+$/.test(clientId);
+                    console.log(`🔗 Link final para personagem ${timer.jogador}: ${jogadorFormatado} (${isUniqueId ? 'Unique ID' : 'ID numérico'})`);
                     
                     descricao += `${timer.codigo} - ${tempoFormatado}${nomeFormatado}: ${jogadorFormatado}${infoFila}
 `;
@@ -1130,7 +1223,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         filasAtivas += `${codigo} - [b]${nomeRespawn}[/b]: 💤 Livre (Fila: `;
                         
                         for (let i = 0; i < fila.length; i++) {
-                            const clientId = await this.obterClientIdPorNome(fila[i].jogador);
+                            const clientId = await this.obterClientIdPorPersonagem(fila[i].jogador);
                             const linkJogador = this.criarLinkJogador(fila[i].jogador, clientId);
                             const tempoInfo = fila[i].tempoDesejado ? ` (${this.formatarTempo(fila[i].tempoDesejado!)})` : '';
                             
@@ -2155,16 +2248,16 @@ ${statusAtual}
         try {
             console.log(`🔍 Buscando cliente para poke: ${nomeJogador}`);
             
-            // Buscar o cliente pelo nome
-            const cliente = await this.buscarClientePorNome(nomeJogador);
+            // Buscar o cliente pela descrição (nome do personagem)
+            const cliente = await this.buscarClientePorDescricao(nomeJogador);
             if (cliente) {
                 const mensagem = `[color=red]⏰ SEU TIMER EXPIROU! ${codigo.toUpperCase()} - ${nomeRespawn}[/color]`;
                 
                 // Tentar poke (clientpoke)
                 await this.serverQuery.clientPoke(cliente.clid, mensagem);
-                console.log(`📢 Poke enviado para ${nomeJogador} (ID: ${cliente.clid}): Timer ${codigo.toUpperCase()} expirou`);
+                console.log(`📢 Poke enviado para ${nomeJogador} (Cliente: ${cliente.clientNickname}, ID: ${cliente.clid}): Timer ${codigo.toUpperCase()} expirou`);
             } else {
-                console.log(`❌ Cliente ${nomeJogador} não encontrado para poke de expiração`);
+                console.log(`❌ Cliente com personagem ${nomeJogador} não encontrado para poke de expiração`);
                 
                 // Log dos clientes conectados para debug
                 const clientes = await this.serverQuery.clientList();
@@ -2179,8 +2272,8 @@ ${statusAtual}
         try {
             console.log(`🔍 Buscando cliente para poke de next: ${nomeJogador}`);
             
-            // Buscar o cliente pelo nome
-            const cliente = await this.buscarClientePorNome(nomeJogador);
+            // Buscar o cliente pela descrição (nome do personagem)
+            const cliente = await this.buscarClientePorDescricao(nomeJogador);
             if (cliente) {
                 const configRespawns = this.obterConfigRespawns();
                 
@@ -2196,9 +2289,9 @@ ${statusAtual}
                 
                 // Tentar poke (clientpoke)
                 await this.serverQuery.clientPoke(cliente.clid, mensagem);
-                console.log(`📢 Poke enviado para ${nomeJogador} (ID: ${cliente.clid}): Assumiu claimed ${codigo.toUpperCase()}`);
+                console.log(`📢 Poke enviado para ${nomeJogador} (Cliente: ${cliente.clientNickname}, ID: ${cliente.clid}): Assumiu claimed ${codigo.toUpperCase()}`);
             } else {
-                console.log(`❌ Cliente ${nomeJogador} não encontrado para poke de next`);
+                console.log(`❌ Cliente com personagem ${nomeJogador} não encontrado para poke de next`);
                 
                 // Log dos clientes conectados para debug
                 const clientes = await this.serverQuery.clientList();
@@ -2213,16 +2306,16 @@ ${statusAtual}
         try {
             console.log(`🔍 Buscando cliente para poke de next expirado: ${nomeJogador}`);
             
-            // Buscar o cliente pelo nome
-            const cliente = await this.buscarClientePorNome(nomeJogador);
+            // Buscar o cliente pela descrição (nome do personagem)
+            const cliente = await this.buscarClientePorDescricao(nomeJogador);
             if (cliente) {
                 const mensagem = `[color=red]❌ SEU NEXT EXPIROU! ${codigo.toUpperCase()} - Você não aceitou a tempo e foi removido da fila[/color]`;
                 
                 // Tentar poke (clientpoke)
                 await this.serverQuery.clientPoke(cliente.clid, mensagem);
-                console.log(`📢 Poke enviado para ${nomeJogador} (ID: ${cliente.clid}): Next ${codigo.toUpperCase()} expirado`);
+                console.log(`📢 Poke enviado para ${nomeJogador} (Cliente: ${cliente.clientNickname}, ID: ${cliente.clid}): Next ${codigo.toUpperCase()} expirado`);
             } else {
-                console.log(`❌ Cliente ${nomeJogador} não encontrado para poke de next expirado`);
+                console.log(`❌ Cliente com personagem ${nomeJogador} não encontrado para poke de next expirado`);
                 
                 // Log dos clientes conectados para debug
                 const clientes = await this.serverQuery.clientList();
@@ -2361,25 +2454,79 @@ Entre em contato com a liderança para isto!
             const clientesReais = clientes.filter((c: any) => c.type === 0);
             console.log(`👥 ${clientesReais.length} clientes reais online (sem ServerQuery)`);
             
-            // Busca exata primeiro
-            let cliente = clientesReais.find((c: any) => {
-                const nomeCliente = c.clientNickname || c.nickname || '';
-                return nomeCliente === nomeJogador;
+            // Log detalhado dos clientes para debug
+            console.log(`📋 Clientes disponíveis para busca:`);
+            clientesReais.forEach((c: any, index: number) => {
+                console.log(`   ${index + 1}. "${c.clientNickname || c.nickname}" (ID: ${c.clid})`);
             });
             
-            // Se não encontrou, busca case-insensitive
+            let cliente = null;
+            
+            // 1. Busca exata (case-sensitive)
+            cliente = clientesReais.find((c: any) => {
+                const nomeCliente = c.clientNickname || c.nickname || '';
+                const match = nomeCliente === nomeJogador;
+                if (match) {
+                    console.log(`✅ Match exato encontrado: "${nomeCliente}" === "${nomeJogador}"`);
+                }
+                return match;
+            });
+            
+            // 2. Busca case-insensitive
             if (!cliente) {
+                console.log(`🔍 Busca exata falhou, tentando case-insensitive...`);
                 cliente = clientesReais.find((c: any) => {
                     const nomeCliente = (c.clientNickname || c.nickname || '').toLowerCase();
-                    return nomeCliente === nomeJogador.toLowerCase();
+                    const nomeJogadorLower = nomeJogador.toLowerCase();
+                    const match = nomeCliente === nomeJogadorLower;
+                    if (match) {
+                        console.log(`✅ Match case-insensitive encontrado: "${nomeCliente}" === "${nomeJogadorLower}"`);
+                    }
+                    return match;
                 });
             }
             
-            // Se ainda não encontrou, busca parcial
+            // 3. Busca parcial - cliente contém jogador
             if (!cliente) {
+                console.log(`🔍 Busca case-insensitive falhou, tentando busca parcial (cliente contém jogador)...`);
                 cliente = clientesReais.find((c: any) => {
                     const nomeCliente = (c.clientNickname || c.nickname || '').toLowerCase();
-                    return nomeCliente.includes(nomeJogador.toLowerCase()) || nomeJogador.toLowerCase().includes(nomeCliente);
+                    const nomeJogadorLower = nomeJogador.toLowerCase();
+                    const match = nomeCliente.includes(nomeJogadorLower);
+                    if (match) {
+                        console.log(`✅ Match parcial encontrado: "${nomeCliente}" contém "${nomeJogadorLower}"`);
+                    }
+                    return match;
+                });
+            }
+            
+            // 4. Busca parcial - jogador contém cliente
+            if (!cliente) {
+                console.log(`🔍 Busca parcial (cliente contém jogador) falhou, tentando busca inversa...`);
+                cliente = clientesReais.find((c: any) => {
+                    const nomeCliente = (c.clientNickname || c.nickname || '').toLowerCase();
+                    const nomeJogadorLower = nomeJogador.toLowerCase();
+                    const match = nomeJogadorLower.includes(nomeCliente);
+                    if (match) {
+                        console.log(`✅ Match parcial inverso encontrado: "${nomeJogadorLower}" contém "${nomeCliente}"`);
+                    }
+                    return match;
+                });
+            }
+            
+            // 5. Busca aproximada (remover espaços e caracteres especiais)
+            if (!cliente) {
+                console.log(`🔍 Busca parcial inversa falhou, tentando busca aproximada...`);
+                const nomeJogadorLimpo = nomeJogador.toLowerCase().replace(/[\s\-_\.]/g, '');
+                cliente = clientesReais.find((c: any) => {
+                    const nomeCliente = (c.clientNickname || c.nickname || '').toLowerCase().replace(/[\s\-_\.]/g, '');
+                    const match = nomeCliente === nomeJogadorLimpo || 
+                                  nomeCliente.includes(nomeJogadorLimpo) || 
+                                  nomeJogadorLimpo.includes(nomeCliente);
+                    if (match) {
+                        console.log(`✅ Match aproximado encontrado: "${nomeCliente}" ≈ "${nomeJogadorLimpo}"`);
+                    }
+                    return match;
                 });
             }
             
@@ -2395,14 +2542,21 @@ Entre em contato com a liderança para isto!
                         if (clientInfo && clientInfo.clientUniqueIdentifier) {
                             cliente.clientUniqueIdentifier = clientInfo.clientUniqueIdentifier;
                             console.log(`✅ Unique ID obtido: ${cliente.clientUniqueIdentifier}`);
+                        } else {
+                            console.log(`⚠️ Unique ID não encontrado no clientInfo`);
                         }
                     } catch (error: any) {
                         console.log(`⚠️ Erro ao obter clientInfo: ${error.message}`);
                     }
                 }
             } else {
-                console.log(`❌ Cliente "${nomeJogador}" não encontrado`);
-                console.log(`📋 Clientes reais disponíveis:`, clientesReais.map((c: any) => `"${c.clientNickname || c.nickname}" (ID: ${c.clid})`).join(', '));
+                console.log(`❌ Cliente "${nomeJogador}" não encontrado após todas as tentativas`);
+                console.log(`📋 Tentativas realizadas:`);
+                console.log(`   1. Busca exata: "${nomeJogador}"`);
+                console.log(`   2. Case-insensitive: "${nomeJogador.toLowerCase()}"`);
+                console.log(`   3. Parcial (cliente contém): Contains "${nomeJogador.toLowerCase()}"`);
+                console.log(`   4. Parcial (jogador contém): "${nomeJogador.toLowerCase()}" contains cliente`);
+                console.log(`   5. Aproximada: "${nomeJogador.toLowerCase().replace(/[\s\-_\.]/g, '')}"`);
             }
             
             return cliente;
@@ -2412,20 +2566,118 @@ Entre em contato com a liderança para isto!
         }
     }
 
+    private async buscarClientePorDescricao(nomePersonagem: string): Promise<any> {
+        try {
+            const clientes = await this.serverQuery.clientList();
+            console.log(`🔍 Procurando cliente por descrição: "${nomePersonagem}"`);
+            console.log(`👥 ${clientes.length} clientes online`);
+            
+            // Filtrar apenas clientes reais (não ServerQuery)
+            const clientesReais = clientes.filter((c: any) => c.type === 0);
+            console.log(`👥 ${clientesReais.length} clientes reais online (sem ServerQuery)`);
+            
+            // Para buscar por descrição, precisamos verificar clientInfo de cada cliente
+            for (const cliente of clientesReais) {
+                try {
+                    console.log(`🔍 Verificando descrição do cliente "${cliente.clientNickname || cliente.nickname}" (ID: ${cliente.clid})...`);
+                    
+                    const clientInfoArray = await this.serverQuery.clientInfo(cliente.clid);
+                    const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
+                    
+                    if (clientInfo && clientInfo.clientDescription) {
+                        const descricao = clientInfo.clientDescription.trim();
+                        console.log(`📝 Descrição encontrada: "${descricao}"`);
+                        
+                        // Verificar match exato
+                        if (descricao === nomePersonagem) {
+                            console.log(`✅ Match exato por descrição: "${descricao}" === "${nomePersonagem}"`);
+                            // Copiar Unique ID para o objeto cliente
+                            cliente.clientUniqueIdentifier = clientInfo.clientUniqueIdentifier;
+                            cliente.clientDescription = descricao;
+                            return cliente;
+                        }
+                        
+                        // Verificar match case-insensitive
+                        if (descricao.toLowerCase() === nomePersonagem.toLowerCase()) {
+                            console.log(`✅ Match case-insensitive por descrição: "${descricao}" ≈ "${nomePersonagem}"`);
+                            cliente.clientUniqueIdentifier = clientInfo.clientUniqueIdentifier;
+                            cliente.clientDescription = descricao;
+                            return cliente;
+                        }
+                        
+                        // Verificar match parcial
+                        if (descricao.toLowerCase().includes(nomePersonagem.toLowerCase()) || 
+                            nomePersonagem.toLowerCase().includes(descricao.toLowerCase())) {
+                            console.log(`✅ Match parcial por descrição: "${descricao}" ≈ "${nomePersonagem}"`);
+                            cliente.clientUniqueIdentifier = clientInfo.clientUniqueIdentifier;
+                            cliente.clientDescription = descricao;
+                            return cliente;
+                        }
+                    } else {
+                        console.log(`📝 Sem descrição para cliente "${cliente.clientNickname || cliente.nickname}"`);
+                    }
+                } catch (error: any) {
+                    console.log(`⚠️ Erro ao verificar clientInfo para ${cliente.clid}: ${error.message}`);
+                    continue;
+                }
+            }
+            
+            console.log(`❌ Nenhum cliente encontrado com descrição "${nomePersonagem}"`);
+            return null;
+        } catch (error: any) {
+            console.log(`❌ Erro ao buscar cliente por descrição ${nomePersonagem}:`, error.message);
+            return null;
+        }
+    }
+
     private async obterClientIdPorNome(nomeJogador: string): Promise<string> {
         try {
             const cliente = await this.buscarClientePorNome(nomeJogador);
-            if (cliente && cliente.clientUniqueIdentifier) {
+            if (!cliente) {
+                console.log(`⚠️ Cliente ${nomeJogador} não encontrado - retornando ID vazio`);
+                return '';
+            }
+            
+            // Prioridade 1: clientUniqueIdentifier (melhor para links)
+            if (cliente.clientUniqueIdentifier) {
                 console.log(`🔍 Unique ID encontrado para ${nomeJogador}: ${cliente.clientUniqueIdentifier}`);
                 return cliente.clientUniqueIdentifier;
             }
-            // Fallback para ID numérico se não tiver Unique Identifier
-            if (cliente && cliente.clid) {
+            
+            // Se não tem Unique ID no clientList, forçar busca via clientInfo
+            if (cliente.clid && !cliente.clientUniqueIdentifier) {
+                console.log(`🔍 Forçando busca de Unique ID via clientInfo para ${nomeJogador} (ID: ${cliente.clid})...`);
+                try {
+                    const clientInfoArray = await this.serverQuery.clientInfo(cliente.clid);
+                    const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
+                    if (clientInfo && clientInfo.clientUniqueIdentifier) {
+                        console.log(`✅ Unique ID obtido via clientInfo para ${nomeJogador}: ${clientInfo.clientUniqueIdentifier}`);
+                        return clientInfo.clientUniqueIdentifier;
+                    } else {
+                        console.log(`⚠️ ClientInfo não retornou Unique ID para ${nomeJogador}`);
+                    }
+                } catch (infoError: any) {
+                    console.log(`❌ Erro ao buscar clientInfo para ${nomeJogador}: ${infoError.message}`);
+                }
+            }
+            
+            // Prioridade 2: ID numérico (funciona como fallback)
+            if (cliente.clid) {
                 console.log(`🔍 ID numérico usado para ${nomeJogador}: ${cliente.clid} (Unique ID não disponível)`);
                 return cliente.clid.toString();
             }
-            console.log(`⚠️ Cliente ${nomeJogador} não encontrado ou sem ID válido`);
-            // Se não encontrar o cliente, retorna uma string vazia para não quebrar o BBCode
+            
+            // Prioridade 3: Tentar outras propriedades de ID
+            if (cliente.clientId) {
+                console.log(`🔍 ClientId alternativo usado para ${nomeJogador}: ${cliente.clientId}`);
+                return cliente.clientId.toString();
+            }
+            
+            // Último recurso: log completo das propriedades do cliente
+            console.log(`⚠️ Nenhum ID válido encontrado para ${nomeJogador}`);
+            console.log(`📋 Propriedades do cliente:`, Object.keys(cliente));
+            console.log(`📋 Valores das propriedades:`, JSON.stringify(cliente, null, 2));
+            
             return '';
         } catch (error: any) {
             console.log(`❌ Erro ao obter ID do cliente ${nomeJogador}:`, error.message);
@@ -2433,17 +2685,78 @@ Entre em contato com a liderança para isto!
         }
     }
 
+    private async obterClientIdPorPersonagem(nomePersonagem: string): Promise<string> {
+        try {
+            console.log(`🔍 Buscando cliente por personagem: "${nomePersonagem}"`);
+            
+            // Buscar cliente pela descrição (nome do personagem)
+            const cliente = await this.buscarClientePorDescricao(nomePersonagem);
+            if (!cliente) {
+                console.log(`⚠️ Nenhum cliente encontrado com personagem "${nomePersonagem}"`);
+                return '';
+            }
+            
+            console.log(`✅ Cliente encontrado: "${cliente.clientNickname || cliente.nickname}" com personagem "${nomePersonagem}"`);
+            
+            // Prioridade 1: clientUniqueIdentifier (melhor para links)
+            if (cliente.clientUniqueIdentifier) {
+                console.log(`🔍 Unique ID encontrado para personagem ${nomePersonagem}: ${cliente.clientUniqueIdentifier}`);
+                return cliente.clientUniqueIdentifier;
+            }
+            
+            // Se não tem Unique ID, forçar busca via clientInfo
+            if (cliente.clid) {
+                console.log(`🔍 Forçando busca de Unique ID via clientInfo para personagem ${nomePersonagem} (Cliente: ${cliente.clientNickname}, ID: ${cliente.clid})...`);
+                try {
+                    const clientInfoArray = await this.serverQuery.clientInfo(cliente.clid);
+                    const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
+                    if (clientInfo && clientInfo.clientUniqueIdentifier) {
+                        console.log(`✅ Unique ID obtido via clientInfo para personagem ${nomePersonagem}: ${clientInfo.clientUniqueIdentifier}`);
+                        return clientInfo.clientUniqueIdentifier;
+                    } else {
+                        console.log(`⚠️ ClientInfo não retornou Unique ID para personagem ${nomePersonagem}`);
+                    }
+                } catch (infoError: any) {
+                    console.log(`❌ Erro ao buscar clientInfo para personagem ${nomePersonagem}: ${infoError.message}`);
+                }
+            }
+            
+            // Fallback para ID numérico
+            if (cliente.clid) {
+                console.log(`🔍 ID numérico usado para personagem ${nomePersonagem}: ${cliente.clid} (Unique ID não disponível)`);
+                return cliente.clid.toString();
+            }
+            
+            console.log(`⚠️ Nenhum ID válido encontrado para personagem ${nomePersonagem}`);
+            return '';
+        } catch (error: any) {
+            console.log(`❌ Erro ao obter ID do cliente por personagem ${nomePersonagem}:`, error.message);
+            return '';
+        }
+    }
+
     private criarLinkJogador(nomeJogador: string, clientId: string): string {
         if (!clientId || clientId === '') {
+            console.log(`🔗 Sem ID para ${nomeJogador}, retornando apenas nome`);
             return nomeJogador; // Retorna apenas o nome se não tiver ID
         }
         
-        console.log(`🔗 Criando link para ${nomeJogador} com Unique ID: ${clientId}`);
+        console.log(`🔗 Criando link para ${nomeJogador} com ID: ${clientId}`);
         
-        // Usar formato URL com Unique Identifier para melhor compatibilidade
-        // O formato client://0/uniqueId funciona melhor que client://0/numericId
-        const linkFinal = `[url=client://0/${clientId}]${nomeJogador}[/url]`;
-        console.log(`🔗 Link final para ${nomeJogador}: ${linkFinal}`);
+        // Determinar se é Unique ID (string longa) ou ID numérico (apenas números)
+        const isNumericId = /^\d+$/.test(clientId);
+        let linkFinal: string;
+        
+        if (isNumericId) {
+            // Para ID numérico, usar formato client simples
+            linkFinal = `[client=${clientId}]${nomeJogador}[/client]`;
+            console.log(`🔗 Link com ID numérico criado: ${linkFinal}`);
+        } else {
+            // Para Unique ID, usar formato URL (melhor compatibilidade)
+            linkFinal = `[url=client://0/${clientId}]${nomeJogador}[/url]`;
+            console.log(`🔗 Link com Unique ID criado: ${linkFinal}`);
+            console.log(`✅ Usando clientUniqueIdentifier para ${nomeJogador} - link clicável otimizado`);
+        }
         
         return linkFinal;
     }
