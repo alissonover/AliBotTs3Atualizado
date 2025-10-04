@@ -330,7 +330,7 @@
   },
   "Uil": {
     "character": "Uil",
-    "lastChecked": "2025-10-03T21:05:37.248Z",
+    "lastChecked": "2025-10-03T22:46:53.671Z",
     "recentDeaths": [
       {
         "time": "2025-09-18T13:17:45Z",
@@ -350,7 +350,7 @@
   },
   "Sin Blade": {
     "character": "Sin Blade",
-    "lastChecked": "2025-10-03T21:05:38.072Z",
+    "lastChecked": "2025-10-03T22:46:54.585Z",
     "recentDeaths": [
       {
         "time": "2025-09-22T16:35:04Z",
@@ -390,8 +390,22 @@
   },
   "Tbombeiw": {
     "character": "Tbombeiw",
-    "lastChecked": "2025-10-03T21:05:27.406Z",
+    "lastChecked": "2025-10-03T22:46:44.672Z",
     "recentDeaths": [
+      {
+        "time": "2025-10-03T21:10:54Z",
+        "level": 13,
+        "killers": [
+          {
+            "name": "rat",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 13 by rat."
+      },
       {
         "time": "2025-10-03T20:54:23Z",
         "level": 14,
@@ -447,26 +461,12 @@
         ],
         "assists": [],
         "reason": "Died at Level 15 by rat."
-      },
-      {
-        "time": "2025-10-03T19:52:14Z",
-        "level": 16,
-        "killers": [
-          {
-            "name": "cave rat",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 16 by cave rat."
       }
     ]
   },
   "Celsiin": {
     "character": "Celsiin",
-    "lastChecked": "2025-10-03T21:05:31.134Z",
+    "lastChecked": "2025-10-03T22:46:48.448Z",
     "recentDeaths": [
       {
         "time": "2025-10-03T00:15:42Z",
@@ -514,7 +514,7 @@
   },
   "Red Vesgo": {
     "character": "Red Vesgo",
-    "lastChecked": "2025-10-03T21:05:33.208Z",
+    "lastChecked": "2025-10-03T22:46:50.269Z",
     "recentDeaths": [
       {
         "time": "2025-09-10T12:50:10Z",
@@ -534,7 +534,7 @@
   },
   "Vic In Debit": {
     "character": "Vic In Debit",
-    "lastChecked": "2025-10-03T21:05:34.030Z",
+    "lastChecked": "2025-10-03T22:46:50.890Z",
     "recentDeaths": [
       {
         "time": "2025-09-19T21:09:53Z",
@@ -583,6 +583,74 @@
         ],
         "assists": [],
         "reason": "Died at Level 1195 by animated feather."
+      }
+    ]
+  },
+  "Renato Winchester": {
+    "character": "Renato Winchester",
+    "lastChecked": "2025-10-03T22:46:45.931Z",
+    "recentDeaths": [
+      {
+        "time": "2025-10-03T21:03:00Z",
+        "level": 1177,
+        "killers": [
+          {
+            "name": "burning book",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1177 by burning book."
+      }
+    ]
+  },
+  "Oswaldo Toxico": {
+    "character": "Oswaldo Toxico",
+    "lastChecked": "2025-10-03T22:46:52.160Z",
+    "recentDeaths": [
+      {
+        "time": "2025-10-03T22:31:20Z",
+        "level": 2023,
+        "killers": [
+          {
+            "name": "Oswaldo Toxico",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 2023 by Oswaldo Toxico."
+      },
+      {
+        "time": "2025-09-15T22:20:35Z",
+        "level": 2004,
+        "killers": [
+          {
+            "name": "agony",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 2004 by agony."
+      },
+      {
+        "time": "2025-09-13T01:18:33Z",
+        "level": 2004,
+        "killers": [
+          {
+            "name": "agony",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 2004 by agony."
       }
     ]
   }

@@ -96,6 +96,9 @@ class SistemaHibridoOptimizado {
     private deathListEntries: DeathListEntry[] = []; // Lista de mortes do dia
     private ultimoResetDeathlist: Date = new Date(); // Última vez que a lista foi resetada
     private intervalResetDeathlist: NodeJS.Timeout | null = null; // Timer para reset diário às 06:00
+    
+    // Configurações de monitoramento de mortes
+    private readonly LIMITE_TEMPO_MORTE_MINUTOS = 20; // Só notificar mortes até X minutos atrás
     private deathMonitorInterval: NodeJS.Timeout | null = null; // Timer para verificaÃ§Ã£o de mortes
 
     constructor() {
@@ -3691,14 +3694,27 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
             };
 
             const ultimaVerificacao = new Date(cacheData.lastChecked);
+            const agora = new Date();
+            const limiteTempoMorte = this.LIMITE_TEMPO_MORTE_MINUTOS * 60 * 1000; // Converter minutos para millisegundos
             const novasMortes: PlayerDeath[] = [];
 
-            // Verificar mortes que aconteceram após a última verificação
+            console.log(`🕐 Verificando mortes de ${nomePersonagem} - Limite: ${this.LIMITE_TEMPO_MORTE_MINUTOS} minutos`);
+
+            // Verificar mortes que aconteceram após a última verificação E dentro do limite de tempo
             for (const death of deaths) {
                 const timeString = death.time;
                 const deathDate = this.parseDeathTime(timeString);
                 
-                if (deathDate > ultimaVerificacao) {
+                // Calcular tempo desde a morte
+                const tempoDesDaMorte = agora.getTime() - deathDate.getTime();
+                const minutosDesDaMorte = Math.round(tempoDesDaMorte / 60000);
+                
+                // Verificar se a morte:
+                // 1. Aconteceu após a última verificação
+                // 2. Aconteceu dentro do limite de tempo configurado
+                if (deathDate > ultimaVerificacao && tempoDesDaMorte <= limiteTempoMorte) {
+                    console.log(`💀 ✅ Morte válida: ${response.data.character.character.name} - ${minutosDesDaMorte} min atrás (dentro do limite de ${this.LIMITE_TEMPO_MORTE_MINUTOS} min)`);
+                    
                     novasMortes.push({
                         character: {
                             name: response.data.character.character.name,
@@ -3708,6 +3724,12 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
                         time: timeString,
                         reason: death.reason || 'Causa desconhecida'
                     });
+                } else if (deathDate > ultimaVerificacao && tempoDesDaMorte > limiteTempoMorte) {
+                    // Morte nova mas fora do limite de tempo
+                    console.log(`💀 ⏰ Morte ignorada (fora do limite): ${response.data.character.character.name} - ${minutosDesDaMorte} min atrás (limite: ${this.LIMITE_TEMPO_MORTE_MINUTOS} min)`);
+                } else if (deathDate <= ultimaVerificacao) {
+                    // Morte já verificada anteriormente
+                    console.log(`💀 📋 Morte já conhecida: ${response.data.character.character.name} - ${minutosDesDaMorte} min atrás`);
                 }
             }
 
@@ -3728,12 +3750,40 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
 
     private parseDeathTime(timeString: string): Date {
         try {
-            // Formato esperado: "Dec 25 2023, 14:30:45 CET"
-            // Vamos tentar parsear o formato da API do Tibia
-            const cleanTime = timeString.replace(' CET', '').replace(' CEST', '');
-            return new Date(cleanTime);
+            // Formato esperado da API TibiaData: "Dec 25 2023, 14:30:45 CET"
+            console.log(`🕐 Parseando tempo de morte: "${timeString}"`);
+            
+            // Remover timezone para parsing mais confiável
+            let cleanTime = timeString.replace(/ CET$/, '').replace(/ CEST$/, '');
+            
+            // Tentar diferentes formatos
+            let deathDate: Date;
+            
+            // Primeiro tentar parsing direto
+            deathDate = new Date(cleanTime);
+            
+            // Se não funcionou, tentar com formatos alternativos
+            if (isNaN(deathDate.getTime())) {
+                // Tentar formato alternativo: "Dec 25, 2023 14:30:45"
+                cleanTime = cleanTime.replace(/(\w{3} \d{1,2}) (\d{4}),/, '$1, $2');
+                deathDate = new Date(cleanTime);
+            }
+            
+            // Validar se a data faz sentido (não muito no futuro, não muito no passado)
+            const agora = new Date();
+            const umAnoAtras = new Date(agora.getTime() - 365 * 24 * 60 * 60 * 1000);
+            const umaHoraNaFrente = new Date(agora.getTime() + 60 * 60 * 1000);
+            
+            if (isNaN(deathDate.getTime()) || deathDate < umAnoAtras || deathDate > umaHoraNaFrente) {
+                console.log(`⚠️ Data de morte inválida ou fora do range válido: ${timeString}`);
+                return new Date(0);
+            }
+            
+            console.log(`✅ Data de morte parseada: ${deathDate.toISOString()} (${Math.round((agora.getTime() - deathDate.getTime()) / 60000)} min atrás)`);
+            return deathDate;
+            
         } catch (error: any) {
-            console.log('⚠️ Erro ao parsear tempo de morte:', timeString);
+            console.log(`❌ Erro ao parsear tempo de morte "${timeString}":`, error.message);
             return new Date(0);
         }
     }

@@ -1,7 +1,25 @@
 {
   "dataReset": "2025-10-03T20:26:11.630Z",
-  "totalMortes": 10,
+  "totalMortes": 12,
   "mortes": [
+    {
+      "nome": "Oswaldo Toxico",
+      "level": 2020,
+      "vocacao": "Royal Paladin",
+      "horario": "03/10/2025 19:31",
+      "causa": "Killed at Level 2023 by Oswaldo Toxico.",
+      "tipo": "Friend",
+      "timestamp": "2025-10-03T22:46:52.280Z"
+    },
+    {
+      "nome": "Renato Winchester",
+      "level": 1177,
+      "vocacao": "Elite Knight",
+      "horario": "03/10/2025 18:03",
+      "causa": "Died at Level 1177 by burning book.",
+      "tipo": "Friend",
+      "timestamp": "2025-10-03T21:12:17.942Z"
+    },
     {
       "nome": "Vic In Debit",
       "level": 1202,
