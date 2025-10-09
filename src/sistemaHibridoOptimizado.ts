@@ -101,6 +101,11 @@ class SistemaHibridoOptimizado {
     private readonly LIMITE_TEMPO_MORTE_MINUTOS = 20; // Só notificar mortes até X minutos atrás
     private deathMonitorInterval: NodeJS.Timeout | null = null; // Timer para verificaÃ§Ã£o de mortes
 
+    // CACHE DE PERFORMANCE PARA CLAIMEDS
+    private cacheClienteIds: Map<string, string> = new Map(); // personagem -> clientId
+    private ultimaAtualizacaoCache: number = 0;
+    private readonly CACHE_VALIDADE_MS = 30000; // Cache válido por 30 segundos
+
     constructor() {
         this.gerenciadorConexao = GerenciadorConexaoHibrida.obterInstancia();
         this.carregarRespawnsPersistidos();
@@ -1025,6 +1030,11 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         }
 
         try {
+            const inicioAtualizacao = Date.now();
+            
+            // STEP 1: Atualizar cache de clientes primeiro (super rápido)
+            await this.atualizarCacheClientesRapido();
+            
             const claimedChannelId = "7"; // ID do canal Claimeds
             
             // Construir descrição base do canal
@@ -1036,7 +1046,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
 📋 Use: [b]!resp [código] [tempo][/b] - Iniciar timer
 🎯 Use: [b]!next [código] [tempo][/b] - Entrar na fila (máx 3 pessoas)
         ⚠️ [i]Tempo mínimo: 01:00 | Incrementos: 15min | Máx: Tier1/2=02:30, Tier3=03:15[/i]
-        ⚠️ [i]Obs: Caso não informe tempo, resps Tier 1 e 2  serão 2:30, Tier 3 serão 03:15 por padrão![/i]
+        ⚠️ [i]Obs: Caso não informe tempo, resps Tier 1 e 2  serão 02:30, Tier 3 serão 03:15 por padrão![/i]
 🚪 Use: [b]!leave [código][/b] - Sair do respawn
 📊 Use: [b]!fila [código][/b] - Ver timer específico
 💡 Use: [b]!help[/b] - Lista de comandos
@@ -1077,7 +1087,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                 // Ordenar timers por tempo restante (menor primeiro)
                 todosTimers.sort((a, b) => a.tempoRestante - b.tempoRestante);
                 
-                // Usar for...of para aguardar corretamente as chamadas assíncronas
+                // STEP 2: Processar timers usando cache (ultra rápido)
                 for (const timer of todosTimers) {
                     const tempoRestante = this.formatarTempo(timer.tempoRestante);
                     
@@ -1086,35 +1096,36 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     if (this.filasClaimeds[timer.codigo] && this.filasClaimeds[timer.codigo].length > 0) {
                         const fila = this.filasClaimeds[timer.codigo];
                         if (fila.length === 1) {
-                            const clientId = await this.obterClientIdPorPersonagem(fila[0].jogador);
+                            // Usar cache em vez de busca assíncrona
+                            const clientId = this.obterClientIdDoCache(fila[0].jogador) || fila[0].jogador;
                             const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId);
                             const tempoInfo = fila[0].tempoDesejado ? ` (${this.formatarTempo(fila[0].tempoDesejado)})` : '';
                             
-                            // Se é um next timer, a fila mostra "Fila:", se é claimed normal, mostra "Next:"
-                            const labelFila = timer.tipo === 'next' ? 'Fila' : 'Next';
+                            const labelFila = '| Next';
                             infoFila = ` ${labelFila}: ${linkJogador}${tempoInfo}`;
                         } else if (fila.length === 2) {
-                            const clientId = await this.obterClientIdPorPersonagem(fila[0].jogador);
+                            // Usar cache em vez de busca assíncrona
+                            const clientId = this.obterClientIdDoCache(fila[0].jogador) || fila[0].jogador;
                             const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId);
                             const tempoInfo = fila[0].tempoDesejado ? ` (${this.formatarTempo(fila[0].tempoDesejado)})` : '';
                             
-                            // Se é um next timer, a fila mostra "Fila:", se é claimed normal, mostra "Next:"
-                            const labelFila = timer.tipo === 'next' ? 'Fila' : 'Next';
+                            const labelFila = '| Next';
                             infoFila = ` ${labelFila}: ${linkJogador}${tempoInfo} +1`;
                         }
                     }
                     
                     // Formato com BBCode padrão do TeamSpeak 3
-                    const tempoFormatado = `[color=darkorange][b][${tempoRestante}][/b][/color]`;
+                    let tempoFormatado: string;
+                    if (timer.tipo === 'next') {
+                        tempoFormatado = `[color=darkblue][b][${tempoRestante}][/b][/color]`;
+                    } else {
+                        tempoFormatado = `[color=darkorange][b][${tempoRestante}][/b][/color]`;
+                    }
                     const nomeFormatado = `[b]${timer.nome}[/b]`;
                     
-                    // Obter ID do cliente para link clicável (usando nome do personagem)
-                    const clientId = await this.obterClientIdPorPersonagem(timer.jogador);
+                    // STEP 3: Usar cache em vez de busca assíncrona (mega rápido!)
+                    const clientId = this.obterClientIdDoCache(timer.jogador) || timer.jogador;
                     const jogadorFormatado = this.criarLinkJogador(timer.jogador, clientId);
-                    
-                    // Log detalhado sobre o tipo de ID usado
-                    const isUniqueId = clientId && !/^\d+$/.test(clientId);
-                    console.log(`🔗 Link final para personagem ${timer.jogador}: ${jogadorFormatado} (${isUniqueId ? 'Unique ID' : 'ID numérico'})`);
                     
                     descricao += `${timer.codigo} - ${tempoFormatado}${nomeFormatado}: ${jogadorFormatado}${infoFila}
 `;
@@ -1122,7 +1133,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             }
             
             if (todosTimers.length === 0) {
-                // Verificar se há filas ativas mesmo sem timers
+                // Verificar se há filas ativas mesmo sem timers (usando cache)
                 let filasAtivas = '';
                 for (const [codigo, fila] of Object.entries(this.filasClaimeds)) {
                     if (fila && fila.length > 0) {
@@ -1132,7 +1143,8 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         filasAtivas += `${codigo} - [b]${nomeRespawn}[/b]: 💤 Livre (Fila: `;
                         
                         for (let i = 0; i < fila.length; i++) {
-                            const clientId = await this.obterClientIdPorPersonagem(fila[i].jogador);
+                            // Usar cache em vez de busca assíncrona
+                            const clientId = this.obterClientIdDoCache(fila[i].jogador) || fila[i].jogador;
                             const linkJogador = this.criarLinkJogador(fila[i].jogador, clientId);
                             const tempoInfo = fila[i].tempoDesejado ? ` (${this.formatarTempo(fila[i].tempoDesejado!)})` : '';
                             
@@ -1162,13 +1174,14 @@ ${filasAtivas}`;
 🤖 Sistema: AliBot 🧙‍♂️
 ⚡ Atualização: Automática a cada minuto`;
             
-            // Atualizar canal
+            // STEP 4: Atualizar canal (único await restante)
             await this.serverQuery.channelEdit(claimedChannelId, {
                 channel_description: descricao
             });
             
+            const tempoTotal = Date.now() - inicioAtualizacao;
             const statusTimers = timersAtivos.length > 0 ? `${timersAtivos.length} timers ativos` : 'sem timers';
-            console.log(`⏰ Canal Claimeds atualizado (${statusTimers})`);
+            console.log(`⚡ Canal Claimeds atualizado em ${tempoTotal}ms (${statusTimers})`);
             
         } catch (error: any) {
             console.log('❌ Erro ao atualizar canal Claimeds:', error.message);
@@ -1228,6 +1241,80 @@ ${filasAtivas}`;
     }
 
     // ===== FUNÇÕES AUXILIARES =====
+    
+    // SISTEMA DE CACHE ULTRA-RÁPIDO PARA CLAIMEDS
+    private async atualizarCacheClientesRapido(): Promise<void> {
+        const agora = Date.now();
+        
+        // Usar cache se ainda está válido
+        if (agora - this.ultimaAtualizacaoCache < this.CACHE_VALIDADE_MS) {
+            return;
+        }
+        
+        console.log('⚡ Atualizando cache de clientes para performance máxima...');
+        const inicioCache = Date.now();
+        
+        try {
+            // Buscar todos os clientes de uma vez
+            const clientes = await this.serverQuery.clientList();
+            const clientesReais = clientes.filter((c: any) => c.type === 0);
+            
+            // Buscar todas as informações em paralelo usando Promise.all
+            const clientesInfoPromises = clientesReais.map(async (cliente: any) => {
+                try {
+                    const clientInfoArray = await this.serverQuery.clientInfo(cliente.clid);
+                    const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
+                    return {
+                        nickname: cliente.clientNickname || cliente.nickname,
+                        clid: cliente.clid,
+                        uniqueId: clientInfo?.clientUniqueIdentifier,
+                        description: clientInfo?.clientDescription || ''
+                    };
+                } catch (error) {
+                    return null;
+                }
+            });
+            
+            // Aguardar todas as promises em paralelo
+            const clientesCompletos = await Promise.all(clientesInfoPromises);
+            
+            // Atualizar cache
+            this.cacheClienteIds.clear();
+            
+            for (const cliente of clientesCompletos) {
+                if (!cliente) continue;
+                
+                // Cache por nickname
+                if (cliente.nickname) {
+                    const clientId = cliente.uniqueId || cliente.clid.toString();
+                    this.cacheClienteIds.set(cliente.nickname, clientId);
+                }
+                
+                // Cache por descrição (personagem)
+                if (cliente.description) {
+                    const clientId = cliente.uniqueId || cliente.clid.toString();
+                    this.cacheClienteIds.set(cliente.description, clientId);
+                }
+            }
+            
+            this.ultimaAtualizacaoCache = agora;
+            const tempoCache = Date.now() - inicioCache;
+            console.log(`⚡ Cache atualizado em ${tempoCache}ms - ${this.cacheClienteIds.size} entradas`);
+            
+        } catch (error: any) {
+            console.log('❌ Erro ao atualizar cache:', error.message);
+        }
+    }
+    
+    private obterClientIdDoCache(personagem: string): string | null {
+        return this.cacheClienteIds.get(personagem) || null;
+    }
+    
+    // Invalidar cache para forçar atualização rápida após comandos
+    private invalidarCache(): void {
+        this.ultimaAtualizacaoCache = 0;
+        console.log('🔄 Cache invalidado - próxima atualização será forçada');
+    }
 
     private async buscarMembrosOnlineTibia(): Promise<any[]> {
         try {
@@ -1539,7 +1626,8 @@ ${filasAtivas}`;
                 this.iniciarSistemaTimers();
             }
 
-            // Atualizar canal Claimeds imediatamente
+            // Atualizar canal Claimeds imediatamente (invalidar cache para máxima velocidade)
+            this.invalidarCache();
             await this.atualizarCanalClaimeds();
 
             const tempoFormatado = this.formatarTempo(tempoParaUsar!);
