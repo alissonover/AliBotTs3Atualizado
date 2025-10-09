@@ -1601,11 +1601,7 @@ ${filasAtivas}`;
                 return `❌ Respawn já tem claimed ativo!
 ⚔️ ${timerAtivo.nome} (${codigo.toUpperCase()})
 👤 Jogador: ${timerAtivo.jogador}
-⏰ Tempo restante: ${this.formatarTempo(timerAtivo.tempoRestante)}
-
-💡 Opções disponíveis:
-🔄 Use !next ${codigo} [tempo] para entrar na fila
-📋 Use !claimeds para ver todos os ativos`;
+⏰ Tempo restante: ${this.formatarTempo(timerAtivo.tempoRestante)}`;
             }
 
             // Criar timer
@@ -1634,11 +1630,7 @@ ${filasAtivas}`;
             const tipoAceitacao = ehAceitacaoNext ? ' (Next aceito!)' : '';
             const tipoTempo = (partes.length < 3 && !ehAceitacaoNext) ? ' (Tempo padrão aplicado)' : '';
             
-            return `✅ Timer iniciado!${tipoAceitacao}${tipoTempo}
-⚔️ Respawn: ${timer.nome} (${codigo.toUpperCase()})
-⏰ Tempo: ${tempoFormatado}
-👤 Jogador: ${timer.jogador}
-🔄 Canal Claimeds atualizado automaticamente`;
+            return `✅ Timer iniciado!${tipoAceitacao}${tipoTempo} ⚔️ Respawn: ${timer.nome} (${codigo.toUpperCase()}) ⏰ Tempo: ${tempoFormatado}`;
 
         } catch (error: any) {
             return `❌ Erro ao processar comando !resp: ${error.message}`;
@@ -1675,9 +1667,7 @@ ${filasAtivas}`;
             const partes = comando.trim().split(' ');
             
             if (partes.length < 2) {
-                return `❌ Formato incorreto!
-📋 Use: !leave [código]
-💡 Exemplo: !leave f4`;
+                return `❌ Formato incorreto! 📋 Use: !leave [código] Exemplo: !leave f4`;
             }
 
             const codigo = partes[1].toLowerCase();
@@ -1692,8 +1682,7 @@ ${filasAtivas}`;
             // Verificar se o código existe na configuração
             const configRespawns = this.obterConfigRespawns();
             if (!configRespawns[codigo]) {
-                return `❌ Código "${codigo.toUpperCase()}" não existe!
-📋 Use !help para ver códigos disponíveis`;
+                return `❌ Código "${codigo.toUpperCase()}" não existe!📋 Use !help para ver códigos disponíveis`;
             }
 
             let encontrouJogador = false;
@@ -1708,7 +1697,7 @@ ${filasAtivas}`;
                     delete this.timersRespawn[codigo];
                     encontrouJogador = true;
                     tipoRemocao = 'timer';
-                    mensagemSucesso = `✅ Você saiu do respawn **${configRespawns[codigo]}**!`;
+                    mensagemSucesso = `✅ Você saiu do respawn ${configRespawns[codigo]}!`;
                     
                     // Verificar se há próximo na fila para assumir
                     if (this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0) {
@@ -1743,7 +1732,7 @@ ${filasAtivas}`;
                     delete this.nextTimers[codigo];
                     encontrouJogador = true;
                     tipoRemocao = 'next';
-                    mensagemSucesso = `✅ Você saiu do next timer **${configRespawns[codigo]}**!`;
+                    mensagemSucesso = `✅ Você saiu do next timer ${configRespawns[codigo]}!`;
                     
                     // Verificar se há próximo na fila
                     if (this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0) {
@@ -1788,15 +1777,14 @@ ${filasAtivas}`;
             }
 
             if (!encontrouJogador) {
-                return `❌ Você não está participando do respawn **${configRespawns[codigo]}**!
+                return `❌ Você não está participando do respawn ${configRespawns[codigo]}!
 � Use !fila ${codigo} para ver o status atual`;
             }
 
             // Atualizar canal
             await this.atualizarCanalClaimeds();
 
-            return mensagemSucesso + `
-🔄 Canal Claimeds atualizado`;
+            return '';
 
         } catch (error: any) {
             console.log('❌ Erro no comando leave:', error.message);
@@ -3024,9 +3012,7 @@ Entre em contato com a liderança para isto!
             
             if (novosHunteds.length === 1) {
                 const hunted = novosHunteds[0];
-                mensagem += `🎯 [b]${hunted.name}[/b] acabou de ficar online!
-📊 Level: ${hunted.level || '?'}
-⚔️ Vocação: ${hunted.vocation || 'Unknown'}
+                mensagem += `🎯 [b]${hunted.name}[/b] acabou de ficar online! 📊 Level: ${hunted.level || '?'} ⚔️ Vocação: ${hunted.vocation || 'Unknown'}
 ⚠️ [color=orange]Amassa ele bro! 🚜[/color]`;
             } else {
                 mensagem += `🎯 [b]${novosHunteds.length} hunteds[/b] acabaram de ficar online:
@@ -3040,11 +3026,6 @@ Entre em contato com a liderança para isto!
                 mensagem += `
 ⚠️ [color=orange]Amassa ele bro! 🚜[/color]`;
             }
-            
-            mensagem += `
-
-🔍 Use !hunteds para ver lista completa
-🤖 Sistema: AliBot - Monitor de Hunteds`;
 
             // Enviar mensagem privada para cada cliente conectado
             const promises = realClients.map(async (client: any) => {
@@ -3400,7 +3381,7 @@ Bom Game! 🎯✨`;
                 await this.serverQuery.sendTextMessage(remetente.clid, 1, mensagemBoasVindas);
                 console.log(`🤖 Chat privado aberto com ${nomeJogador} (ID: ${remetente.clid})`);
                 
-                return `✅ Chat privado aberto! Verifique sua aba de mensagens privadas 💬`;
+                return '';
                 
             } catch (error: any) {
                 console.log(`❌ Erro ao abrir chat privado com ${nomeJogador}:`, error.message);
