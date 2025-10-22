@@ -3553,13 +3553,7 @@ Bom Game! 🎯✨`;
             
             resposta += `� Notificações: ${this.notificacoesHuntedsAtivas ? '[color=green]ATIVAS[/color]' : '[color=red]DESATIVADAS[/color]'}
 📡 Fonte: TibiaData v4
-🔄 Atualização automática: A cada 1 minuto
-
-💡 [b]COMANDOS DISPONÍVEIS:[/b]
-📋 !addhunted [nome] - Adicionar hunted([i]apenas lideres ou adms podem usar[/i])
-🗑️ !delhunted [nome] - Remover hunted([i]apenas lideres ou adms podem usar[/i])
-🔔 !alertas on/off - Ativar/desativar notificações([i]apenas lideres ou adms podem usar[/i])
-📊 !alertas - Ver status das notificações`;
+🔄 Atualização automática: A cada 1 minuto`;
 
             return resposta;
 
