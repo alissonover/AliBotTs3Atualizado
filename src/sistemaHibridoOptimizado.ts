@@ -2735,6 +2735,123 @@ Entre em contato com a liderança para isto!
         return linkFinal;
     }
 
+    private async verificarPermissaoAdmin(remetente: any): Promise<{permitido: boolean, erro?: string}> {
+        try {
+            const clientId = remetente.invokerid || remetente.clid;
+            
+            if (!clientId) {
+                console.log('❌ ClientId não encontrado para verificação de permissão');
+                return {
+                    permitido: false,
+                    erro: '❌ Não foi possível identificar o cliente'
+                };
+            }
+
+            console.log(`🔐 Verificando permissões do cliente ID: ${clientId}`);
+
+            // Verificar se o serverQuery está disponível
+            if (!this.serverQuery) {
+                console.log('❌ ServerQuery não está conectado');
+                return {
+                    permitido: false,
+                    erro: '❌ Conexão com TeamSpeak indisponível'
+                };
+            }
+
+            try {
+                // Obter informações dos server groups do cliente
+                const clientInfoArray = await this.serverQuery.clientInfo(clientId);
+                const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
+                
+                console.log(`📋 ClientInfo obtido para verificação de permissão:`, {
+                    clientNickname: clientInfo?.clientNickname,
+                    clid: clientInfo?.clid,
+                    clientServergroups: clientInfo?.clientServergroups
+                });
+
+                // Verificar se tem a propriedade dos server groups
+                if (!clientInfo?.clientServergroups) {
+                    console.log('⚠️ Cliente não tem informações de server groups');
+                    return {
+                        permitido: false,
+                        erro: '❌ Você não tem permissão para executar este comando'
+                    };
+                }
+
+                // Obter lista de todos os server groups para encontrar o ID do grupo "Adestrador de Bot"
+                const serverGroups = await this.serverQuery.serverGroupList();
+                console.log(`📋 Server Groups disponíveis:`, serverGroups.map((g: any) => `${g.name} (ID: ${g.sgid})`));
+
+                // Procurar o grupo "Adestrador de Bot"
+                const grupoAdmin = serverGroups.find((g: any) => 
+                    g.name && g.name.toLowerCase() === 'adestrador de bot'
+                );
+
+                if (!grupoAdmin) {
+                    console.log('⚠️ Server Group "Adestrador de Bot" não encontrado no servidor');
+                    return {
+                        permitido: false,
+                        erro: '❌ Grupo de administração não configurado no servidor'
+                    };
+                }
+
+                console.log(`✅ Server Group "Adestrador de Bot" encontrado com ID: ${grupoAdmin.sgid}`);
+
+                // Verificar se o cliente pertence ao grupo
+                // clientServergroups pode ser string, array ou number
+                let clientGroups: string[] = [];
+                
+                if (Array.isArray(clientInfo.clientServergroups)) {
+                    // Se já for array
+                    clientGroups = clientInfo.clientServergroups.map((id: any) => id.toString().trim());
+                } else if (typeof clientInfo.clientServergroups === 'string') {
+                    // Se for string, fazer split
+                    clientGroups = clientInfo.clientServergroups.split(',').map((id: string) => id.trim());
+                } else if (typeof clientInfo.clientServergroups === 'number') {
+                    // Se for número, converter para string
+                    clientGroups = [clientInfo.clientServergroups.toString()];
+                } else {
+                    console.log(`⚠️ Tipo inesperado de clientServergroups: ${typeof clientInfo.clientServergroups}`);
+                    console.log(`📋 Valor: ${JSON.stringify(clientInfo.clientServergroups)}`);
+                }
+                
+                console.log(`👥 Grupos do cliente:`, clientGroups);
+                
+                const pertenceAoGrupo = clientGroups.includes(grupoAdmin.sgid.toString());
+
+                if (pertenceAoGrupo) {
+                    console.log(`✅ Cliente ${clientInfo.clientNickname} tem permissão de administrador`);
+                    return {
+                        permitido: true
+                    };
+                } else {
+                    console.log(`❌ Cliente ${clientInfo.clientNickname} NÃO tem permissão de administrador`);
+                    return {
+                        permitido: false,
+                        erro: `❌ Você não tem permissão para executar este comando!
+
+🔒 Este comando requer o Server Group: [b]Adestrador de Bot[/b]
+💡 Entre em contato com um administrador se precisar de acesso`
+                    };
+                }
+
+            } catch (apiError: any) {
+                console.log('❌ Erro ao verificar permissões via API:', apiError.message);
+                return {
+                    permitido: false,
+                    erro: `❌ Erro ao verificar permissões: ${apiError.message}`
+                };
+            }
+
+        } catch (error: any) {
+            console.log(`❌ Erro ao verificar permissão de admin:`, error.message);
+            return {
+                permitido: false,
+                erro: `❌ Erro ao verificar permissões: ${error.message}`
+            };
+        }
+    }
+
     private obterTempopadrao(codigo: string): number {
         const nomeRespawn = this.obterNomeRespawn(codigo).toLowerCase();
         
@@ -3210,6 +3327,12 @@ Entre em contato com a liderança para isto!
 
     private async processarComandoAddResp(comando: string, remetente: any): Promise<string> {
         try {
+            // Verificar permissão de administrador
+            const permissao = await this.verificarPermissaoAdmin(remetente);
+            if (!permissao.permitido) {
+                return permissao.erro || '❌ Você não tem permissão para executar este comando';
+            }
+
             const partes = comando.trim().split(' ');
             
             if (partes.length < 3) {
@@ -3276,6 +3399,12 @@ Entre em contato com a liderança para isto!
 
     private async processarComandoDelResp(comando: string, remetente: any): Promise<string> {
         try {
+            // Verificar permissão de administrador
+            const permissao = await this.verificarPermissaoAdmin(remetente);
+            if (!permissao.permitido) {
+                return permissao.erro || '❌ Você não tem permissão para executar este comando';
+            }
+
             const partes = comando.trim().split(' ');
             
             if (partes.length < 2) {
@@ -3396,6 +3525,12 @@ Bom Game! 🎯✨`;
 
     private async processarComandoAddHunted(comando: string, remetente: any): Promise<string> {
         try {
+            // Verificar permissão de administrador
+            const permissao = await this.verificarPermissaoAdmin(remetente);
+            if (!permissao.permitido) {
+                return permissao.erro || '❌ Você não tem permissão para executar este comando';
+            }
+
             const partes = comando.trim().split(' ');
             
             if (partes.length < 2) {
@@ -3447,6 +3582,12 @@ Bom Game! 🎯✨`;
 
     private async processarComandoDelHunted(comando: string, remetente: any): Promise<string> {
         try {
+            // Verificar permissão de administrador
+            const permissao = await this.verificarPermissaoAdmin(remetente);
+            if (!permissao.permitido) {
+                return permissao.erro || '❌ Você não tem permissão para executar este comando';
+            }
+
             const partes = comando.trim().split(' ');
             
             if (partes.length < 2) {
@@ -3622,6 +3763,12 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
 
     private async processarComandoAddFriend(comando: string, remetente: any): Promise<string> {
         try {
+            // Verificar permissão de administrador
+            const permissao = await this.verificarPermissaoAdmin(remetente);
+            if (!permissao.permitido) {
+                return permissao.erro || '❌ Você não tem permissão para executar este comando';
+            }
+
             const partes = comando.trim().split(' ');
             
             if (partes.length < 2) {
@@ -3669,6 +3816,12 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
 
     private async processarComandoDelFriend(comando: string, remetente: any): Promise<string> {
         try {
+            // Verificar permissão de administrador
+            const permissao = await this.verificarPermissaoAdmin(remetente);
+            if (!permissao.permitido) {
+                return permissao.erro || '❌ Você não tem permissão para executar este comando';
+            }
+
             const partes = comando.trim().split(' ');
             
             if (partes.length < 2) {
