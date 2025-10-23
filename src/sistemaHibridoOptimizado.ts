@@ -17,6 +17,7 @@ interface RespawnTimer {
     iniciadoEm: Date;
     duracaoTotal: number; // em segundos
     ultimoMinutoProcessado: number; // para controlar decrementos individuais
+    pausado?: boolean; // indica se o timer está pausado
 }
 
 interface FilaItem {
@@ -33,6 +34,7 @@ interface NextTimer {
     iniciadoEm: Date;
     tempoDesejado?: number; // tempo que o jogador quer usar quando aceitar
     ultimoMinutoProcessado: number; // para controlar decrementos individuais
+    pausado?: boolean; // indica se o timer está pausado
 }
 
 interface FilasAtivas {
@@ -466,16 +468,33 @@ class SistemaHibridoOptimizado {
 !users - Usuários online
 !time - Horário atual
 
-🔧 Comandos de Administração:
+⚔️ Comandos de Claimed:
+!resp [código] [tempo] - Iniciar claimed
+!next [código] [tempo] - Entrar na fila
+!leave [código] - Sair do claimed
+!fila [código] - Ver fila
+
+🔧 Comandos de Administração (Respawns):
 !addresp [código] [nome] - Adicionar respawn
 !delresp [código] - Remover respawn
+!listplaces - Listar respawns cadastrados
 
-🎯 Comandos de Hunteds:
+� Controle de Claimeds (Admin):
+!resppause [código] - Pausar/despausar timer
+!resppauseall - Pausar/despausar todos
+!cleanresp [código] - Limpar claimed
+!cleanrespall - Limpar todos os claimeds
+
+�🎯 Comandos de Hunteds (Admin):
 !addhunted [nome] - Adicionar hunted
 !delhunted [nome] - Remover hunted
-!hunteds - Atualizar lista de hunteds
-!alertas on/off - Ativar/desativar notificações
-!alertas - Ver status das notificações`;
+!hunteds - Atualizar lista
+!alertas on/off - Ativar/desativar alertas
+
+👥 Comandos de Friends (Admin):
+!addfriend [nome] - Adicionar friend
+!delfriend [nome] - Remover friend
+!syncfriends - Sincronizar com canal`;
                     break;
                 
                 case '!status':
@@ -756,6 +775,14 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         resposta = await this.processarComandoFriends(comando, remetente);
                     } else if (comando.toLowerCase() === '!syncfriends') {
                         resposta = await this.processarComandoSyncFriends(comando, remetente);
+                    } else if (comando.toLowerCase().startsWith('!resppause ')) {
+                        resposta = await this.processarComandoRespPause(comando, remetente);
+                    } else if (comando.toLowerCase() === '!resppauseall') {
+                        resposta = await this.processarComandoRespPauseAll(comando, remetente);
+                    } else if (comando.toLowerCase().startsWith('!cleanresp ')) {
+                        resposta = await this.processarComandoCleanResp(comando, remetente);
+                    } else if (comando.toLowerCase() === '!cleanrespall') {
+                        resposta = await this.processarComandoCleanRespAll(comando, remetente);
                     } else {
                         resposta = `❓ Comando "${comando}" não reconhecido.
 💡 Use !help para ver comandos disponíveis.
@@ -1091,6 +1118,10 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                 for (const timer of todosTimers) {
                     const tempoRestante = this.formatarTempo(timer.tempoRestante);
                     
+                    // Verificar se o timer está pausado
+                    const timerOriginal = timer.tipo === 'claimed' ? this.timersRespawn[timer.codigo] : this.nextTimers[timer.codigo];
+                    const pausado = timerOriginal?.pausado || false;
+                    
                     // Para timers normais, verificar se há fila
                     let infoFila = '';
                     if (this.filasClaimeds[timer.codigo] && this.filasClaimeds[timer.codigo].length > 0) {
@@ -1116,7 +1147,10 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     
                     // Formato com BBCode padrão do TeamSpeak 3
                     let tempoFormatado: string;
-                    if (timer.tipo === 'next') {
+                    if (pausado) {
+                        // Timer pausado - mostrar em vermelho com emoji de pausa
+                        tempoFormatado = `⏸️ [color=red][b][${tempoRestante}][/b][/color]`;
+                    } else if (timer.tipo === 'next') {
                         tempoFormatado = `[color=darkblue][b][${tempoRestante}][/b][/color]`;
                     } else {
                         tempoFormatado = `[color=darkorange][b][${tempoRestante}][/b][/color]`;
@@ -2047,6 +2081,11 @@ ${statusAtual}
                 for (const codigo in this.timersRespawn) {
                     const timer = this.timersRespawn[codigo];
                     
+                    // Pular timer se estiver pausado
+                    if (timer.pausado) {
+                        continue;
+                    }
+                    
                     // Calcular quantos minutos se passaram desde o início
                     const tempoDecorridoMs = agora - timer.iniciadoEm.getTime();
                     const minutosDecorridos = Math.floor(tempoDecorridoMs / 60000);
@@ -2078,6 +2117,11 @@ ${statusAtual}
                 // Atualizar timers de next - contagem individual no minuto exato
                 for (const codigo in this.nextTimers) {
                     const nextTimer = this.nextTimers[codigo];
+                    
+                    // Pular timer se estiver pausado
+                    if (nextTimer.pausado) {
+                        continue;
+                    }
                     
                     // Calcular quantos minutos se passaram desde o início
                     const tempoDecorridoMs = agora - nextTimer.iniciadoEm.getTime();
@@ -3969,6 +4013,275 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
 
 💡 Verifique se o ID do canal Friends está correto
 🔧 Use !listarcanais para ver IDs disponíveis`;
+        }
+    }
+
+    private async processarComandoRespPause(comando: string, remetente: any): Promise<string> {
+        try {
+            // Verificar permissão de administrador
+            const permissao = await this.verificarPermissaoAdmin(remetente);
+            if (!permissao.permitido) {
+                return permissao.erro || '❌ Você não tem permissão para executar este comando';
+            }
+
+            const partes = comando.trim().split(' ');
+            
+            if (partes.length < 2) {
+                return `❌ Formato incorreto!
+📋 Use: !resppause [código]
+💡 Exemplo: !resppause f4`;
+            }
+
+            const codigo = partes[1].toLowerCase();
+            
+            // Verificar se o timer existe
+            const timer = this.timersRespawn[codigo];
+            if (!timer) {
+                return `❌ Nenhum timer ativo para "${codigo.toUpperCase()}"
+📋 Use !fila para ver todos os timers ativos`;
+            }
+
+            // Alternar estado de pausa
+            timer.pausado = !timer.pausado;
+
+            if (timer.pausado) {
+                console.log(`⏸️ Timer ${codigo.toUpperCase()} PAUSADO por admin: ${remetente.clientNickname || 'Desconhecido'}`);
+                
+                // Atualizar canal
+                await this.atualizarCanalClaimeds();
+                
+                return `⏸️ Timer PAUSADO com sucesso!
+⚔️ ${timer.nome} (${codigo.toUpperCase()})
+👤 Jogador: ${timer.jogador}
+⏰ Tempo restante: ${this.formatarTempo(timer.tempoRestante)}
+🔄 Canal Claimeds atualizado
+
+💡 Use !resppause ${codigo} novamente para despausar`;
+            } else {
+                // Ajustar tempo de início ao despausar para manter contagem correta
+                const minutosDecorridos = timer.ultimoMinutoProcessado;
+                timer.iniciadoEm = new Date(Date.now() - (minutosDecorridos * 60000));
+                
+                console.log(`▶️ Timer ${codigo.toUpperCase()} DESPAUSADO por admin: ${remetente.clientNickname || 'Desconhecido'}`);
+                
+                // Atualizar canal
+                await this.atualizarCanalClaimeds();
+                
+                return `▶️ Timer RETOMADO com sucesso!
+⚔️ ${timer.nome} (${codigo.toUpperCase()})
+👤 Jogador: ${timer.jogador}
+⏰ Tempo restante: ${this.formatarTempo(timer.tempoRestante)}
+🔄 Canal Claimeds atualizado
+
+💡 O timer continuará contando normalmente`;
+            }
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando !resppause:', error.message);
+            return `❌ Erro ao pausar/despausar timer: ${error.message}`;
+        }
+    }
+
+    private async processarComandoRespPauseAll(comando: string, remetente: any): Promise<string> {
+        try {
+            // Verificar permissão de administrador
+            const permissao = await this.verificarPermissaoAdmin(remetente);
+            if (!permissao.permitido) {
+                return permissao.erro || '❌ Você não tem permissão para executar este comando';
+            }
+
+            const timersAtivos = Object.values(this.timersRespawn);
+            
+            if (timersAtivos.length === 0) {
+                return `❌ Nenhum timer ativo no momento
+💡 Use !resp [código] [tempo] para iniciar um timer`;
+            }
+
+            // Verificar se algum timer está ativo (não pausado)
+            const algumTimerAtivo = timersAtivos.some(timer => !timer.pausado);
+            
+            if (algumTimerAtivo) {
+                // PAUSAR TODOS
+                let pausados = 0;
+                
+                for (const codigo in this.timersRespawn) {
+                    const timer = this.timersRespawn[codigo];
+                    if (!timer.pausado) {
+                        timer.pausado = true;
+                        pausados++;
+                    }
+                }
+                
+                console.log(`⏸️ ${pausados} timer(s) PAUSADOS por admin: ${remetente.clientNickname || 'Desconhecido'}`);
+                
+                // Atualizar canal
+                await this.atualizarCanalClaimeds();
+                
+                return `⏸️ TODOS OS TIMERS PAUSADOS!
+📊 Total pausado: ${pausados} timer(s)
+🔄 Canal Claimeds atualizado
+
+💡 Use !resppauseall novamente para retomar todos`;
+            } else {
+                // DESPAUSAR TODOS
+                let despausados = 0;
+                
+                for (const codigo in this.timersRespawn) {
+                    const timer = this.timersRespawn[codigo];
+                    if (timer.pausado) {
+                        timer.pausado = false;
+                        // Ajustar tempo de início ao despausar
+                        const minutosDecorridos = timer.ultimoMinutoProcessado;
+                        timer.iniciadoEm = new Date(Date.now() - (minutosDecorridos * 60000));
+                        despausados++;
+                    }
+                }
+                
+                console.log(`▶️ ${despausados} timer(s) DESPAUSADOS por admin: ${remetente.clientNickname || 'Desconhecido'}`);
+                
+                // Atualizar canal
+                await this.atualizarCanalClaimeds();
+                
+                return `▶️ TODOS OS TIMERS RETOMADOS!
+📊 Total retomado: ${despausados} timer(s)
+🔄 Canal Claimeds atualizado
+
+💡 Todos os timers continuarão contando normalmente`;
+            }
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando !resppauseall:', error.message);
+            return `❌ Erro ao pausar/despausar todos os timers: ${error.message}`;
+        }
+    }
+
+    private async processarComandoCleanResp(comando: string, remetente: any): Promise<string> {
+        try {
+            // Verificar permissão de administrador
+            const permissao = await this.verificarPermissaoAdmin(remetente);
+            if (!permissao.permitido) {
+                return permissao.erro || '❌ Você não tem permissão para executar este comando';
+            }
+
+            const partes = comando.trim().split(' ');
+            
+            if (partes.length < 2) {
+                return `❌ Formato incorreto!
+📋 Use: !cleanresp [código]
+💡 Exemplo: !cleanresp f4`;
+            }
+
+            const codigo = partes[1].toLowerCase();
+            
+            // Verificar se há algo para limpar
+            const temTimer = this.timersRespawn[codigo];
+            const temNextTimer = this.nextTimers[codigo];
+            const temFila = this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0;
+            
+            if (!temTimer && !temNextTimer && !temFila) {
+                return `❌ Nenhum claimed ativo para "${codigo.toUpperCase()}"
+💡 Não há timer, next timer ou fila para limpar`;
+            }
+
+            // Coletar informações antes de limpar
+            let infoLimpeza = '';
+            let itensLimpos = 0;
+            
+            if (temTimer) {
+                infoLimpeza += `⚔️ Timer ativo: ${this.timersRespawn[codigo].jogador}\n`;
+                delete this.timersRespawn[codigo];
+                itensLimpos++;
+            }
+            
+            if (temNextTimer) {
+                infoLimpeza += `🎯 Next timer: ${this.nextTimers[codigo].jogador}\n`;
+                delete this.nextTimers[codigo];
+                itensLimpos++;
+            }
+            
+            if (temFila) {
+                const tamanhoFila = this.filasClaimeds[codigo].length;
+                infoLimpeza += `📋 Fila: ${tamanhoFila} pessoa(s)\n`;
+                delete this.filasClaimeds[codigo];
+                itensLimpos++;
+            }
+            
+            console.log(`🧹 Claimed ${codigo.toUpperCase()} LIMPO por admin: ${remetente.clientNickname || 'Desconhecido'}`);
+            console.log(infoLimpeza);
+            
+            // Atualizar canal
+            await this.atualizarCanalClaimeds();
+            
+            const configRespawns = this.obterConfigRespawns();
+            const nomeRespawn = configRespawns[codigo] || codigo.toUpperCase();
+            
+            return `🧹 Claimed LIMPO com sucesso!
+⚔️ ${nomeRespawn} (${codigo.toUpperCase()})
+
+📊 [b]Removido:[/b]
+${infoLimpeza}
+🔄 Canal Claimeds atualizado
+
+✅ O claimed está livre para ser usado novamente`;
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando !cleanresp:', error.message);
+            return `❌ Erro ao limpar claimed: ${error.message}`;
+        }
+    }
+
+    private async processarComandoCleanRespAll(comando: string, remetente: any): Promise<string> {
+        try {
+            // Verificar permissão de administrador
+            const permissao = await this.verificarPermissaoAdmin(remetente);
+            if (!permissao.permitido) {
+                return permissao.erro || '❌ Você não tem permissão para executar este comando';
+            }
+
+            // Contar itens antes de limpar
+            const totalTimers = Object.keys(this.timersRespawn).length;
+            const totalNextTimers = Object.keys(this.nextTimers).length;
+            const totalFilas = Object.keys(this.filasClaimeds).filter(codigo => this.filasClaimeds[codigo].length > 0).length;
+            
+            if (totalTimers === 0 && totalNextTimers === 0 && totalFilas === 0) {
+                return `❌ Nenhum claimed ativo no momento
+💡 Não há timers, next timers ou filas para limpar`;
+            }
+
+            // Limpar tudo
+            this.timersRespawn = {};
+            this.nextTimers = {};
+            this.filasClaimeds = {};
+            
+            // Parar sistema de timers se estiver ativo
+            if (this.intervalTimers) {
+                clearInterval(this.intervalTimers);
+                this.intervalTimers = null;
+            }
+            
+            console.log(`🧹 TODOS OS CLAIMEDS LIMPOS por admin: ${remetente.clientNickname || 'Desconhecido'}`);
+            console.log(`   - ${totalTimers} timer(s)`);
+            console.log(`   - ${totalNextTimers} next timer(s)`);
+            console.log(`   - ${totalFilas} fila(s)`);
+            
+            // Atualizar canal
+            await this.atualizarCanalClaimeds();
+            
+            return `🧹 [b][color=red]TODOS OS CLAIMEDS LIMPOS![/color][/b]
+
+📊 [b]Total removido:[/b]
+⚔️ Timers ativos: ${totalTimers}
+🎯 Next timers: ${totalNextTimers}
+📋 Filas: ${totalFilas}
+
+🔄 Canal Claimeds atualizado
+✅ Sistema resetado - todos os claimeds estão livres
+
+⚠️ [color=orange]Use este comando com cuidado![/color]`;
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando !cleanrespall:', error.message);
+            return `❌ Erro ao limpar todos os claimeds: ${error.message}`;
         }
     }
 
