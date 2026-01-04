@@ -481,6 +481,7 @@ class SistemaHibridoOptimizado {
 !next [código] [tempo] - Entrar na fila
 !leave [código] - Sair do claimed
 !fila [código] - Ver fila
+!atualizalevel - Atualizar grupo de level
 
 🔧 Comandos de Administração (Respawns):
 !addresp [código] [nome] - Adicionar respawn
@@ -502,7 +503,10 @@ class SistemaHibridoOptimizado {
 👥 Comandos de Friends (Admin):
 !addfriend [nome] - Adicionar friend
 !delfriend [nome] - Remover friend
-!syncfriends - Sincronizar com canal`;
+!syncfriends - Sincronizar com canal
+
+🔍 Utilitários (Admin):
+!listgroups - Listar grupos do servidor`;
                     break;
                 
                 case '!status':
@@ -562,6 +566,15 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
 📅 Data: ${now.toLocaleDateString('pt-BR')}
 🕐 Hora: ${now.toLocaleTimeString('pt-BR')}
 🌐 Timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
+                    break;
+
+                case '!atualizalevel':
+                    resposta = await this.processarComandoAtualizaLevel(comando, remetente);
+                    break;
+
+                case '!listgroups':
+                case '!grupos':
+                    resposta = await this.processarComandoListGroups();
                     break;
 
                 case '!update-friends':
@@ -3778,6 +3791,313 @@ Bom Game! 🎯✨`;
         } catch (error: any) {
             console.log('❌ Erro no comando !bot:', error.message);
             return `❌ Erro ao processar comando !bot: ${error.message}`;
+        }
+    }
+
+    private async processarComandoAtualizaLevel(comando: string, remetente: any): Promise<string> {
+        try {
+            console.log('🔄 Processando comando !atualizalevel...');
+
+            // Obter nome do personagem através da descrição
+            const infoJogador = await this.obterNomeJogadorPorDescricao(remetente);
+            if (!infoJogador.valido) {
+                return `❌ Erro ao obter informações do jogador!
+💡 Configure sua descrição no TeamSpeak com o nome do seu personagem`;
+            }
+            const nomePersonagem = infoJogador.nome;
+
+            console.log(`📋 Verificando level do personagem: ${nomePersonagem}`);
+
+            // Consultar API do Tibia para obter informações do personagem
+            const dadosPersonagem = await this.consultarPersonagemTibia(nomePersonagem);
+            
+            if (!dadosPersonagem.sucesso) {
+                return `❌ Erro ao consultar personagem "${nomePersonagem}"!
+💡 Verifique se o nome está correto na sua descrição do TeamSpeak`;
+            }
+
+            const level = dadosPersonagem.level!;
+            const vocacao = dadosPersonagem.vocation || 'Unknown';
+            
+            console.log(`📊 Personagem encontrado: ${nomePersonagem} - Level ${level} (${vocacao})`);
+
+            // Determinar grupo de level apropriado
+            const grupoLevel = this.determinarGrupoLevel(level);
+            
+            console.log(`🎯 Grupo de level determinado: ${grupoLevel.nome}`);
+
+            // Atualizar grupos do usuário no TeamSpeak
+            const clientId = remetente.invokerid || remetente.clid;
+            const resultado = await this.atualizarGrupoLevel(clientId, grupoLevel.sgid);
+
+            if (!resultado.sucesso) {
+                return `❌ Erro ao atualizar grupo: ${resultado.erro}`;
+            }
+
+            // Verificar se já estava no grupo correto
+            if (resultado.jaTemGrupo) {
+                return `✅ Você já está no grupo correto!
+👤 Personagem: ${nomePersonagem}
+📊 Level: ${level}
+⚔️ Vocação: ${vocacao}
+🎖️ Grupo atual: ${grupoLevel.nome}
+💡 Nenhuma alteração necessária`;
+            }
+
+            return `✅ Level atualizado com sucesso!
+👤 Personagem: ${nomePersonagem}
+📊 Level: ${level}
+⚔️ Vocação: ${vocacao}
+🎖️ Grupo: ${grupoLevel.nome}
+${resultado.removido ? `🗑️ Grupo anterior removido: ${resultado.grupoRemovido}` : ''}`;
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando !atualizalevel:', error.message);
+            return `❌ Erro ao processar comando: ${error.message}`;
+        }
+    }
+
+    private async consultarPersonagemTibia(nomePersonagem: string): Promise<{
+        sucesso: boolean;
+        level?: number;
+        vocation?: string;
+        erro?: string;
+    }> {
+        try {
+            console.log(`🌐 Consultando API do Tibia para: ${nomePersonagem}`);
+            
+            const response = await axios.get(`https://api.tibiadata.com/v4/character/${encodeURIComponent(nomePersonagem)}`, {
+                timeout: 15000,
+                headers: {
+                    'User-Agent': 'AliBotTS3-LevelChecker/1.0'
+                }
+            });
+
+            if (response.data && response.data.character && response.data.character.character) {
+                const charData = response.data.character.character;
+                
+                return {
+                    sucesso: true,
+                    level: charData.level,
+                    vocation: charData.vocation
+                };
+            } else {
+                return {
+                    sucesso: false,
+                    erro: 'Personagem não encontrado'
+                };
+            }
+
+        } catch (error: any) {
+            console.log(`❌ Erro ao consultar API do Tibia:`, error.message);
+            
+            // Verificar se é erro 502 (Bad Gateway)
+            if (error.response && error.response.status === 502) {
+                return {
+                    sucesso: false,
+                    erro: 'API temporariamente indisponível. Tente novamente em alguns instantes!'
+                };
+            }
+            
+            // Verificar se é erro 404 (personagem não encontrado)
+            if (error.response && error.response.status === 404) {
+                return {
+                    sucesso: false,
+                    erro: 'Personagem não encontrado! Verifique se o nome na descrição do TeamSpeak está correto'
+                };
+            }
+            
+            return {
+                sucesso: false,
+                erro: error.message
+            };
+        }
+    }
+
+    private determinarGrupoLevel(level: number): { nome: string; sgid: number } {
+        // Definir as faixas de level e seus respectivos grupos
+        // IMPORTANTE: Ajuste os SGIDs (Server Group IDs) de acordo com o seu servidor TeamSpeak
+        
+        if (level >= 1100) {
+            return { nome: '1100+', sgid: 10549 };
+        } else if (level >= 1000) {
+            return { nome: '1000+', sgid: 10570 };
+        } else if (level >= 400) {
+            return { nome: '400+', sgid: 10548 };
+        } else if (level >= 300) {
+            return { nome: '300+', sgid: 10547 };
+        } else if (level >= 200) {
+            return { nome: '200+', sgid: 10546 };
+        } else if (level >= 100) {
+            return { nome: '100+', sgid: 10544 };
+        } else {
+            return { nome: 'Iniciante', sgid: 6 }; // Level abaixo de 100
+        }
+    }
+
+    private async atualizarGrupoLevel(clientId: number, novoGrupoSgid: number): Promise<{
+        sucesso: boolean;
+        erro?: string;
+        removido?: boolean;
+        grupoRemovido?: string;
+        jaTemGrupo?: boolean;
+    }> {
+        try {
+            // Lista de todos os SGIDs de grupos de level (para remover os antigos)
+            const gruposLevel = [6, 10544, 10546, 10547, 10548, 11, 12, 13, 14, 15, 10570, 10549, 18];
+            
+            // Obter grupos atuais do cliente
+            const clientInfoArray = await this.serverQuery.clientInfo(clientId);
+            const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
+            
+            let clientGroups: string[] = [];
+            if (typeof clientInfo.clientServergroups === 'string') {
+                clientGroups = clientInfo.clientServergroups.split(',').filter((g: string) => g !== '');
+            } else if (Array.isArray(clientInfo.clientServergroups)) {
+                clientGroups = clientInfo.clientServergroups.map((g: any) => g.toString());
+            }
+
+            console.log(`👥 Grupos atuais do cliente:`, clientGroups);
+
+            // Verificar se já tem o grupo correto
+            if (clientGroups.includes(novoGrupoSgid.toString())) {
+                console.log(`✅ Cliente já possui o grupo ${novoGrupoSgid}`);
+                return {
+                    sucesso: true,
+                    removido: false,
+                    jaTemGrupo: true
+                };
+            }
+
+            // Remover grupos de level antigos
+            let grupoRemovido = '';
+            let grupoRemovidoSgid = 0;
+            
+            for (const sgid of gruposLevel) {
+                if (clientGroups.includes(sgid.toString()) && sgid !== novoGrupoSgid) {
+                    try {
+                        console.log(`🗑️ Tentando remover grupo ${sgid} do cliente DB ID ${clientInfo.clientDatabaseId}...`);
+                        
+                        // Usar serverGroupDelClient com cldbid
+                        await this.serverQuery.serverGroupDelClient(clientInfo.clientDatabaseId, sgid);
+                        
+                        grupoRemovidoSgid = sgid;
+                        grupoRemovido = this.determinarGrupoLevel(this.getLevelByGrupo(sgid)).nome;
+                        console.log(`✅ Grupo ${sgid} (${grupoRemovido}) removido do cliente`);
+                        
+                    } catch (error: any) {
+                        console.log(`⚠️ Erro ao remover grupo ${sgid}:`, error.message);
+                        console.log(`📋 Detalhes do erro:`, error);
+                        // Continuar tentando adicionar o novo grupo mesmo se falhar a remoção
+                    }
+                }
+            }
+
+            // Adicionar novo grupo
+            try {
+                console.log(`➕ Adicionando grupo ${novoGrupoSgid} ao cliente DB ID ${clientInfo.clientDatabaseId}...`);
+                await this.serverQuery.serverGroupAddClient(clientInfo.clientDatabaseId, novoGrupoSgid);
+                console.log(`✅ Grupo ${novoGrupoSgid} adicionado ao cliente`);
+            } catch (error: any) {
+                console.log(`❌ Erro ao adicionar grupo ${novoGrupoSgid}:`, error.message);
+                throw new Error(`Falha ao adicionar novo grupo: ${error.message}`);
+            }
+
+            return {
+                sucesso: true,
+                removido: grupoRemovido !== '',
+                grupoRemovido: grupoRemovido
+            };
+
+        } catch (error: any) {
+            console.log(`❌ Erro ao atualizar grupo de level:`, error.message);
+            return {
+                sucesso: false,
+                erro: error.message
+            };
+        }
+    }
+
+    private getLevelByGrupo(sgid: number): number {
+        // Mapeamento inverso: SGID -> Level mínimo da faixa
+        const mapa: { [key: number]: number } = {
+            6: 0,
+            10544: 100,
+            10546: 200,
+            10547: 300,
+            10548: 400,
+            11: 500,
+            12: 600,
+            13: 700,
+            14: 800,
+            15: 900,
+            10570: 1000,
+            10549: 1100,
+            18: 1200
+        };
+        return mapa[sgid] || 0;
+    }
+
+    private async processarComandoListGroups(): Promise<string> {
+        try {
+            console.log('📋 Listando grupos do servidor...');
+            
+            // Obter todos os grupos do servidor
+            const grupos = await this.serverQuery.serverGroupList();
+            
+            if (!grupos || grupos.length === 0) {
+                return '❌ Nenhum grupo encontrado no servidor';
+            }
+
+            // Ordenar grupos por SGID
+            const gruposOrdenados = grupos.sort((a: any, b: any) => {
+                const sgidA = parseInt(a.sgid);
+                const sgidB = parseInt(b.sgid);
+                return sgidA - sgidB;
+            });
+
+            // Criar mensagem formatada
+            let resposta = `📋 [b]GRUPOS DO SERVIDOR TEAMSPEAK[/b]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+
+            for (const grupo of gruposOrdenados) {
+                const sgid = grupo.sgid;
+                const nome = grupo.name;
+                const tipo = grupo.type; // 0=Template, 1=Regular, 2=Query
+                const iconId = grupo.iconid || 'N/A';
+                
+                let tipoTexto = '';
+                switch (tipo) {
+                    case 0: tipoTexto = '[color=blue][Template][/color]'; break;
+                    case 1: tipoTexto = '[color=green][Regular][/color]'; break;
+                    case 2: tipoTexto = '[color=orange][Query][/color]'; break;
+                    default: tipoTexto = '[Outro]';
+                }
+                
+                resposta += `[b]SGID:[/b] ${sgid} | ${tipoTexto}
+[b]Nome:[/b] ${nome}
+[b]Icon ID:[/b] ${iconId}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+            }
+
+            resposta += `💡 [b]Total de grupos:[/b] ${gruposOrdenados.length}
+
+📌 [b]Para configurar os grupos de level:[/b]
+1. Identifique os SGIDs dos seus grupos de level
+2. Edite a função [b]determinarGrupoLevel()[/b] no código
+3. Substitua os SGIDs de exemplo pelos reais`;
+
+            console.log(`✅ ${gruposOrdenados.length} grupos listados`);
+            
+            return resposta;
+
+        } catch (error: any) {
+            console.log('❌ Erro ao listar grupos:', error.message);
+            return `❌ Erro ao listar grupos: ${error.message}`;
         }
     }
 
