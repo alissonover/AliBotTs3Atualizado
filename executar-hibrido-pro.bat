@@ -32,12 +32,29 @@ set /p resposta="🚀 Iniciar AliBotTS3 Sistema Otimizado? (S/N): "
 if /i "%resposta%"=="S" (
     echo.
     echo 🎯 Iniciando AliBotTS3 Sistema Híbrido Otimizado...
-    echo ⚡ Carregando sistema completo com todas as funcionalidades!
-    echo 🔄 Aguarde enquanto o bot se conecta ao TeamSpeak...
     echo.
     
     REM Navegar para o diretório do projeto
     cd /d "c:\AliBotTs3Atualizado"
+    
+    REM Verificar se node_modules existe
+    if not exist "node_modules" (
+        echo 📦 Dependências não encontradas!
+        echo 🔄 Instalando dependências do projeto...
+        echo ⏳ Isso pode levar alguns minutos na primeira vez...
+        echo.
+        npm install
+        echo.
+        echo ✅ Dependências instaladas com sucesso!
+        echo.
+    ) else (
+        echo ✅ Dependências já instaladas
+    )
+    
+    echo.
+    echo ⚡ Carregando sistema completo com todas as funcionalidades!
+    echo 🔄 Aguarde enquanto o bot se conecta ao TeamSpeak...
+    echo.
     
     REM Executar o sistema otimizado através do index.ts
     echo 🚀 Executando: npm run dev
