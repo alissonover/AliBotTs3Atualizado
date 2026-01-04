@@ -239,56 +239,44 @@ class SistemaHibridoOptimizado {
 
         while (tentativas < maxTentativas) {
             try {
-                console.log(`🔗 Tentativa de conexão ${tentativas + 1}/${maxTentativas}...`);
+                tentativas++;
                 
                 // Tentar usar conexão existente primeiro
                 const conexaoExistente = this.gerenciadorConexao.obterConexaoAtual();
                 if (conexaoExistente) {
-                    console.log('🔄 Reutilizando conexão existente...');
-                    
                     // Testar se a conexão ainda funciona
                     try {
                         await conexaoExistente.serverInfo();
-                        console.log('✅ Conexão existente ainda válida!');
                         return conexaoExistente;
                     } catch (testError) {
-                        console.log('⚠️ Conexão existente inválida, criando nova...');
+                        // Conexão inválida, criar nova
                     }
                 }
                 
                 // Se não há conexão válida, criar nova
-                console.log('🆕 Criando nova conexão ServerQuery...');
                 conexao = await this.gerenciadorConexao.obterConexaoUnica();
                 
                 if (conexao) {
-                    console.log('✅ Conexão ServerQuery estabelecida com sucesso!');
                     return conexao;
                 }
                 
             } catch (error: any) {
-                tentativas++;
-                console.log(`⚠️ Tentativa ${tentativas} falhou: ${error.message}`);
-                
                 // Estratégias específicas de recuperação
                 if (error.message.includes('too many')) {
-                    console.log('⏳ Muitas sessões ativas - aguardando 10s...');
                     await new Promise(resolve => setTimeout(resolve, 10000));
                 } else if (error.message.includes('connection')) {
-                    console.log('🔌 Problema de conexão - aguardando 5s...');
                     await new Promise(resolve => setTimeout(resolve, 5000));
                 } else {
-                    console.log('🔄 Erro genérico - aguardando 3s...');
                     await new Promise(resolve => setTimeout(resolve, 3000));
                 }
                 
                 // Reset suave apenas se necessário
                 if (tentativas === Math.floor(maxTentativas / 2)) {
-                    console.log('🔄 Tentativa de reset suave na metade das tentativas...');
                     try {
                         await this.gerenciadorConexao.resetCompleto();
                         await new Promise(resolve => setTimeout(resolve, 2000));
                     } catch (resetError) {
-                        console.log('⚠️ Reset suave falhou, continuando...');
+                        // Reset falhou, continuar
                     }
                 }
             }
@@ -314,7 +302,6 @@ class SistemaHibridoOptimizado {
         
         while (tentativa < maxTentativas && this.sistemaAtivo) {
             tentativa++;
-            console.log(`🔄 Tentativa de reconexão ${tentativa}/${maxTentativas}...`);
             
             try {
                 // Aguardar um pouco antes de tentar reconectar
@@ -324,21 +311,15 @@ class SistemaHibridoOptimizado {
                 this.serverQuery = await this.conectarServerQueryComReconexao();
                 
                 if (this.serverQuery) {
-                    console.log('✅ Reconexão bem-sucedida!');
-                    
                     // Reconfigurar monitoramento
                     await this.configurarMonitoramentoOtimizado();
-                    
-                    console.log('🎉 Sistema totalmente restaurado após reconexão!');
+                    console.log('✅ Reconexão bem-sucedida!');
                     return;
                 }
                 
             } catch (error: any) {
-                console.log(`❌ Tentativa de reconexão ${tentativa} falhou:`, error.message);
-                
                 // Aguardar mais tempo entre tentativas se houver muitos erros
                 if (tentativa >= 5) {
-                    console.log('⏳ Aguardando mais tempo devido a múltiplas falhas...');
                     await new Promise(resolve => setTimeout(resolve, 10000));
                 }
             }
@@ -404,39 +385,25 @@ class SistemaHibridoOptimizado {
             console.log('⚠️ Aviso ao configurar notificações:', error.message);
         }
 
-        // Monitorar TODAS as mensagens com logs detalhados
+        // Monitorar TODAS as mensagens
         this.serverQuery.on("textmessage", async (ev: any) => {
-            const timestamp = new Date().toLocaleTimeString();
-            console.log(`📨 [${timestamp}] ===== NOVA MENSAGEM RECEBIDA =====`);
-            console.log(`👤 De: ${ev.invoker?.clientNickname || 'Desconhecido'} (ID: ${ev.invoker?.clid || 'N/A'})`);
-            console.log(`💬 Mensagem: "${ev.msg}"`);
-            console.log(`📍 Tipo: ${ev.targetmode || 'N/A'}`);
-            console.log(`🎯 Target: ${ev.target || 'N/A'}`);
-            console.log(`======================================`);
-            
             // Processar comandos que começam com ! OU respostas y/n
             const mensagem = ev.msg?.trim().toLowerCase() || '';
             const ehComando = ev.msg && ev.msg.startsWith('!');
             const ehResposta = mensagem === 'y' || mensagem === 'n';
             
             if (ehComando || ehResposta) {
-                console.log(`⚡ [${timestamp}] ${ehComando ? 'COMANDO' : 'RESPOSTA'} DETECTADO: ${ev.msg}`);
-                console.log(`🔄 Iniciando processamento...`);
                 try {
                     await this.processarComandoOtimizado(ev.msg, ev.invoker);
-                    console.log(`✅ [${timestamp}] ${ehComando ? 'Comando' : 'Resposta'} processado com sucesso`);
                 } catch (error: any) {
-                    console.log(`❌ [${timestamp}] Erro ao processar:`, error.message);
+                    console.log(`❌ Erro ao processar comando:`, error.message);
                 }
-            } else {
-                console.log(`💭 [${timestamp}] Mensagem ignorada (não é comando nem resposta)`);
             }
         });
 
-        // Monitorar entradas/saídas de clientes
+        // Monitorar entradas/saídas de clientes (silencioso)
         this.serverQuery.on("cliententerview", (ev: any) => {
-            const timestamp = new Date().toLocaleTimeString();
-            console.log(`👋 [${timestamp}] Cliente conectou: ${ev.client?.nickname || 'Desconhecido'}`);
+            // Evento capturado
         });
 
         // ADICIONAR MONITORAMENTO DE CONEXÃO E AUTO-RECONEXÃO
@@ -824,7 +791,6 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             // Resposta ultra-rápida (apenas se houver conteúdo)
             if (resposta && resposta.trim() !== '') {
                 await this.serverQuery.sendTextMessage(remetente.clid, 1, resposta);
-                console.log(`✅ [${timestamp}] Resposta enviada instantaneamente`);
             }
 
         } catch (error: any) {
@@ -844,16 +810,8 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         try {
             const clients = await this.serverQuery.clientList();
             const realClients = clients.filter((c: any) => c.type === 0); // Apenas clientes reais
-            
-            console.log(`👥 Clientes conectados detectados: ${realClients.length}`);
-            
-            if (realClients.length > 0) {
-                console.log('✅ Há clientes online - sistema pronto para comandos!');
-            } else {
-                console.log('ℹ️ Nenhum cliente real online no momento');
-            }
         } catch (error: any) {
-            console.log('⚠️ Não foi possível verificar clientes:', error.message);
+            // Erro silenciado
         }
     }
 
@@ -870,13 +828,9 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
     }
 
     private iniciarMonitoramentoLeve(): void {
-        // Monitoramento de status - a cada 2 minutos
+        // Monitoramento de status - a cada 2 minutos (silencioso)
         setInterval(() => {
-            if (this.sistemaAtivo) {
-                const timestamp = new Date().toLocaleTimeString();
-                const uptime = Math.floor(process.uptime() / 60);
-                console.log(`💓 Sistema otimizado ativo [${timestamp}] - Uptime: ${uptime}min - ServerQuery: ✅`);
-            }
+            // Sistema ativo
         }, 120000); // 2 minutos
 
         // Atualização automática do canal Friends - a cada 1 minuto
@@ -884,8 +838,6 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             if (this.sistemaAtivo) {
                 try {
                     await this.atualizarCanalFriends();
-                    const timestamp = new Date().toLocaleTimeString();
-                    console.log(`👥 [${timestamp}] Canal Friends atualizado automaticamente`);
                 } catch (error: any) {
                     console.log('⚠️ Erro na atualização automática do canal Friends:', error.message);
                 }
@@ -899,12 +851,6 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     // Só atualizar se não há timers de respawn ativos (para evitar conflito)
                     if (Object.keys(this.timersRespawn).length === 0) {
                         await this.atualizarCanalClaimeds();
-                        const timestamp = new Date().toLocaleTimeString();
-                        console.log(`⏰ [${timestamp}] Canal Claimeds atualizado automaticamente`);
-                    } else {
-                        // Timers ativos - sistema de respawn está controlando as atualizações
-                        const timestamp = new Date().toLocaleTimeString();
-                        console.log(`⏰ [${timestamp}] Canal Claimeds gerenciado por timers ativos`);
                     }
                 } catch (error: any) {
                     console.log('⚠️ Erro na atualização automática do canal Claimeds:', error.message);
@@ -917,8 +863,6 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             if (this.sistemaAtivo) {
                 try {
                     await this.atualizarCanalHunteds();
-                    const timestamp = new Date().toLocaleTimeString();
-                    console.log(`🎯 [${timestamp}] Canal Hunteds atualizado automaticamente`);
                 } catch (error: any) {
                     console.log('⚠️ Erro na atualização automática do canal Hunteds:', error.message);
                 }
