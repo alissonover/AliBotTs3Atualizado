@@ -108,6 +108,10 @@ class SistemaHibridoOptimizado {
     private ultimaAtualizacaoCache: number = 0;
     private readonly CACHE_VALIDADE_MS = 30000; // Cache válido por 30 segundos
 
+    // Sistema de confirmação para comandos
+    private confirmacoesLeave: Map<string, { codigo: string; timestamp: number }> = new Map(); // jogador -> { codigo, timestamp }
+    private readonly TIMEOUT_CONFIRMACAO_MS = 30000; // Confirmação expira em 30 segundos
+
     constructor() {
         this.gerenciadorConexao = GerenciadorConexaoHibrida.obterInstancia();
         this.carregarRespawnsPersistidos();
@@ -408,18 +412,22 @@ class SistemaHibridoOptimizado {
             console.log(`🎯 Target: ${ev.target || 'N/A'}`);
             console.log(`======================================`);
             
-            // Processamento imediato para comandos
-            if (ev.msg && ev.msg.startsWith('!')) {
-                console.log(`⚡ [${timestamp}] COMANDO DETECTADO: ${ev.msg}`);
+            // Processar comandos que começam com ! OU respostas y/n
+            const mensagem = ev.msg?.trim().toLowerCase() || '';
+            const ehComando = ev.msg && ev.msg.startsWith('!');
+            const ehResposta = mensagem === 'y' || mensagem === 'n';
+            
+            if (ehComando || ehResposta) {
+                console.log(`⚡ [${timestamp}] ${ehComando ? 'COMANDO' : 'RESPOSTA'} DETECTADO: ${ev.msg}`);
                 console.log(`🔄 Iniciando processamento...`);
                 try {
                     await this.processarComandoOtimizado(ev.msg, ev.invoker);
-                    console.log(`✅ [${timestamp}] Comando processado com sucesso`);
+                    console.log(`✅ [${timestamp}] ${ehComando ? 'Comando' : 'Resposta'} processado com sucesso`);
                 } catch (error: any) {
-                    console.log(`❌ [${timestamp}] Erro ao processar comando:`, error.message);
+                    console.log(`❌ [${timestamp}] Erro ao processar:`, error.message);
                 }
             } else {
-                console.log(`💭 [${timestamp}] Mensagem ignorada (não é comando)`);
+                console.log(`💭 [${timestamp}] Mensagem ignorada (não é comando nem resposta)`);
             }
         });
 
@@ -736,8 +744,12 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     break;
                 
                 default:
+                    // VERIFICAR SE É RESPOSTA A CONFIRMAÇÃO DE LEAVE (y/n)
+                    if (comando.toLowerCase() === 'y' || comando.toLowerCase() === 'n') {
+                        resposta = await this.processarRespostaConfirmacao(comando, remetente);
+                    }
                     // Verificar se é comando !resp
-                    if (comando.toLowerCase().startsWith('!resp ')) {
+                    else if (comando.toLowerCase().startsWith('!resp ')) {
                         resposta = await this.processarComandoResp(comando, remetente);
                     } else if (comando.toLowerCase().startsWith('!leave ')) {
                         resposta = await this.processarComandoLeave(comando, remetente);
@@ -794,9 +806,11 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     break;
             }
 
-            // Resposta ultra-rápida
-            await this.serverQuery.sendTextMessage(remetente.clid, 1, resposta);
-            console.log(`✅ [${timestamp}] Resposta enviada instantaneamente`);
+            // Resposta ultra-rápida (apenas se houver conteúdo)
+            if (resposta && resposta.trim() !== '') {
+                await this.serverQuery.sendTextMessage(remetente.clid, 1, resposta);
+                console.log(`✅ [${timestamp}] Resposta enviada instantaneamente`);
+            }
 
         } catch (error: any) {
             console.log('❌ Erro ao processar comando:', error.message);
@@ -904,6 +918,13 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                 } catch (error: any) {
                     console.log('⚠️ Erro no monitoramento de mortes:', error.message);
                 }
+            }
+        }, 60000); // 1 minuto
+
+        // Limpeza de confirmações expiradas - a cada 1 minuto
+        setInterval(() => {
+            if (this.sistemaAtivo) {
+                this.limparConfirmacoesExpiradas();
             }
         }, 60000); // 1 minuto
 
@@ -1475,6 +1496,20 @@ ${filasAtivas}`;
 📋 Use !listplaces para ver todos os respawns disponíveis
 💡 Códigos válidos: ${Object.keys(this.respawnsList).slice(0, 10).join(', ')}${Object.keys(this.respawnsList).length > 10 ? '...' : ''}`;
             }
+
+            // VERIFICAR SE O JOGADOR JÁ TEM UM CLAIMED ATIVO (exceto se for aceitar o próprio next)
+            const claimedAtual = this.verificarJogadorTemClaimedAtivo(nomeJogador);
+            if (claimedAtual.temClaimed) {
+                // Permitir apenas se for aceitar o próprio next timer
+                const isAceitandoProprioNext = this.nextTimers[codigo] && this.nextTimers[codigo].jogador === nomeJogador;
+                
+                if (!isAceitandoProprioNext) {
+                    return `❌ Você já tem um claimed ativo!
+⚔️ Respawn: ${claimedAtual.nome} (${claimedAtual.codigo?.toUpperCase()})
+📍 Status: ${claimedAtual.tipo}
+💡 Use !leave ${claimedAtual.codigo} para sair antes de pegar outro claimed`;
+                }
+            }
             
             let tempoParaUsar: number | null = null;
             let ehAceitacaoNext = false;
@@ -1719,6 +1754,45 @@ ${filasAtivas}`;
                 return `❌ Código "${codigo.toUpperCase()}" não existe!📋 Use !help para ver códigos disponíveis`;
             }
 
+            // Verificar se jogador está participando deste respawn
+            const estaNoTimer = this.timersRespawn[codigo]?.jogador === nomeJogador;
+            const estaNoNext = this.nextTimers[codigo]?.jogador === nomeJogador;
+            const estaNaFila = this.filasClaimeds[codigo]?.some(item => item.jogador === nomeJogador);
+
+            if (!estaNoTimer && !estaNoNext && !estaNaFila) {
+                return `❌ Você não está participando do respawn ${configRespawns[codigo]}!
+📋 Use !fila ${codigo} para ver o status atual`;
+            }
+
+            // VERIFICAR SE HÁ FILA E PEDIR CONFIRMAÇÃO
+            const temFila = this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0;
+            
+            // Se está no timer ativo ou next E há fila, pedir confirmação
+            if ((estaNoTimer || estaNoNext) && temFila) {
+                // Registrar solicitação de confirmação
+                this.confirmacoesLeave.set(nomeJogador, {
+                    codigo: codigo,
+                    timestamp: Date.now()
+                });
+
+                const quantidadeFila = this.filasClaimeds[codigo].length;
+                return `⚠️ Tem ${quantidadeFila} player(s) na fila, deseja realmente sair?
+📋 Responda: [b]y[/b] (sim) ou [b]n[/b] (não)
+⏰ Esta confirmação expira em 30 segundos`;
+            }
+
+            // Prosseguir com remoção direta (sem confirmação)
+            return await this.executarLeave(codigo, nomeJogador, remetente);
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando leave:', error.message);
+            return `❌ Erro interno: ${error.message}`;
+        }
+    }
+
+    private async executarLeave(codigo: string, nomeJogador: string, remetente: any): Promise<string> {
+        try {
+            const configRespawns = this.obterConfigRespawns();
             let encontrouJogador = false;
             let tipoRemocao = '';
             let mensagemSucesso = '';
@@ -1731,7 +1805,8 @@ ${filasAtivas}`;
                     delete this.timersRespawn[codigo];
                     encontrouJogador = true;
                     tipoRemocao = 'timer';
-                    mensagemSucesso = `✅ Você saiu do respawn ${configRespawns[codigo]}!`;
+                    mensagemSucesso = `✅ Você saiu do claimed!
+⚔️ Respawn: ${timer.nome} (${codigo.toUpperCase()})`;
                     
                     // Verificar se há próximo na fila para assumir
                     if (this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0) {
@@ -1750,7 +1825,8 @@ ${filasAtivas}`;
                             ultimoMinutoProcessado: 0
                         };
                         
-                        mensagemSucesso += ` Próximo da fila foi notificado.`;
+                        mensagemSucesso += `
+🎯 Próximo da fila: ${proximoJogador.jogador} (notificado)`;
                         
                         // Enviar poke para o próximo jogador
                         await this.enviarPokeNextIniciado(proximoJogador.jogador, codigo);
@@ -1766,7 +1842,8 @@ ${filasAtivas}`;
                     delete this.nextTimers[codigo];
                     encontrouJogador = true;
                     tipoRemocao = 'next';
-                    mensagemSucesso = `✅ Você saiu do next timer ${configRespawns[codigo]}!`;
+                    mensagemSucesso = `✅ Você saiu do next timer!
+⚔️ Respawn: ${configRespawns[codigo]} (${codigo.toUpperCase()})`;
                     
                     // Verificar se há próximo na fila
                     if (this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0) {
@@ -1785,7 +1862,8 @@ ${filasAtivas}`;
                             ultimoMinutoProcessado: 0
                         };
                         
-                        mensagemSucesso += ` Próximo da fila assumiu.`;
+                        mensagemSucesso += `
+🎯 Próximo da fila: ${proximoJogador.jogador} (notificado)`;
                         
                         // Enviar poke para o próximo jogador
                         await this.enviarPokeNextIniciado(proximoJogador.jogador, codigo);
@@ -1797,11 +1875,14 @@ ${filasAtivas}`;
             if (!encontrouJogador && this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0) {
                 const indiceJogador = this.filasClaimeds[codigo].findIndex(item => item.jogador === nomeJogador);
                 if (indiceJogador !== -1) {
+                    const posicaoAnterior = indiceJogador + 1;
                     // Remover da fila
                     this.filasClaimeds[codigo].splice(indiceJogador, 1);
                     encontrouJogador = true;
                     tipoRemocao = 'fila';
-                    mensagemSucesso = `✅ Você foi removido da fila **${configRespawns[codigo]}**!`;
+                    mensagemSucesso = `✅ Você saiu da fila!
+⚔️ Respawn: ${configRespawns[codigo]} (${codigo.toUpperCase()})
+📍 Posição que estava: ${posicaoAnterior}`;
                     
                     // Reajustar posições na fila
                     this.filasClaimeds[codigo].forEach((item, index) => {
@@ -1818,11 +1899,70 @@ ${filasAtivas}`;
             // Atualizar canal
             await this.atualizarCanalClaimeds();
 
-            return '';
+            return mensagemSucesso;
 
         } catch (error: any) {
-            console.log('❌ Erro no comando leave:', error.message);
+            console.log('❌ Erro ao executar leave:', error.message);
             return `❌ Erro interno: ${error.message}`;
+        }
+    }
+
+    private async processarRespostaConfirmacao(comando: string, remetente: any): Promise<string> {
+        try {
+            console.log(`🔍 Processando resposta de confirmação: "${comando}"`);
+            
+            // Obter nome do jogador
+            const infoJogador = await this.obterNomeJogadorPorDescricao(remetente);
+            if (!infoJogador.valido) {
+                console.log('⚠️ Não foi possível obter informações do jogador');
+                return ''; // Silenciosamente ignorar se não conseguir identificar
+            }
+            const nomeJogador = infoJogador.nome;
+            console.log(`👤 Jogador identificado: ${nomeJogador}`);
+
+            // Verificar se há confirmação pendente para este jogador
+            const confirmacao = this.confirmacoesLeave.get(nomeJogador);
+            if (!confirmacao) {
+                console.log(`ℹ️ Nenhuma confirmação pendente para ${nomeJogador}`);
+                return ''; // Não há confirmação pendente, ignorar resposta
+            }
+
+            console.log(`✅ Confirmação encontrada para ${nomeJogador} - código: ${confirmacao.codigo}`);
+
+            // Verificar se a confirmação expirou (30 segundos)
+            const tempoDecorrido = Date.now() - confirmacao.timestamp;
+            if (tempoDecorrido > this.TIMEOUT_CONFIRMACAO_MS) {
+                console.log(`⏰ Confirmação expirada (${Math.floor(tempoDecorrido/1000)}s)`);
+                this.confirmacoesLeave.delete(nomeJogador);
+                return `❌ Tempo de confirmação expirado!
+💡 Use !leave ${confirmacao.codigo} novamente se ainda desejar sair`;
+            }
+
+            const resposta = comando.toLowerCase();
+            const codigo = confirmacao.codigo;
+
+            // Remover confirmação pendente
+            this.confirmacoesLeave.delete(nomeJogador);
+
+            if (resposta === 'y') {
+                console.log(`✅ Confirmação aceita (y) - executando leave para ${codigo}`);
+                // Usuário confirmou, executar leave
+                return await this.executarLeave(codigo, nomeJogador, remetente);
+            } else if (resposta === 'n') {
+                console.log(`🚫 Confirmação cancelada (n) para ${codigo}`);
+                // Usuário cancelou
+                const configRespawns = this.obterConfigRespawns();
+                return `🚫 Saída cancelada!
+⚔️ Respawn: ${configRespawns[codigo]} (${codigo.toUpperCase()})
+💡 Você continua no claimed`;
+            }
+
+            console.log(`⚠️ Resposta inválida: "${resposta}"`);
+            return ''; // Resposta inválida, ignorar
+
+        } catch (error: any) {
+            console.log('❌ Erro ao processar confirmação:', error.message);
+            return '';
         }
     }
 
@@ -2928,6 +3068,64 @@ Entre em contato com a liderança para isto!
     private obterConfigRespawns(): { [key: string]: string } {
         // Gerar configuração dinamicamente baseada no respawnsList
         return { ...this.respawnsList };
+    }
+
+    private limparConfirmacoesExpiradas(): void {
+        const agora = Date.now();
+        let confirmacoesCanceladas = 0;
+
+        for (const [jogador, confirmacao] of this.confirmacoesLeave.entries()) {
+            const tempoDecorrido = agora - confirmacao.timestamp;
+            if (tempoDecorrido > this.TIMEOUT_CONFIRMACAO_MS) {
+                this.confirmacoesLeave.delete(jogador);
+                confirmacoesCanceladas++;
+            }
+        }
+
+        if (confirmacoesCanceladas > 0) {
+            console.log(`🧹 Limpeza: ${confirmacoesCanceladas} confirmação(ões) expirada(s) removida(s)`);
+        }
+    }
+
+    private verificarJogadorTemClaimedAtivo(nomeJogador: string): { temClaimed: boolean; codigo?: string; nome?: string; tipo?: string } {
+        // Verificar se jogador tem timer ativo
+        for (const codigo in this.timersRespawn) {
+            if (this.timersRespawn[codigo].jogador === nomeJogador) {
+                return {
+                    temClaimed: true,
+                    codigo: codigo,
+                    nome: this.timersRespawn[codigo].nome,
+                    tipo: 'timer ativo'
+                };
+            }
+        }
+
+        // Verificar se jogador tem next timer
+        for (const codigo in this.nextTimers) {
+            if (this.nextTimers[codigo].jogador === nomeJogador) {
+                return {
+                    temClaimed: true,
+                    codigo: codigo,
+                    nome: this.obterNomeRespawn(codigo),
+                    tipo: 'next timer (aguardando aceitar)'
+                };
+            }
+        }
+
+        // Verificar se jogador está em alguma fila
+        for (const codigo in this.filasClaimeds) {
+            const filaItems = this.filasClaimeds[codigo];
+            if (filaItems.some(item => item.jogador === nomeJogador)) {
+                return {
+                    temClaimed: true,
+                    codigo: codigo,
+                    nome: this.obterNomeRespawn(codigo),
+                    tipo: 'fila'
+                };
+            }
+        }
+
+        return { temClaimed: false };
     }
 
     private formatarTempo(segundos: number): string {
