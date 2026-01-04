@@ -1032,11 +1032,16 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             
             // Atualizar canal apenas se necessário
             if (precisaAtualizar) {
+                // Atualizar nome do canal com quantidade de membros online
+                const nomeCanal = `Friends[${membrosOnline.length}]`;
+                
                 await this.serverQuery.channelEdit(friendsChannelId, {
+                    channel_name: nomeCanal,
                     channel_description: descricao
                 });
                 
                 console.log(`👥 Canal Friends atualizado: ${membrosOnline.length} membros online da guild Missclick`);
+                console.log(`📝 Nome do canal alterado para: ${nomeCanal}`);
                 
                 if (membrosOnline.length > 0) {
                     const levelMedio = Math.round(membrosOnline.reduce((sum, m) => sum + (m.level || 0), 0) / membrosOnline.length);
