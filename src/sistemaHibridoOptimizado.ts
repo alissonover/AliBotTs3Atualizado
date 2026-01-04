@@ -707,7 +707,11 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                 case '!api':
                     try {
                         const membrosOnline = await this.buscarMembrosOnlineTibia();
-                        if (membrosOnline.length > 0) {
+                        if (membrosOnline === null) {
+                            resposta = `❌ Erro ao conectar com a API do Tibia
+🌐 A API pode estar temporariamente indisponível
+⏱️ Tente novamente em alguns instantes`;
+                        } else if (membrosOnline.length > 0) {
                             const nomes = membrosOnline.slice(0, 5).map(m => `${m.name} (Lv.${m.level})`).join(', ');
                             resposta = `✅ API do Tibia funcionando!
 🔍 Guild: Missclick
@@ -954,6 +958,12 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             
             // Buscar membros online da guild
             const membrosOnline = await this.buscarMembrosOnlineTibia();
+            
+            // Se houve erro na API, não atualizar o canal
+            if (membrosOnline === null) {
+                console.log('⚠️ Pulando atualização do canal Friends devido a erro na API');
+                return;
+            }
             
             // Construir descrição do canal
             let descricao = `[img]https://i.imgur.com/FtrTAPu.png[/img]
@@ -1358,7 +1368,7 @@ ${filasAtivas}`;
         console.log('🔄 Cache invalidado - próxima atualização será forçada');
     }
 
-    private async buscarMembrosOnlineTibia(): Promise<any[]> {
+    private async buscarMembrosOnlineTibia(): Promise<any[] | null> {
         try {
             const guildName = 'Missclick';
             console.log(`🔍 Buscando membros online da guild "${guildName}" na API do Tibia...`);
@@ -1407,7 +1417,9 @@ ${filasAtivas}`;
                 console.log('❌ Erro inesperado ao buscar membros online:', error.message);
             }
             
-            return [];
+            // Retornar null em caso de erro para não atualizar canal
+            console.log('⚠️ Retornando null - canal Friends não será atualizado devido ao erro');
+            return null;
         }
     }
 
@@ -3239,7 +3251,7 @@ Entre em contato com a liderança para isto!
         }
     }
 
-    private async buscarHuntedsOnline(): Promise<any[]> {
+    private async buscarHuntedsOnline(): Promise<any[] | null> {
         try {
             const worldName = 'Kalibra';
             console.log(`🔍 Buscando players online no mundo "${worldName}"...`);
@@ -3316,7 +3328,9 @@ Entre em contato com a liderança para isto!
                 console.log('📋 Stack trace:', error.stack);
             }
             
-            return [];
+            // Retornar null em caso de erro para não atualizar canal
+            console.log('⚠️ Retornando null - canal Hunteds não será atualizado devido ao erro');
+            return null;
         }
     }
 
@@ -3417,15 +3431,15 @@ Entre em contato com a liderança para isto!
             console.log('🎯 Iniciando atualização do canal Hunteds...');
             
             // Buscar hunteds online com tratamento de erro
-            let huntedsOnline: any[] = [];
-            try {
-                huntedsOnline = await this.buscarHuntedsOnline();
-                console.log(`✅ Busca de hunteds concluída: ${huntedsOnline.length} encontrados`);
-            } catch (searchError: any) {
-                console.log(`❌ Erro na busca de hunteds online: ${searchError.message}`);
-                // Continuar com lista vazia em caso de erro na API
-                huntedsOnline = [];
+            const huntedsOnline = await this.buscarHuntedsOnline();
+            
+            // Se houve erro na API, não atualizar o canal
+            if (huntedsOnline === null) {
+                console.log('⚠️ Pulando atualização do canal Hunteds devido a erro na API');
+                return;
             }
+            
+            console.log(`✅ Busca de hunteds concluída: ${huntedsOnline.length} encontrados`);
             
             // Construir descrição do canal
             let descricao = `[img]https://i.imgur.com/7Bryvk2.png[/img]
@@ -4194,6 +4208,14 @@ ${resultado.removido ? `🗑️ Grupo anterior removido: ${resultado.grupoRemovi
             await this.atualizarCanalHunteds();
             
             const huntedsOnline = await this.buscarHuntedsOnline();
+            
+            // Se houve erro na API, informar ao usuário
+            if (huntedsOnline === null) {
+                return `❌ Erro ao buscar hunteds online
+🌐 A API do Tibia pode estar temporariamente indisponível
+⏱️ Tente novamente em alguns instantes
+📋 Total de hunteds monitorados: ${this.huntedsList.length}`;
+            }
             
             let resposta = `✅ Canal Hunteds atualizado!
 🎯 Hunteds monitorados: ${this.huntedsList.length}
