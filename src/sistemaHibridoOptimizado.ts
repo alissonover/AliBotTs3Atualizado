@@ -4998,7 +4998,7 @@ ${infoLimpeza}
 
             // Processar em lotes paralelos (3 por vez para não sobrecarregar API)
             const TAMANHO_LOTE = 3;
-            const DELAY_ENTRE_LOTES = 1500; // 1.5 segundos entre lotes
+            const DELAY_ENTRE_LOTES = 2000; // 2 segundos entre lotes - aumentado de 1.5s
             let mortesEncontradas = 0;
             let sucessos = 0;
             let falhas = 0;
@@ -5062,7 +5062,7 @@ ${infoLimpeza}
 
     private async verificarMortesPersonagem(nomePersonagem: string, tentativa: number = 1): Promise<PlayerDeath[]> {
         const MAX_TENTATIVAS = 3;
-        const TIMEOUT = 15000; // 15 segundos
+        const TIMEOUT = 25000; // 25 segundos - aumentado para evitar ECONNABORTED
         
         try {
             // Buscar dados do personagem na API do Tibia com timeout e retry
@@ -5072,8 +5072,12 @@ ${infoLimpeza}
                     timeout: TIMEOUT,
                     headers: {
                         'User-Agent': 'AliBotTS3-DeathMonitor/1.0',
-                        'Accept-Encoding': 'gzip, deflate'
-                    }
+                        'Accept-Encoding': 'gzip, deflate',
+                        'Connection': 'keep-alive'
+                    },
+                    // Configurações adicionais para conexão mais estável
+                    maxRedirects: 5,
+                    validateStatus: (status) => status < 500
                 }
             );
             
@@ -5153,12 +5157,17 @@ ${infoLimpeza}
         } catch (error: any) {
             const errorCode = error.code;
             
-            // Retry em erros de conexão
+            // Retry em erros de conexão com delay progressivo mais longo
             if ((errorCode === 'ECONNRESET' || errorCode === 'ETIMEDOUT' || errorCode === 'ECONNABORTED') && tentativa < MAX_TENTATIVAS) {
-                const delayMs = 2000 * tentativa; // 2s, 4s, 6s
+                const delayMs = 3000 * tentativa; // 3s, 6s, 9s - aumentado de 2s para 3s
                 console.log(`⚠️ ${nomePersonagem}: ${errorCode}, aguardando ${delayMs}ms antes de retry ${tentativa}/${MAX_TENTATIVAS}`);
                 await new Promise(resolve => setTimeout(resolve, delayMs));
                 return await this.verificarMortesPersonagem(nomePersonagem, tentativa + 1);
+            }
+            
+            // Logar erro final se todas as tentativas falharam
+            if (tentativa >= MAX_TENTATIVAS) {
+                console.log(`❌ ${nomePersonagem}: Falha após ${MAX_TENTATIVAS} tentativas (${errorCode})`);
             }
             
             // Erro 404 ou personagem não encontrado - atualizar cache para não tentar novamente

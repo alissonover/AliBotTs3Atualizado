@@ -1,7 +1,25 @@
 {
   "dataReset": "2026-01-04T13:01:14.984Z",
-  "totalMortes": 1,
+  "totalMortes": 3,
   "mortes": [
+    {
+      "nome": "Sandalphon",
+      "level": 1092,
+      "vocacao": "Master Sorcerer",
+      "horario": "04/01/2026 15:10",
+      "causa": "Died at Level 1092 by walking pillar.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-04T18:12:04.192Z"
+    },
+    {
+      "nome": "Tbombeiw",
+      "level": 11,
+      "vocacao": "Sorcerer",
+      "horario": "04/01/2026 14:39",
+      "causa": "Died at Level 11 by cave rat.",
+      "tipo": "Hunted",
+      "timestamp": "2026-01-04T17:46:19.262Z"
+    },
     {
       "nome": "Tbombeiw",
       "level": 11,
