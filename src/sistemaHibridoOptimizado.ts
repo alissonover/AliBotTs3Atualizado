@@ -1148,17 +1148,19 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     if (this.filasClaimeds[timer.codigo] && this.filasClaimeds[timer.codigo].length > 0) {
                         const fila = this.filasClaimeds[timer.codigo];
                         if (fila.length === 1) {
-                            // Usar cache em vez de busca assíncrona
+                            // Verificar se o jogador está online
+                            const isOnline = this.verificarJogadorOnline(fila[0].jogador);
                             const clientId = this.obterClientIdDoCache(fila[0].jogador) || fila[0].jogador;
-                            const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId);
+                            const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId, isOnline);
                             const tempoInfo = fila[0].tempoDesejado ? ` (${this.formatarTempo(fila[0].tempoDesejado)})` : '';
                             
                             const labelFila = '| Next';
                             infoFila = ` ${labelFila}: ${linkJogador}${tempoInfo}`;
                         } else if (fila.length === 2) {
-                            // Usar cache em vez de busca assíncrona
+                            // Verificar se o jogador está online
+                            const isOnline = this.verificarJogadorOnline(fila[0].jogador);
                             const clientId = this.obterClientIdDoCache(fila[0].jogador) || fila[0].jogador;
-                            const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId);
+                            const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId, isOnline);
                             const tempoInfo = fila[0].tempoDesejado ? ` (${this.formatarTempo(fila[0].tempoDesejado)})` : '';
                             
                             const labelFila = '| Next';
@@ -1178,9 +1180,10 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     }
                     const nomeFormatado = `[b]${timer.nome}[/b]`;
                     
-                    // STEP 3: Usar cache em vez de busca assíncrona (mega rápido!)
+                    // STEP 3: Verificar se o jogador está online e criar link adequadamente
+                    const isJogadorOnline = this.verificarJogadorOnline(timer.jogador);
                     const clientId = this.obterClientIdDoCache(timer.jogador) || timer.jogador;
-                    const jogadorFormatado = this.criarLinkJogador(timer.jogador, clientId);
+                    const jogadorFormatado = this.criarLinkJogador(timer.jogador, clientId, isJogadorOnline);
                     
                     descricao += `${timer.codigo} - ${tempoFormatado}${nomeFormatado}: ${jogadorFormatado}${infoFila}
 `;
@@ -1198,9 +1201,10 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         filasAtivas += `${codigo} - [b]${nomeRespawn}[/b]: 💤 Livre (Fila: `;
                         
                         for (let i = 0; i < fila.length; i++) {
-                            // Usar cache em vez de busca assíncrona
+                            // Verificar se o jogador está online
+                            const isOnline = this.verificarJogadorOnline(fila[i].jogador);
                             const clientId = this.obterClientIdDoCache(fila[i].jogador) || fila[i].jogador;
-                            const linkJogador = this.criarLinkJogador(fila[i].jogador, clientId);
+                            const linkJogador = this.criarLinkJogador(fila[i].jogador, clientId, isOnline);
                             const tempoInfo = fila[i].tempoDesejado ? ` (${this.formatarTempo(fila[i].tempoDesejado!)})` : '';
                             
                             if (i > 0) filasAtivas += ', ';
@@ -2893,7 +2897,13 @@ Entre em contato com a liderança para isto!
         }
     }
 
-    private criarLinkJogador(nomeJogador: string, clientId: string): string {
+    private criarLinkJogador(nomeJogador: string, clientId: string, isOnline: boolean = true): string {
+        // Se o jogador está offline, retornar nome em vermelho e negrito sem link
+        if (!isOnline) {
+            console.log(`🔴 Jogador ${nomeJogador} está OFFLINE - formatando em vermelho`);
+            return `[color=red][b]${nomeJogador}[/b][/color]`;
+        }
+        
         if (!clientId || clientId === '') {
             console.log(`🔗 Sem ID para ${nomeJogador}, retornando apenas nome`);
             return nomeJogador; // Retorna apenas o nome se não tiver ID
@@ -2917,6 +2927,12 @@ Entre em contato com a liderança para isto!
         }
         
         return linkFinal;
+    }
+
+    private verificarJogadorOnline(nomeJogador: string): boolean {
+        // Verificar se o jogador está no cache (significa que está online)
+        const clientId = this.obterClientIdDoCache(nomeJogador);
+        return clientId !== null;
     }
 
     private async verificarPermissaoAdmin(remetente: any): Promise<{permitido: boolean, erro?: string}> {
@@ -3901,8 +3917,25 @@ Bom Game! 🎯✨`;
                 // Separar hunteds online e offline
                 const huntedsOnlineNomes = huntedsOnline.map(h => h.name.toLowerCase());
                 
-                for (let i = 0; i < this.huntedsList.length; i++) {
-                    const hunted = this.huntedsList[i];
+                // Criar arrays separados para online e offline
+                const huntedsOnlineList: string[] = [];
+                const huntedsOfflineList: string[] = [];
+                
+                for (const hunted of this.huntedsList) {
+                    const isOnline = huntedsOnlineNomes.includes(hunted.toLowerCase());
+                    if (isOnline) {
+                        huntedsOnlineList.push(hunted);
+                    } else {
+                        huntedsOfflineList.push(hunted);
+                    }
+                }
+                
+                // Concatenar: primeiro online, depois offline
+                const huntedsOrdenados = [...huntedsOnlineList, ...huntedsOfflineList];
+                
+                // Exibir lista ordenada
+                for (let i = 0; i < huntedsOrdenados.length; i++) {
+                    const hunted = huntedsOrdenados[i];
                     const isOnline = huntedsOnlineNomes.includes(hunted.toLowerCase());
                     const status = isOnline ? '[color=GREEN][b]🟢 ONLINE[/b][/color]' : '[color=RED]🔴 OFFLINE[/color]';
                     const numero = (i + 1).toString().padStart(2, '0');
@@ -5041,19 +5074,21 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
             clearTimeout(this.intervalResetDeathlist);
         }
 
-        // Calcular próximo reset (06:00 do próximo dia se já passou das 06:00 hoje)
-        const agora = new Date();
-        const proximoReset = new Date();
-        proximoReset.setHours(6, 0, 0, 0);
+        // Calcular próximo reset às 06:00 horário de Brasília (UTC-3)
+        // Obter horário atual em Brasília
+        const agoraBrasilia = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+        const proximoResetBrasilia = new Date(agoraBrasilia);
+        proximoResetBrasilia.setHours(6, 0, 0, 0);
 
-        // Se já passou das 06:00 hoje, definir para amanhã
-        if (agora.getHours() >= 6) {
-            proximoReset.setDate(proximoReset.getDate() + 1);
+        // Se já passou das 06:00 hoje em Brasília, definir para amanhã
+        if (agoraBrasilia.getHours() >= 6) {
+            proximoResetBrasilia.setDate(proximoResetBrasilia.getDate() + 1);
         }
 
-        const tempoAteReset = proximoReset.getTime() - agora.getTime();
+        // Converter de volta para UTC para calcular o tempo de espera
+        const tempoAteReset = proximoResetBrasilia.getTime() - agoraBrasilia.getTime();
         
-        console.log(`⏰ Próximo reset da Deathlist: ${proximoReset.toLocaleString('pt-BR')}`);
+        console.log(`⏰ Próximo reset da Deathlist: ${proximoResetBrasilia.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (Horário de Brasília)`);
         
         // Configurar timeout para o reset
         this.intervalResetDeathlist = setTimeout(() => {
@@ -5066,18 +5101,19 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
     private resetarDeathlistDiaria(): void {
         console.log('🌅 06:00 - Resetando Deathlist diária...');
         
-        // Fazer backup da lista anterior
-        const backupPath = path.join(__dirname, '..', `deathlist-backup-${new Date().toISOString().split('T')[0]}.json`);
+        // Salvar backup no arquivo fixo (sempre o mesmo arquivo)
+        const backupPath = path.join(__dirname, '..', 'deathlist-backup.json');
         try {
             const backupData = {
-                data: this.ultimoResetDeathlist.toISOString().split('T')[0],
+                ultimaAtualizacao: new Date().toISOString(),
+                dataAnterior: this.ultimoResetDeathlist.toISOString().split('T')[0],
                 totalMortes: this.deathListEntries.length,
                 mortes: this.deathListEntries
             };
             fs.writeFileSync(backupPath, JSON.stringify(backupData, null, 2));
-            console.log(`📁 Backup criado: ${backupPath}`);
+            console.log(`📁 Backup atualizado: ${backupPath} (${this.deathListEntries.length} mortes do dia anterior)`);
         } catch (error: any) {
-            console.log('⚠️ Erro ao criar backup da deathlist:', error.message);
+            console.log('⚠️ Erro ao atualizar backup da deathlist:', error.message);
         }
 
         // Resetar lista
@@ -5090,7 +5126,7 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
         // Atualizar canal
         this.atualizarCanalDeathlist();
         
-        console.log('✅ Deathlist resetada para novo dia');
+        console.log('✅ Deathlist resetada para novo dia - arquivo de backup reutilizado');
     }
 
     private async adicionarMorteNaDeathlist(morte: PlayerDeath, tipoPersonagem: 'Friend' | 'Hunted'): Promise<void> {
