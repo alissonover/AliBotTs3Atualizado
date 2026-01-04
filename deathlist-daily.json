@@ -1,5 +1,15 @@
 {
   "dataReset": "2026-01-04T13:01:14.984Z",
-  "totalMortes": 0,
-  "mortes": []
+  "totalMortes": 1,
+  "mortes": [
+    {
+      "nome": "Tbombeiw",
+      "level": 11,
+      "vocacao": "Sorcerer",
+      "horario": "04/01/2026 13:40",
+      "causa": "Died at Level 11 by rat.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-04T16:52:54.626Z"
+    }
+  ]
 }
