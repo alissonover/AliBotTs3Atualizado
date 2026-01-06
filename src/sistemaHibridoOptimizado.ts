@@ -2297,16 +2297,13 @@ ${statusAtual}
                     }
                     
                     if (nextTimer.tempoRestante <= 0) {
-                        console.log(`⏰ Timer de next expirado: ${codigo.toUpperCase()} - ${nextTimer.jogador} não aceitou`);
+                        console.log(`⏰ Timer de next expirado: ${codigo.toUpperCase()} - ${nextTimer.jogador} - aceitando automaticamente`);
                         
-                        // ENVIAR POKE para o jogador avisando que não aceitou a tempo
-                        await this.enviarPokeNextExpirado(nextTimer.jogador, codigo);
+                        // ACEITAR AUTOMATICAMENTE O CLAIMED
+                        await this.aceitarClaimedAutomaticamente(codigo, nextTimer);
                         
                         delete this.nextTimers[codigo];
                         atualizacaoNecessaria = true;
-                        
-                        // Passar para o próximo da fila
-                        await this.processarProximoNaFila(codigo);
                     }
                 }
                 
@@ -2372,6 +2369,45 @@ ${statusAtual}
             }
         } catch (error: any) {
             console.log(`❌ Erro ao processar fila após expiração (${codigo}):`, error.message);
+        }
+    }
+
+    private async aceitarClaimedAutomaticamente(codigo: string, nextTimer: NextTimer): Promise<void> {
+        try {
+            const nomeJogador = nextTimer.jogador;
+            const tempoParaUsar = nextTimer.tempoDesejado || this.obterTempopadrao(codigo);
+            
+            console.log(`🤖 Aceitando automaticamente claimed para ${nomeJogador} - ${codigo.toUpperCase()} (${this.formatarTempo(tempoParaUsar)})`);
+            
+            // Criar timer de respawn
+            const timer: RespawnTimer = {
+                codigo: codigo,
+                nome: this.obterNomeRespawn(codigo),
+                jogador: nomeJogador,
+                tempoRestante: tempoParaUsar,
+                iniciadoEm: new Date(),
+                duracaoTotal: tempoParaUsar,
+                ultimoMinutoProcessado: 0
+            };
+
+            this.timersRespawn[codigo] = timer;
+            
+            // Iniciar sistema de contagem se não estiver ativo
+            if (!this.intervalTimers) {
+                this.iniciarSistemaTimers();
+            }
+
+            // Invalidar cache e atualizar canal
+            this.invalidarCache();
+            await this.atualizarCanalClaimeds();
+
+            // Enviar poke informando que o claimed foi aceito automaticamente
+            await this.enviarPokeClaimedAceito(nomeJogador, codigo, tempoParaUsar);
+            
+            console.log(`✅ Claimed aceito automaticamente: ${codigo.toUpperCase()} para ${nomeJogador} (${this.formatarTempo(tempoParaUsar)})`);
+            
+        } catch (error: any) {
+            console.log(`❌ Erro ao aceitar claimed automaticamente (${codigo}):`, error.message);
         }
     }
 
@@ -2500,6 +2536,31 @@ ${statusAtual}
             }
         } catch (error: any) {
             console.log(`❌ Erro ao enviar poke de next expirado para ${nomeJogador}:`, error.message);
+        }
+    }
+
+    private async enviarPokeClaimedAceito(nomeJogador: string, codigo: string, tempo: number): Promise<void> {
+        try {
+            console.log(`🔍 Buscando cliente para poke de claimed aceito automaticamente: ${nomeJogador}`);
+            
+            // Buscar o cliente pela descrição (nome do personagem)
+            const cliente = await this.buscarClientePorDescricao(nomeJogador);
+            if (cliente) {
+                const configRespawns = this.obterConfigRespawns();
+                const mensagem = `[color=blue]🤖 CLAIMED ACEITO AUTOMATICAMENTE! ${codigo.toUpperCase()} - ${configRespawns[codigo]} | Tempo: ${this.formatarTempo(tempo)}. Você não aceitou em 10 minutos, então o sistema aceitou automaticamente.[/color]`;
+                
+                // Tentar poke (clientpoke)
+                await this.serverQuery.clientPoke(cliente.clid, mensagem);
+                console.log(`📢 Poke enviado para ${nomeJogador} (Cliente: ${cliente.clientNickname}, ID: ${cliente.clid}): Claimed ${codigo.toUpperCase()} aceito automaticamente`);
+            } else {
+                console.log(`❌ Cliente com personagem ${nomeJogador} não encontrado para poke de claimed aceito`);
+                
+                // Log dos clientes conectados para debug
+                const clientes = await this.serverQuery.clientList();
+                console.log(`👥 Clientes online:`, clientes.map((c: any) => c.clientNickname || c.nickname).join(', '));
+            }
+        } catch (error: any) {
+            console.log(`❌ Erro ao enviar poke de claimed aceito para ${nomeJogador}:`, error.message);
         }
     }
 
