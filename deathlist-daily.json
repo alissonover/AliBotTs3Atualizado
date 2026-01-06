@@ -1,33 +1,42 @@
 {
-  "dataReset": "2026-01-04T13:01:14.984Z",
-  "totalMortes": 3,
+  "dataReset": "2026-01-06T00:33:35.634Z",
+  "totalMortes": 4,
   "mortes": [
     {
-      "nome": "Sandalphon",
-      "level": 1092,
-      "vocacao": "Master Sorcerer",
-      "horario": "04/01/2026 15:10",
-      "causa": "Died at Level 1092 by walking pillar.",
+      "nome": "Teagace Vi",
+      "level": 627,
+      "vocacao": "Elite Knight",
+      "horario": "06/01/2026 02:48",
+      "causa": "Died at Level 627 by The Gravedigger.",
       "tipo": "Friend",
-      "timestamp": "2026-01-04T18:12:04.192Z"
+      "timestamp": "2026-01-06T05:49:14.728Z"
+    },
+    {
+      "nome": "Dim Druid",
+      "level": 819,
+      "vocacao": "Elder Druid",
+      "horario": "06/01/2026 02:28",
+      "causa": "Died at Level 820 by agony.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-06T05:35:15.522Z"
     },
     {
       "nome": "Tbombeiw",
-      "level": 11,
+      "level": 9,
       "vocacao": "Sorcerer",
-      "horario": "04/01/2026 14:39",
-      "causa": "Died at Level 11 by cave rat.",
-      "tipo": "Hunted",
-      "timestamp": "2026-01-04T17:46:19.262Z"
+      "horario": "05/01/2026 23:15",
+      "causa": "Died at Level 9 by rat.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-06T02:16:12.057Z"
     },
     {
       "nome": "Tbombeiw",
-      "level": 11,
+      "level": 9,
       "vocacao": "Sorcerer",
-      "horario": "04/01/2026 13:40",
-      "causa": "Died at Level 11 by rat.",
+      "horario": "05/01/2026 23:08",
+      "causa": "Died at Level 9 by rat.",
       "tipo": "Friend",
-      "timestamp": "2026-01-04T16:52:54.626Z"
+      "timestamp": "2026-01-06T02:11:39.998Z"
     }
   ]
 }

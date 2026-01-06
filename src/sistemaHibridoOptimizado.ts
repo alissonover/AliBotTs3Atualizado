@@ -1,4 +1,5 @@
 ﻿import GerenciadorConexaoHibrida from './gerenciadorConexaoHibrida';
+import { DeathMonitorService, PlayerDeath } from './services/DeathMonitorService';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -53,22 +54,6 @@ interface RespawnsList {
     [codigo: string]: string; // codigo -> nome do respawn
 }
 
-interface PlayerDeath {
-    character: {
-        name: string;
-        level: number;
-        vocation: string;
-    };
-    time: string;
-    reason: string;
-}
-
-interface DeathMonitorData {
-    character: string;
-    lastChecked: string; // ISO string da última verificação
-    recentDeaths: PlayerDeath[];
-}
-
 interface DeathListEntry {
     nome: string;
     level: number;
@@ -92,18 +77,14 @@ class SistemaHibridoOptimizado {
     private friendsList: string[] = []; // Lista de friends para monitoramento de mortes
     private huntedsOnlineAnterior: string[] = []; // Para rastrear mudanÃ§as de status
     private notificacoesHuntedsAtivas: boolean = true; // Controlar se notificaÃ§Ãµes estÃ£o ativas
-    private deathMonitorData: Map<string, DeathMonitorData> = new Map(); // Cache de mortes por personagem
+    
+    // Serviço otimizado de monitoramento de mortes
+    private deathMonitor: DeathMonitorService;
     
     // Sistema de Deathlist
     private deathListEntries: DeathListEntry[] = []; // Lista de mortes do dia
     private ultimoResetDeathlist: Date = new Date(); // Última vez que a lista foi resetada
     private intervalResetDeathlist: NodeJS.Timeout | null = null; // Timer para reset diário às 06:00
-    
-    // Configurações de monitoramento de mortes
-    private readonly LIMITE_TEMPO_MORTE_MINUTOS = 20; // Só notificar mortes até X minutos atrás
-    private deathMonitorInterval: NodeJS.Timeout | null = null; // Timer para verificação de mortes
-    private playersOnlineCache: Set<string> = new Set(); // Cache de players online no mundo
-    private ultimaAtualizacaoOnline: number = 0; // Timestamp da última atualização de online
 
     // CACHE DE PERFORMANCE PARA CLAIMEDS
     private cacheClienteIds: Map<string, string> = new Map(); // personagem -> clientId
@@ -119,8 +100,16 @@ class SistemaHibridoOptimizado {
         this.carregarRespawnsPersistidos();
         this.carregarHuntedsList();
         this.carregarFriendsList();
-        this.carregarDeathMonitorData();
         this.inicializarSistemaDeathlist();
+        
+        // Inicializar serviço otimizado de monitoramento de mortes
+        this.deathMonitor = new DeathMonitorService({
+            recentDeathLimitMinutes: 20,
+            worldName: 'Kalibra',
+            batchSize: 3,
+            delayBetweenBatches: 2000
+        });
+        console.log('💀 ✅ Serviço de monitoramento de mortes inicializado');
     }
 
     public async iniciar(): Promise<void> {
@@ -884,11 +873,11 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             }
         }, 60000); // 1 minuto
 
-        // Atualização de players online - a cada 2 minutos
+        // Atualização de cache de players online - a cada 2 minutos (usando o serviço)
         setInterval(async () => {
             if (this.sistemaAtivo) {
                 try {
-                    await this.atualizarPlayersOnlineCache();
+                    await this.deathMonitor.updateOnlineCache();
                 } catch (error: any) {
                     console.log('⚠️ Erro ao atualizar cache de players online:', error.message);
                 }
@@ -897,7 +886,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
 
         // Atualizar cache de players online imediatamente ao iniciar (não bloquear)
         if (this.sistemaAtivo) {
-            this.atualizarPlayersOnlineCache().catch(error => {
+            this.deathMonitor.updateOnlineCache().catch(error => {
                 console.log('⚠️ Erro ao atualizar cache inicial de players online:', error.message);
             });
         }
@@ -4868,324 +4857,43 @@ ${infoLimpeza}
     }
 
     // ========================================
-    // SISTEMA DE MONITORAMENTO DE MORTES
+    // SISTEMA DE MONITORAMENTO DE MORTES (REFATORADO)
     // ========================================
 
-    private async atualizarPlayersOnlineCache(): Promise<void> {
-        try {
-            const timestamp = new Date().toLocaleTimeString();
-            console.log(`🌍 [${timestamp}] Atualizando cache de players online...`);
-            
-            const worldName = 'Kalibra';
-            const response = await axios.get(
-                `https://api.tibiadata.com/v4/world/${encodeURIComponent(worldName)}`,
-                {
-                    timeout: 10000,
-                    headers: {
-                        'User-Agent': 'AliBotTS3-OnlineChecker/1.0'
-                    }
-                }
-            );
-
-            if (response.data?.world?.online_players && Array.isArray(response.data.world.online_players)) {
-                const playersOnline = response.data.world.online_players;
-                
-                // Limpar cache anterior e adicionar novos
-                this.playersOnlineCache.clear();
-                playersOnline.forEach((player: any) => {
-                    if (player.name) {
-                        this.playersOnlineCache.add(player.name.toLowerCase());
-                    }
-                });
-                
-                this.ultimaAtualizacaoOnline = Date.now();
-                console.log(`✅ Cache atualizado: ${this.playersOnlineCache.size} players online`);
-            } else {
-                console.log('⚠️ Resposta da API não contém players online');
-            }
-        } catch (error: any) {
-            console.log('❌ Erro ao atualizar cache de players online:', error.message);
-        }
-    }
-
-    private carregarDeathMonitorData(): void {
-        try {
-            const filePath = path.join(__dirname, '..', 'mortes-cache.json');
-            if (fs.existsSync(filePath)) {
-                const data = fs.readFileSync(filePath, 'utf8');
-                const cacheData = JSON.parse(data);
-                this.deathMonitorData = new Map(Object.entries(cacheData));
-                console.log(`💀 Cache de mortes carregado: ${this.deathMonitorData.size} personagens`);
-            } else {
-                this.deathMonitorData = new Map();
-                this.salvarDeathMonitorData();
-                console.log('💀 Arquivo mortes-cache.json criado');
-            }
-        } catch (error: any) {
-            console.log('❌ Erro ao carregar mortes-cache.json:', error.message);
-            this.deathMonitorData = new Map();
-        }
-    }
-
-    private salvarDeathMonitorData(): void {
-        try {
-            const filePath = path.join(__dirname, '..', 'mortes-cache.json');
-            const cacheData = Object.fromEntries(this.deathMonitorData);
-            fs.writeFileSync(filePath, JSON.stringify(cacheData, null, 2));
-        } catch (error: any) {
-            console.log('❌ Erro ao salvar mortes-cache.json:', error.message);
-        }
-    }
-
+    /**
+     * Método principal de verificação de mortes - usa o DeathMonitorService otimizado
+     * Utiliza APENAS os arquivos friends-list.json e hunteds-list.json
+     */
     private async verificarMortes(): Promise<void> {
         try {
-            const timestamp = new Date().toLocaleTimeString();
-            console.log(`💀 [${timestamp}] Verificando mortes de Friends & Hunteds...`);
-
-            // Obter personagens diretamente das listas (sem sincronização desnecessária)
-            const friendsDoCanal = [...this.friendsList];
-            const huntedsDoCanal = [...this.huntedsList];
+            // Usar diretamente os dados dos arquivos JSON (sem sincronização com canal)
+            const friendsDoArquivo = [...this.friendsList];
+            const huntedsDoArquivo = [...this.huntedsList];
             
             // Combinar friends e hunteds em uma lista única (sem duplicatas)
-            const personagensUnicos = new Set<string>([...friendsDoCanal, ...huntedsDoCanal]);
+            const personagensUnicos = new Set<string>([...friendsDoArquivo, ...huntedsDoArquivo]);
             const todosPersonagens = Array.from(personagensUnicos);
+
+            console.log(`📋 Lista dos arquivos: ${friendsDoArquivo.length} friends + ${huntedsDoArquivo.length} hunteds = ${todosPersonagens.length} únicos`);
 
             if (todosPersonagens.length === 0) {
                 console.log('💀 Nenhum personagem para monitorar (listas vazias)');
                 return;
             }
 
-            // Filtrar apenas personagens que estão online
-            const personagensOnline = todosPersonagens.filter(personagem => 
-                this.playersOnlineCache.has(personagem.toLowerCase())
-            );
+            // Usar o serviço otimizado para verificar mortes
+            const novasMortesMap = await this.deathMonitor.checkDeaths(todosPersonagens);
 
-            if (personagensOnline.length === 0) {
-                console.log(`💀 Nenhum personagem monitorado online (0 de ${todosPersonagens.length})`);
-                return;
+            console.log(`📬 Mortes detectadas: ${novasMortesMap.size} personagens com novas mortes`);
+
+            // Processar e notificar mortes encontradas
+            for (const [personagem, mortes] of novasMortesMap.entries()) {
+                const tipoPersonagem = friendsDoArquivo.includes(personagem) ? 'Friend' : 'Hunted';
+                await this.notificarMortes(personagem, mortes, tipoPersonagem);
             }
-
-            console.log(`📊 Verificando ${personagensOnline.length} de ${todosPersonagens.length} personagens (apenas online)`);
-
-            // Processar em lotes paralelos (3 por vez para não sobrecarregar API)
-            const TAMANHO_LOTE = 3;
-            const DELAY_ENTRE_LOTES = 2000; // 2 segundos entre lotes - aumentado de 1.5s
-            let mortesEncontradas = 0;
-            let sucessos = 0;
-            let falhas = 0;
-
-            for (let i = 0; i < personagensOnline.length; i += TAMANHO_LOTE) {
-                const lote = personagensOnline.slice(i, i + TAMANHO_LOTE);
-                
-                // Processar lote em paralelo com Promise.allSettled para não parar em erros
-                const promessas = lote.map(async (personagem) => {
-                    try {
-                        const novasMortes = await this.verificarMortesPersonagem(personagem);
-                        if (novasMortes.length > 0) {
-                            const tipoPersonagem = friendsDoCanal.includes(personagem) ? 'Friend' : 'Hunted';
-                            await this.notificarMortes(personagem, novasMortes, tipoPersonagem);
-                            return { sucesso: true, mortes: novasMortes.length };
-                        }
-                        return { sucesso: true, mortes: 0 };
-                    } catch (error: any) {
-                        // Não logar aqui pois verificarMortesPersonagem já loga os erros
-                        return { sucesso: false, mortes: 0 };
-                    }
-                });
-
-                const resultados = await Promise.allSettled(promessas);
-                
-                // Contar sucessos e falhas
-                resultados.forEach(resultado => {
-                    if (resultado.status === 'fulfilled') {
-                        if (resultado.value.sucesso) {
-                            sucessos++;
-                            mortesEncontradas += resultado.value.mortes;
-                        } else {
-                            falhas++;
-                        }
-                    } else {
-                        falhas++;
-                    }
-                });
-
-                // Delay entre lotes - SEMPRE aplicar para não sobrecarregar API
-                if (i + TAMANHO_LOTE < personagensOnline.length) {
-                    await new Promise(resolve => setTimeout(resolve, DELAY_ENTRE_LOTES));
-                }
-            }
-
-            console.log(`📊 Resultado: ${sucessos} sucessos, ${falhas} falhas de ${personagensOnline.length} personagens`);
-
-            // Salvar cache uma única vez no final
-            if (mortesEncontradas > 0) {
-                console.log(`💀 [${timestamp}] ${mortesEncontradas} nova(s) morte(s) encontrada(s)`);
-            } else {
-                console.log(`💀 [${timestamp}] Nenhuma nova morte encontrada`);
-            }
-            
-            this.salvarDeathMonitorData();
 
         } catch (error: any) {
             console.log('❌ Erro geral no monitoramento de mortes:', error.message);
-        }
-    }
-
-    private async verificarMortesPersonagem(nomePersonagem: string, tentativa: number = 1): Promise<PlayerDeath[]> {
-        const MAX_TENTATIVAS = 3;
-        const TIMEOUT = 25000; // 25 segundos - aumentado para evitar ECONNABORTED
-        
-        try {
-            // Buscar dados do personagem na API do Tibia com timeout e retry
-            const response = await axios.get(
-                `https://api.tibiadata.com/v4/character/${encodeURIComponent(nomePersonagem)}`,
-                {
-                    timeout: TIMEOUT,
-                    headers: {
-                        'User-Agent': 'AliBotTS3-DeathMonitor/1.0',
-                        'Accept-Encoding': 'gzip, deflate',
-                        'Connection': 'keep-alive'
-                    },
-                    // Configurações adicionais para conexão mais estável
-                    maxRedirects: 5,
-                    validateStatus: (status) => status < 500
-                }
-            );
-            
-            if (!response.data || !response.data.character) {
-                return [];
-            }
-
-            const deaths = response.data.character.deaths || [];
-            if (deaths.length === 0) {
-                // Atualizar timestamp mesmo sem mortes
-                this.deathMonitorData.set(nomePersonagem, {
-                    character: nomePersonagem,
-                    lastChecked: new Date().toISOString(),
-                    recentDeaths: []
-                });
-                return [];
-            }
-
-            // Obter dados do cache
-            const cacheData = this.deathMonitorData.get(nomePersonagem) || {
-                character: nomePersonagem,
-                lastChecked: new Date(0).toISOString(),
-                recentDeaths: []
-            };
-
-            const ultimaVerificacao = new Date(cacheData.lastChecked);
-            const agora = new Date();
-            const limiteTempoMorte = this.LIMITE_TEMPO_MORTE_MINUTOS * 60 * 1000;
-            const novasMortes: PlayerDeath[] = [];
-
-            // Verificar apenas a primeira morte (mais recente) para otimização
-            // Se a primeira já foi processada, as outras também foram
-            const primeiramorte = deaths[0];
-            const timeString = primeiramorte.time;
-            const deathDate = this.parseDeathTime(timeString);
-            
-            // Se a morte mais recente já foi processada, pular
-            if (deathDate <= ultimaVerificacao) {
-                this.deathMonitorData.set(nomePersonagem, {
-                    character: nomePersonagem,
-                    lastChecked: new Date().toISOString(),
-                    recentDeaths: deaths.slice(0, 5)
-                });
-                return [];
-            }
-
-            // Verificar todas as mortes novas
-            for (const death of deaths) {
-                const deathTime = this.parseDeathTime(death.time);
-                const tempoDesDaMorte = agora.getTime() - deathTime.getTime();
-                const minutosDesDaMorte = Math.round(tempoDesDaMorte / 60000);
-                
-                if (deathTime > ultimaVerificacao && tempoDesDaMorte <= limiteTempoMorte) {
-                    console.log(`💀 ✅ ${response.data.character.character.name} - ${minutosDesDaMorte} min atrás`);
-                    
-                    novasMortes.push({
-                        character: {
-                            name: response.data.character.character.name,
-                            level: response.data.character.character.level,
-                            vocation: response.data.character.character.vocation
-                        },
-                        time: death.time,
-                        reason: death.reason || 'Causa desconhecida'
-                    });
-                }
-            }
-
-            // Atualizar cache
-            this.deathMonitorData.set(nomePersonagem, {
-                character: nomePersonagem,
-                lastChecked: new Date().toISOString(),
-                recentDeaths: deaths.slice(0, 5)
-            });
-
-            return novasMortes;
-
-        } catch (error: any) {
-            const errorCode = error.code;
-            
-            // Retry em erros de conexão com delay progressivo mais longo
-            if ((errorCode === 'ECONNRESET' || errorCode === 'ETIMEDOUT' || errorCode === 'ECONNABORTED') && tentativa < MAX_TENTATIVAS) {
-                const delayMs = 3000 * tentativa; // 3s, 6s, 9s - aumentado de 2s para 3s
-                console.log(`⚠️ ${nomePersonagem}: ${errorCode}, aguardando ${delayMs}ms antes de retry ${tentativa}/${MAX_TENTATIVAS}`);
-                await new Promise(resolve => setTimeout(resolve, delayMs));
-                return await this.verificarMortesPersonagem(nomePersonagem, tentativa + 1);
-            }
-            
-            // Logar erro final se todas as tentativas falharam
-            if (tentativa >= MAX_TENTATIVAS) {
-                console.log(`❌ ${nomePersonagem}: Falha após ${MAX_TENTATIVAS} tentativas (${errorCode})`);
-            }
-            
-            // Erro 404 ou personagem não encontrado - atualizar cache para não tentar novamente
-            if (error.response?.status === 404) {
-                this.deathMonitorData.set(nomePersonagem, {
-                    character: nomePersonagem,
-                    lastChecked: new Date().toISOString(),
-                    recentDeaths: []
-                });
-            }
-            
-            return [];
-        }
-    }
-
-    private parseDeathTime(timeString: string): Date {
-        try {
-            // Remover timezone para parsing mais confiável
-            let cleanTime = timeString.replace(/ CET$/, '').replace(/ CEST$/, '');
-            
-            // Tentar diferentes formatos
-            let deathDate: Date;
-            
-            // Primeiro tentar parsing direto
-            deathDate = new Date(cleanTime);
-            
-            // Se não funcionou, tentar com formatos alternativos
-            if (isNaN(deathDate.getTime())) {
-                // Tentar formato alternativo: "Dec 25, 2023 14:30:45"
-                cleanTime = cleanTime.replace(/(\w{3} \d{1,2}) (\d{4}),/, '$1, $2');
-                deathDate = new Date(cleanTime);
-            }
-            
-            // Validar se a data faz sentido (não muito no futuro, não muito no passado)
-            const agora = new Date();
-            const umAnoAtras = new Date(agora.getTime() - 365 * 24 * 60 * 60 * 1000);
-            const umaHoraNaFrente = new Date(agora.getTime() + 60 * 60 * 1000);
-            
-            if (isNaN(deathDate.getTime()) || deathDate < umAnoAtras || deathDate > umaHoraNaFrente) {
-                return new Date(0);
-            }
-            
-            return deathDate;
-            
-        } catch (error: any) {
-            console.log(`❌ Erro ao parsear tempo de morte "${timeString}":`, error.message);
-            return new Date(0);
         }
     }
 
