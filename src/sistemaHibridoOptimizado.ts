@@ -95,6 +95,55 @@ class SistemaHibridoOptimizado {
     private confirmacoesLeave: Map<string, { codigo: string; timestamp: number }> = new Map(); // jogador -> { codigo, timestamp }
     private readonly TIMEOUT_CONFIRMACAO_MS = 30000; // Confirmação expira em 30 segundos
 
+    // Mensagens de zueira para pokes de morte
+    private readonly mensagensZueira: string[] = [
+        'Morreu de novo',
+        'Caiu fácil demais',
+        'Respawn conhece bem',
+        'Morte merecida hoje',
+        'Gameplay questionável hein',
+        'Foi de base',
+        'Visitou o templo',
+        'Temple já conhece',
+        'XP negativa ativada',
+        'Loot virou lenda',
+        'Profissional do chão',
+        'Especialista em morrer',
+        'Dominou o respawn',
+        'Aula de fracasso',
+        'Manual do noob',
+        'Faltou dedo hoje',
+        'Lag seletivo né',
+        'Erro de cálculo',
+        'Estratégia inexistente',
+        'Planejamento zero total',
+        'Morreu igual lixo',
+        'Muito ruim mesmo',
+        'Inútil até vivo',
+        'Jogou pra morrer',
+        'Vergonha desse char',
+        'Delete esse char',
+        'Aposenta do Tibia',
+        'Volta pro rook',
+        'Instala tutorial aí',
+        'Desinstala urgente',
+        'Free kill ambulante',
+        'Farm de death',
+        'Distribuindo frag grátis',
+        'NPC mais forte',
+        'Mob riu disso',
+        'Nem tenta mais',
+        'Fracasso consistente',
+        'Nunca aprende nada',
+        'Morreu previsível',
+        'Zero evolução sempre',
+        'Muito fraco',
+        'Pífio demais',
+        'Ridículo isso',
+        'Patético total',
+        'Horroroso jogando'
+    ];
+
     constructor() {
         this.gerenciadorConexao = GerenciadorConexaoHibrida.obterInstancia();
         this.carregarRespawnsPersistidos();
@@ -4998,6 +5047,9 @@ ${infoLimpeza}
                 // Formatar a data da morte para padrão brasileiro: DD/MM/AAAA HH:MM
                 const dataFormatada = this.formatarDataMorte(morte.time);
                 
+                // Selecionar mensagem de zueira aleatória
+                const mensagemZueira = this.mensagensZueira[Math.floor(Math.random() * this.mensagensZueira.length)];
+                
                 const mensagem = `💀 MORTE DETECTADA! 💀
 
 ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
@@ -5005,7 +5057,9 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
 🕐 Horário: ${dataFormatada}
 💥 Causa: ${morte.reason}
 
-⚠️ [i]Monitoramento automático ativo[/i]`;
+⚠️ [i]Monitoramento automático ativo[/i]
+
+😂 ${mensagemZueira}`;
 
                 // Enviar poke para todos os usuários online
                 await this.enviarPokeParaTodos(mensagem);
