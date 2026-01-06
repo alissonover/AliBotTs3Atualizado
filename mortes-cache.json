@@ -2331,8 +2331,22 @@
   },
   "Tio dos Cores": {
     "character": "Tio dos Cores",
-    "lastChecked": "2026-01-06T02:51:55.274Z",
+    "lastChecked": "2026-01-06T21:45:50.332Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-06T21:37:56Z",
+        "level": 1119,
+        "killers": [
+          {
+            "name": "An Eye",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1119 by An Eye."
+      },
       {
         "time": "2026-01-03T16:32:29Z",
         "level": 1120,

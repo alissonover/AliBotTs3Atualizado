@@ -438,7 +438,7 @@ class SistemaHibridoOptimizado {
 !resp [código] [tempo] - Iniciar claimed
 !next [código] [tempo] - Entrar na fila
 !leave [código] - Sair do claimed
-!fila [código] - Ver fila
+!respinfo [código] - Ver informações do respawn (claimed e nexts)
 !atualizalevel - Atualizar grupo de level
 
 🔧 Comandos de Administração (Respawns):
@@ -728,8 +728,8 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         resposta = await this.processarComandoResp(comando, remetente);
                     } else if (comando.toLowerCase().startsWith('!leave ')) {
                         resposta = await this.processarComandoLeave(comando, remetente);
-                    } else if (comando.toLowerCase().startsWith('!fila ')) {
-                        resposta = await this.processarComandoFila(comando, remetente);
+                    } else if (comando.toLowerCase().startsWith('!respinfo ')) {
+                        resposta = await this.processarComandoRespInfo(comando, remetente);
                     } else if (comando.toLowerCase().startsWith('!next ')) {
                         resposta = await this.processarComandoNext(comando, remetente);
                     } else if (comando.toLowerCase().startsWith('!addresp ')) {
@@ -775,7 +775,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
 💡 Use !help para ver comandos disponíveis.
 ⚔️ Para respawns: !resp [código] [tempo opcional]
 🎯 Para entrar na fila: !next [código]
-📋 Para fila: !fila [código]
+📋 Para ver informações: !respinfo [código]
 🚪 Para sair: !leave [código]`;
                     }
                     break;
@@ -1078,7 +1078,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         ⚠️ [i]Tempo mínimo: 01:00 | Incrementos: 15min | Máx: Tier1/2=02:30, Tier3=03:15[/i]
         ⚠️ [i]Obs: Caso não informe tempo, resps Tier 1 e 2  serão 02:30, Tier 3 serão 03:15 por padrão![/i]
 🚪 Use: [b]!leave [código][/b] - Sair do respawn
-📊 Use: [b]!fila [código][/b] - Ver timer específico
+📊 Use: [b]!respinfo [código][/b] - Ver informações do respawn
 💡 Use: [b]!help[/b] - Lista de comandos
 
 `;
@@ -1749,7 +1749,7 @@ ${filasAtivas}`;
 
             if (!estaNoTimer && !estaNoNext && !estaNaFila) {
                 return `❌ Você não está participando do respawn ${configRespawns[codigo]}!
-📋 Use !fila ${codigo} para ver o status atual`;
+📋 Use !respinfo ${codigo} para ver o status atual`;
             }
 
             // VERIFICAR SE HÁ FILA E PEDIR CONFIRMAÇÃO
@@ -1881,7 +1881,7 @@ ${filasAtivas}`;
 
             if (!encontrouJogador) {
                 return `❌ Você não está participando do respawn ${configRespawns[codigo]}!
-� Use !fila ${codigo} para ver o status atual`;
+� Use !respinfo ${codigo} para ver o status atual`;
             }
 
             // Atualizar canal
@@ -2108,7 +2108,7 @@ ${filasAtivas}`;
                 return `❌ Fila lotada!
 🎯 Máximo: 3 nexts por claimed
 ⚔️ ${configRespawns[codigo]} (${codigo.toUpperCase()})
-📋 Use !fila ${codigo} para ver a fila atual`;
+📋 Use !respinfo ${codigo} para ver a fila atual`;
             }
 
             // Adicionar à fila
@@ -2147,30 +2147,53 @@ ${statusAtual}
         }
     }
 
-    private async processarComandoFila(comando: string, remetente: any): Promise<string> {
+    private async processarComandoRespInfo(comando: string, remetente: any): Promise<string> {
         try {
             const partes = comando.trim().split(' ');
             
             if (partes.length >= 2) {
-                // Ver fila específica
+                // Ver informações específicas de um respawn
                 const codigo = partes[1].toLowerCase();
                 const timer = this.timersRespawn[codigo];
                 
                 if (!timer) {
                     return `❌ Nenhum timer ativo para "${codigo.toUpperCase()}"
-📋 Use !fila para ver todos os timers`;
+📋 Use !respinfo para ver todos os timers`;
                 }
 
                 const tempoRestante = this.formatarTempo(timer.tempoRestante);
                 const tempoTotal = this.formatarTempo(timer.duracaoTotal);
                 const progresso = Math.round(((timer.duracaoTotal - timer.tempoRestante) / timer.duracaoTotal) * 100);
 
-                return `⚔️ ${timer.nome} (${codigo.toUpperCase()})
+                let resposta = `⚔️ ${timer.nome} (${codigo.toUpperCase()})
+
+🎯 CLAIMED:
 👤 Jogador: ${timer.jogador}
 ⏰ Restante: ${tempoRestante}
 📊 Total: ${tempoTotal}
 📈 Progresso: ${progresso}%
 🕐 Iniciado: ${timer.iniciadoEm.toLocaleTimeString('pt-BR')}`;
+                
+                // Verificar se há nexts na fila
+                const fila = this.filasClaimeds[codigo];
+                if (fila && fila.length > 0) {
+                    resposta += '\n\n📋 NEXTS:';
+                    
+                    // Mostrar até 2 nexts
+                    const nextsParaMostrar = Math.min(fila.length, 2);
+                    for (let i = 0; i < nextsParaMostrar; i++) {
+                        const next = fila[i];
+                        const tempoNext = next.tempoDesejado ? this.formatarTempo(next.tempoDesejado) : 'Tempo padrão';
+                        resposta += `\n${i + 1}. 👤 ${next.jogador} - ⏰ ${tempoNext}`;
+                    }
+                    
+                    // Se houver mais de 2 nexts, informar quantos restam
+                    if (fila.length > 2) {
+                        resposta += `\n   ... e mais ${fila.length - 2} na fila`;
+                    }
+                }
+                
+                return resposta;
             } else {
                 // Ver todas as filas
                 const timersAtivos = Object.values(this.timersRespawn);
@@ -2185,14 +2208,22 @@ ${statusAtual}
                 timersAtivos.forEach(timer => {
                     const tempoRestante = this.formatarTempo(timer.tempoRestante);
                     resposta += `⚔️ ${timer.codigo.toUpperCase()}: ${timer.nome}
-👤 ${timer.jogador} - ⏰ ${tempoRestante}\n\n`;
+👤 ${timer.jogador} - ⏰ ${tempoRestante}`;
+                    
+                    // Adicionar info de nexts se houver
+                    const fila = this.filasClaimeds[timer.codigo];
+                    if (fila && fila.length > 0) {
+                        resposta += ` (${fila.length} next${fila.length > 1 ? 's' : ''})`;
+                    }
+                    
+                    resposta += '\n\n';
                 });
 
                 return resposta.trim();
             }
 
         } catch (error: any) {
-            return `❌ Erro ao processar comando !fila: ${error.message}`;
+            return `❌ Erro ao processar comando !respinfo: ${error.message}`;
         }
     }
 
@@ -4575,7 +4606,7 @@ ${emoji} Status: ${ativar ? 'ATIVAS' : 'DESATIVADAS'}
             const timer = this.timersRespawn[codigo];
             if (!timer) {
                 return `❌ Nenhum timer ativo para "${codigo.toUpperCase()}"
-📋 Use !fila para ver todos os timers ativos`;
+📋 Use !respinfo para ver todos os timers ativos`;
             }
 
             // Alternar estado de pausa

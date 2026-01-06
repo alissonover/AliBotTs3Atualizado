@@ -1,42 +1,15 @@
 {
-  "dataReset": "2026-01-06T00:33:35.634Z",
-  "totalMortes": 4,
+  "dataReset": "2026-01-06T21:44:08.592Z",
+  "totalMortes": 1,
   "mortes": [
     {
-      "nome": "Teagace Vi",
-      "level": 627,
-      "vocacao": "Elite Knight",
-      "horario": "06/01/2026 02:48",
-      "causa": "Died at Level 627 by The Gravedigger.",
+      "nome": "Tio dos Cores",
+      "level": 1119,
+      "vocacao": "Royal Paladin",
+      "horario": "06/01/2026 18:37",
+      "causa": "Died at Level 1119 by An Eye.",
       "tipo": "Friend",
-      "timestamp": "2026-01-06T05:49:14.728Z"
-    },
-    {
-      "nome": "Dim Druid",
-      "level": 819,
-      "vocacao": "Elder Druid",
-      "horario": "06/01/2026 02:28",
-      "causa": "Died at Level 820 by agony.",
-      "tipo": "Friend",
-      "timestamp": "2026-01-06T05:35:15.522Z"
-    },
-    {
-      "nome": "Tbombeiw",
-      "level": 9,
-      "vocacao": "Sorcerer",
-      "horario": "05/01/2026 23:15",
-      "causa": "Died at Level 9 by rat.",
-      "tipo": "Friend",
-      "timestamp": "2026-01-06T02:16:12.057Z"
-    },
-    {
-      "nome": "Tbombeiw",
-      "level": 9,
-      "vocacao": "Sorcerer",
-      "horario": "05/01/2026 23:08",
-      "causa": "Died at Level 9 by rat.",
-      "tipo": "Friend",
-      "timestamp": "2026-01-06T02:11:39.998Z"
+      "timestamp": "2026-01-06T21:47:26.970Z"
     }
   ]
 }
