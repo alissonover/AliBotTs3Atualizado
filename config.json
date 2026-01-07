@@ -1,13 +1,13 @@
 {
   "teamspeak": {
-    "host": "108.181.69.166",
-    "serverport": 2573,
-    "queryport": 40401,
+    "host": "201.23.75.214",
+    "serverport": 9987,
+    "queryport": 10101,
     "username": "AliBot",
-    "password": "Yv9bQStraef5",
+    "password": "UVFgiEia0Czl",
     "nickname": "AliBot",
     "protocol": "raw",
-    "virtualServerID": 384,
+    "virtualServerID": 1,
     "channelId": "4"
   },
   "bot": {

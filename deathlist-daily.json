@@ -1,7 +1,25 @@
 {
   "dataReset": "2026-01-06T21:44:08.592Z",
-  "totalMortes": 2,
+  "totalMortes": 4,
   "mortes": [
+    {
+      "nome": "Cokito Mclovin",
+      "level": 1103,
+      "vocacao": "Elder Druid",
+      "horario": "06/01/2026 23:45",
+      "causa": "Died at Level 1104 by crape man.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-07T02:48:01.150Z"
+    },
+    {
+      "nome": "Seriel Tyrus",
+      "level": 648,
+      "vocacao": "Elder Druid",
+      "horario": "06/01/2026 23:20",
+      "causa": "Died at Level 648 by corrupt naga.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-07T02:26:22.006Z"
+    },
     {
       "nome": "Trefor Das Sombras",
       "level": 1207,

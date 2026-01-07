@@ -240,7 +240,7 @@ class SistemaHibridoOptimizado {
             console.log('� Reconexão: Automática com dados persistentes');
             console.log('⚡ Comandos: !help, !status, !ping, !info, !users, !friends, !claimeds, !sync');
             console.log('🚀 Performance: MÁXIMA (sem overhead de abertura)');
-            console.log('🔄 Atualização automática: Friends (1min) | Claimeds (30s)');
+            console.log('🔄 Atualização automática: Friendlist (1min) | Claimedlist (30s)');
             console.log('===============================================');
             console.log('');
 
@@ -251,16 +251,16 @@ class SistemaHibridoOptimizado {
             console.log('🔄 Fazendo primeira atualização dos canais...');
             try {
                 await this.atualizarCanalFriends();
-                console.log('✅ Canal Friends inicializado');
+                console.log('✅ Canal Friendlist inicializado');
             } catch (error: any) {
-                console.log('⚠️ Erro na inicialização do canal Friends:', error.message);
+                console.log('⚠️ Erro na inicialização do canal Friendlist:', error.message);
             }
 
             try {
                 await this.atualizarCanalClaimeds();
-                console.log('✅ Canal Claimeds inicializado');
+                console.log('✅ Canal Claimedlist inicializado');
             } catch (error: any) {
-                console.log('⚠️ Erro na inicialização do canal Claimeds:', error.message);
+                console.log('⚠️ Erro na inicialização do canal Claimedlist:', error.message);
             }
 
             try {
@@ -272,9 +272,9 @@ class SistemaHibridoOptimizado {
 
             try {
                 await this.atualizarCanalHunteds();
-                console.log('✅ Canal Hunteds inicializado');
+                console.log('✅ Canal Huntedlist inicializado');
             } catch (error: any) {
-                console.log('⚠️ Erro na inicialização do canal Hunteds:', error.message);
+                console.log('⚠️ Erro na inicialização do canal Huntedlist:', error.message);
             }
 
             // Configurar handlers de saída
@@ -1014,14 +1014,14 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         }
 
         try {
-            const friendsChannelId = "8"; // ID do canal Friends
+            const friendsChannelId = "109"; // ID do canal Friendlist
             
             // Buscar membros online da guild
             const membrosOnline = await this.buscarMembrosOnlineTibia();
             
             // Se houve erro na API, não atualizar o canal
             if (membrosOnline === null) {
-                console.log('⚠️ Pulando atualização do canal Friends devido a erro na API');
+                console.log('⚠️ Pulando atualização do canal Friendlist devido a erro na API');
                 return;
             }
             
@@ -1093,7 +1093,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                 
                 if (descricaoAtual.trim() === descricao.trim()) {
                     precisaAtualizar = false;
-                    console.log(`👥 Canal Friends já está atualizado (${membrosOnline.length} membros) - sem modificações`);
+                    console.log(`👥 Canal Friendlist já está atualizado (${membrosOnline.length} membros) - sem modificações`);
                 }
             } catch (error) {
                 // Se não conseguir verificar, atualiza mesmo assim
@@ -1103,14 +1103,14 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             // Atualizar canal apenas se necessário
             if (precisaAtualizar) {
                 // Atualizar nome do canal com quantidade de membros online
-                const nomeCanal = `Friends[${membrosOnline.length}]`;
+                const nomeCanal = `Friendlist[${membrosOnline.length}]`;
                 
                 await this.serverQuery.channelEdit(friendsChannelId, {
                     channel_name: nomeCanal,
                     channel_description: descricao
                 });
                 
-                console.log(`👥 Canal Friends atualizado: ${membrosOnline.length} membros online da guild Missclick`);
+                console.log(`👥 Canal Friendlist atualizado: ${membrosOnline.length} membros online da guild Missclick`);
                 console.log(`📝 Nome do canal alterado para: ${nomeCanal}`);
                 
                 if (membrosOnline.length > 0) {
@@ -1120,7 +1120,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             }
             
         } catch (error: any) {
-            console.log('❌ Erro ao atualizar canal Friends:', error.message);
+            console.log('❌ Erro ao atualizar canal Friendlist:', error.message);
             throw error;
         }
     }
@@ -1136,7 +1136,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
             // STEP 1: Atualizar cache de clientes primeiro (super rápido)
             await this.atualizarCacheClientesRapido();
             
-            const claimedChannelId = "7"; // ID do canal Claimeds
+            const claimedChannelId = "112"; // ID do canal Claimeds
             
             // Construir descrição base do canal
             let descricao = `[img]https://i.imgur.com/6yPB3ol.png[/img]
@@ -1307,7 +1307,7 @@ ${filasAtivas}`;
         }
 
         try {
-            const respawnsChannelId = "9"; // ID do canal Respawns List - ESPECÍFICO
+            const respawnsChannelId = "111"; // ID do canal Respawns List - ESPECÍFICO
             
             console.log('📋 Definindo conteúdo estático do canal Respawns List...');
             
@@ -3588,9 +3588,9 @@ Entre em contato com a liderança para isto!
         }
 
         try {
-            const huntedsChannelId = "10"; // ID do canal Hunteds - ajustar conforme necessário
+            const huntedsChannelId = "108"; // ID do canal Hunteds - ajustar conforme necessário
             
-            console.log('🎯 Iniciando atualização do canal Hunteds...');
+            console.log('🎯 Iniciando atualização do canal Huntedlist...');
             
             // Buscar hunteds online com tratamento de erro
             const huntedsOnline = await this.buscarHuntedsOnline();
@@ -3690,7 +3690,7 @@ Entre em contato com a liderança para isto!
                 
                 if (descricaoAtual.trim() === descricao.trim()) {
                     precisaAtualizar = false;
-                    console.log(`🎯 Canal Hunteds já está atualizado (${huntedsOnline.length} online) - sem modificações`);
+                    console.log(`🎯 Canal Huntedlist já está atualizado (${huntedsOnline.length} online) - sem modificações`);
                 }
             } catch (error) {
                 console.log('⚠️ Erro ao verificar estado atual do canal, forçando atualização');
@@ -3701,23 +3701,23 @@ Entre em contato com a liderança para isto!
             if (precisaAtualizar) {
                 try {
                     // Atualizar nome do canal com quantidade de hunteds online
-                    const nomeCanal = `Hunteds[${huntedsOnline.length}]`;
+                    const nomeCanal = `Huntedlist[${huntedsOnline.length}]`;
                     
                     await this.serverQuery.channelEdit(huntedsChannelId, {
                         channel_name: nomeCanal,
                         channel_description: descricao
                     });
                     
-                    console.log(`🎯 Canal Hunteds atualizado: ${huntedsOnline.length} hunteds online de ${this.huntedsList.length} monitorados`);
+                    console.log(`🎯 Canal Huntedlist atualizado: ${huntedsOnline.length} hunteds online de ${this.huntedsList.length} monitorados`);
                     console.log(`📝 Nome do canal alterado para: ${nomeCanal}`);
                 } catch (updateError: any) {
-                    console.log(`❌ Erro ao atualizar canal Hunteds: ${updateError.message}`);
+                    console.log(`❌ Erro ao atualizar canal Huntedlist: ${updateError.message}`);
                     throw updateError;
                 }
             }
             
         } catch (error: any) {
-            console.log('❌ Erro geral ao atualizar canal Hunteds:', error.message);
+            console.log('❌ Erro geral ao atualizar canal Huntedlist:', error.message);
             throw error;
         }
     }
@@ -5223,7 +5223,7 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
 
     private async sincronizarFriendsDoCanal(): Promise<void> {
         try {
-            const friendsChannelId = "9"; // ID do canal Friends - ajustar conforme necessário
+            const friendsChannelId = "109"; // ID do canal Friends - ajustar conforme necessário
             
             console.log(`👥 Sincronizando lista de friends com canal (ID: ${friendsChannelId})...`);
             
@@ -5602,7 +5602,7 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
         }
 
         try {
-            const deathlistChannelId = "11"; // ID do canal Deathlist - ajustar conforme necessário
+            const deathlistChannelId = "110"; // ID do canal Deathlist - ajustar conforme necessário
             
             console.log(`💀 Atualizando canal Deathlist (ID: ${deathlistChannelId})...`);
             
