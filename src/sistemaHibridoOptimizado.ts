@@ -1312,7 +1312,9 @@ ${filasAtivas}`;
             console.log('📋 Definindo conteúdo estático do canal Respawns List...');
             
             // Conteúdo ESTÁTICO - apenas a imagem conforme solicitado
-            const descricao = `[img]https://i.imgur.com/VhBwi3t.png[/img]`;
+            const descricao = `
+            [img]https://i.imgur.com/O6CN0Vy.png[/img]
+            [img]https://i.imgur.com/tvtdFB3.png[/img]`;
             
             // Verificar se precisa atualizar (para evitar atualizações desnecessárias)
             let precisaAtualizar = true;
@@ -4067,18 +4069,67 @@ ${resultado.removido ? `🗑️ Grupo anterior removido: ${resultado.grupoRemovi
         // Definir as faixas de level e seus respectivos grupos
         // IMPORTANTE: Ajuste os SGIDs (Server Group IDs) de acordo com o seu servidor TeamSpeak
         
-        if (level >= 1100) {
-            return { nome: '1100+', sgid: 10549 };
+        // Níveis 3000+
+        if (level >= 3000) {
+            return { nome: '3000+', sgid: 2406 };
+        } else if (level >= 2900) {
+            return { nome: '2900+', sgid: 2405 };
+        } else if (level >= 2800) {
+            return { nome: '2800+', sgid: 2404 };
+        } else if (level >= 2700) {
+            return { nome: '2700+', sgid: 2403 };
+        } else if (level >= 2600) {
+            return { nome: '2600+', sgid: 2402 };
+        } else if (level >= 2500) {
+            return { nome: '2500+', sgid: 2100 };
+        } else if (level >= 2400) {
+            return { nome: '2400+', sgid: 2098 };
+        } else if (level >= 2300) {
+            return { nome: '2300+', sgid: 2097 };
+        } else if (level >= 2200) {
+            return { nome: '2200+', sgid: 2096 };
+        } else if (level >= 2100) {
+            return { nome: '2100+', sgid: 2095 };
+        } else if (level >= 2000) {
+            return { nome: '2000+', sgid: 1348 };
+        } else if (level >= 1900) {
+            return { nome: '1900+', sgid: 1336 };
+        } else if (level >= 1800) {
+            return { nome: '1800+', sgid: 1334 };
+        } else if (level >= 1700) {
+            return { nome: '1700+', sgid: 1332 };
+        } else if (level >= 1600) {
+            return { nome: '1600+', sgid: 1330 };
+        } else if (level >= 1500) {
+            return { nome: '1500+', sgid: 1325 };
+        } else if (level >= 1400) {
+            return { nome: '1400+', sgid: 1323 };
+        } else if (level >= 1300) {
+            return { nome: '1300+', sgid: 1320 };
+        } else if (level >= 1200) {
+            return { nome: '1200+', sgid: 1318 };
+        } else if (level >= 1100) {
+            return { nome: '1100+', sgid: 1314 };
         } else if (level >= 1000) {
-            return { nome: '1000+', sgid: 10570 };
+            return { nome: '1000+', sgid: 1312 };
+        } else if (level >= 900) {
+            return { nome: '900+', sgid: 1329 };
+        } else if (level >= 800) {
+            return { nome: '800+', sgid: 1309 };
+        } else if (level >= 700) {
+            return { nome: '700+', sgid: 1304 };
+        } else if (level >= 600) {
+            return { nome: '600+', sgid: 1298 };
+        } else if (level >= 500) {
+            return { nome: '500+', sgid: 1296 };
         } else if (level >= 400) {
-            return { nome: '400+', sgid: 10548 };
+            return { nome: '400+', sgid: 1294 };
         } else if (level >= 300) {
-            return { nome: '300+', sgid: 10547 };
+            return { nome: '300+', sgid: 2305 };
         } else if (level >= 200) {
-            return { nome: '200+', sgid: 10546 };
+            return { nome: '200+', sgid: 2304 };
         } else if (level >= 100) {
-            return { nome: '100+', sgid: 10544 };
+            return { nome: '100+', sgid: 2303 };
         } else {
             return { nome: 'Iniciante', sgid: 6 }; // Level abaixo de 100
         }
@@ -4093,7 +4144,39 @@ ${resultado.removido ? `🗑️ Grupo anterior removido: ${resultado.grupoRemovi
     }> {
         try {
             // Lista de todos os SGIDs de grupos de level (para remover os antigos)
-            const gruposLevel = [6, 10544, 10546, 10547, 10548, 11, 12, 13, 14, 15, 10570, 10549, 18];
+            const gruposLevel = [
+                6,      // Iniciante
+                2303,  // 100+
+                2304,  // 200+
+                2305,  // 300+
+                1294,  // 400+
+                1296,  // 500+
+                1298,  // 600+
+                1304,  // 700+
+                1309,  // 800+
+                1329,  // 900+
+                1312,  // 1000+
+                1314,  // 1100+
+                1318,  // 1200+
+                1320,  // 1300+
+                1323,  // 1400+
+                1325,  // 1500+
+                1330,  // 1600+
+                1332,  // 1700+
+                1334,  // 1800+
+                1336,  // 1900+
+                1348,  // 2000+
+                2095,  // 2100+
+                2400,  // 2200+
+                2401,  // 2300+
+                2402,  // 2400+
+                2403,  // 2500+
+                2404,  // 2600+
+                2405,  // 2700+
+                2406,  // 2800+
+                2407,  // 2900+
+                2408   // 3000+
+            ];
             
             // Obter grupos atuais do cliente
             const clientInfoArray = await this.serverQuery.clientInfo(clientId);
@@ -4170,19 +4253,37 @@ ${resultado.removido ? `🗑️ Grupo anterior removido: ${resultado.grupoRemovi
     private getLevelByGrupo(sgid: number): number {
         // Mapeamento inverso: SGID -> Level mínimo da faixa
         const mapa: { [key: number]: number } = {
-            6: 0,
-            10544: 100,
-            10546: 200,
-            10547: 300,
-            10548: 400,
-            11: 500,
-            12: 600,
-            13: 700,
-            14: 800,
-            15: 900,
-            10570: 1000,
-            10549: 1100,
-            18: 1200
+            6: 0,           // Iniciante
+            10544: 100,     // 100+
+            10546: 200,     // 200+
+            10547: 300,     // 300+
+            10548: 400,     // 400+
+            20005: 500,     // 500+
+            20006: 600,     // 600+
+            20007: 700,     // 700+
+            20008: 800,     // 800+
+            20009: 900,     // 900+
+            10570: 1000,    // 1000+
+            10549: 1100,    // 1100+
+            20012: 1200,    // 1200+
+            20013: 1300,    // 1300+
+            20014: 1400,    // 1400+
+            20015: 1500,    // 1500+
+            20016: 1600,    // 1600+
+            20017: 1700,    // 1700+
+            20018: 1800,    // 1800+
+            20019: 1900,    // 1900+
+            20020: 2000,    // 2000+
+            20021: 2100,    // 2100+
+            20022: 2200,    // 2200+
+            20023: 2300,    // 2300+
+            20024: 2400,    // 2400+
+            20025: 2500,    // 2500+
+            20026: 2600,    // 2600+
+            20027: 2700,    // 2700+
+            20028: 2800,    // 2800+
+            20029: 2900,    // 2900+
+            20030: 3000     // 3000+
         };
         return mapa[sgid] || 0;
     }
@@ -5087,9 +5188,7 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
 🕐 Horário: ${dataFormatada}
 💥 Causa: ${morte.reason}
 
-⚠️ [i]Monitoramento automático ativo[/i]
-
-😂 ${mensagemZueira}`;
+😂 ${mensagemZueira} 😂`;
 
                 // Enviar poke para todos os usuários online
                 await this.enviarPokeParaTodos(mensagem);

@@ -3811,8 +3811,22 @@
   },
   "Trefor Das Sombras": {
     "character": "Trefor Das Sombras",
-    "lastChecked": "2026-01-06T02:52:02.136Z",
+    "lastChecked": "2026-01-07T00:30:10.836Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-07T00:23:48Z",
+        "level": 1207,
+        "killers": [
+          {
+            "name": "creepy crawler",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1207 by creepy crawler."
+      },
       {
         "time": "2026-01-02T02:13:10Z",
         "level": 1205,
@@ -3868,20 +3882,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 1192 by rhindeer."
-      },
-      {
-        "time": "2025-12-07T19:43:06Z",
-        "level": 1186,
-        "killers": [
-          {
-            "name": "boar man",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 1186 by boar man."
       }
     ]
   },
