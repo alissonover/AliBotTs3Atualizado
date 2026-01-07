@@ -64,6 +64,20 @@ interface DeathListEntry {
     timestamp: Date; // para ordenação
 }
 
+interface RespHistoryEntry {
+    codigo: string;
+    nomeRespawn: string;
+    jogador: string;
+    horario: string; // formato DD/MM/AAAA HH:MM
+    timestamp: Date;
+    acao: 'leave-antecipado'; // tipo de ação (pode ser expandido no futuro)
+    detalhes: string; // descrição adicional
+}
+
+interface RespHistoryCache {
+    [codigo: string]: RespHistoryEntry[]; // codigo -> array de entradas
+}
+
 class SistemaHibridoOptimizado {
     private gerenciadorConexao: GerenciadorConexaoHibrida;
     private sistemaAtivo: boolean = false;
@@ -94,6 +108,11 @@ class SistemaHibridoOptimizado {
     // Sistema de confirmação para comandos
     private confirmacoesLeave: Map<string, { codigo: string; timestamp: number }> = new Map(); // jogador -> { codigo, timestamp }
     private readonly TIMEOUT_CONFIRMACAO_MS = 30000; // Confirmação expira em 30 segundos
+
+    // Sistema de histórico de respawns
+    private respHistoryCache: RespHistoryCache = {}; // Histórico de movimentações por código
+    private ultimoResetRespHistory: Date = new Date(); // Última vez que o histórico foi resetado
+    private intervalResetRespHistory: NodeJS.Timeout | null = null; // Timer para reset diário às 06:00
 
     // Mensagens de zueira para pokes de morte
     private readonly mensagensZueira: string[] = [
@@ -150,6 +169,7 @@ class SistemaHibridoOptimizado {
         this.carregarHuntedsList();
         this.carregarFriendsList();
         this.inicializarSistemaDeathlist();
+        this.inicializarSistemaRespHistory();
         
         // Inicializar serviço otimizado de monitoramento de mortes
         this.deathMonitor = new DeathMonitorService({
@@ -819,6 +839,8 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         resposta = await this.processarComandoCleanResp(comando, remetente);
                     } else if (comando.toLowerCase() === '!cleanrespall') {
                         resposta = await this.processarComandoCleanRespAll(comando, remetente);
+                    } else if (comando.toLowerCase().startsWith('!resphistory ')) {
+                        resposta = await this.processarComandoRespHistory(comando, remetente);
                     } else {
                         resposta = `❓ Comando "${comando}" não reconhecido.
 💡 Use !help para ver comandos disponíveis.
@@ -1838,6 +1860,14 @@ ${filasAtivas}`;
             if (this.timersRespawn[codigo]) {
                 const timer = this.timersRespawn[codigo];
                 if (timer.jogador === nomeJogador) {
+                    // Verificar se há fila para registrar abandono
+                    const temFila = this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0;
+                    
+                    // Se o timer não terminou E há fila, registrar como abandono
+                    if (timer.tempoRestante > 0 && temFila) {
+                        await this.registrarAbandonoRespawn(codigo, timer.nome, nomeJogador, 'leave-antecipado');
+                    }
+                    
                     // Remover timer ativo
                     delete this.timersRespawn[codigo];
                     encontrouJogador = true;
@@ -5584,6 +5614,218 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
             
         } catch (error: any) {
             console.log('❌ Erro ao listar canais:', error.message);
+        }
+    }
+
+    // ============================================
+    // SISTEMA DE HISTÓRICO DE RESPAWNS
+    // ============================================
+
+    private inicializarSistemaRespHistory(): void {
+        console.log('📜 Inicializando sistema de Histórico de Respawns...');
+        
+        // Carregar histórico do dia
+        this.carregarRespHistoryDoDia();
+        
+        // Configurar reset diário às 06:00
+        this.configurarResetDiarioRespHistory();
+        
+        console.log('✅ Sistema de Histórico de Respawns inicializado');
+    }
+
+    private carregarRespHistoryDoDia(): void {
+        try {
+            const filePath = path.join(__dirname, '..', 'resp-history-cache.json');
+            
+            if (fs.existsSync(filePath)) {
+                const data = fs.readFileSync(filePath, 'utf8');
+                const savedData = JSON.parse(data);
+                
+                // Verificar se os dados são do dia atual
+                const hoje = new Date();
+                const dataArquivo = new Date(savedData.dataReset || '1970-01-01');
+                
+                // Se for do mesmo dia, carregar o histórico
+                if (hoje.toDateString() === dataArquivo.toDateString()) {
+                    this.respHistoryCache = savedData.historico || {};
+                    this.ultimoResetRespHistory = new Date(savedData.dataReset);
+                    
+                    const totalEntradas = Object.values(this.respHistoryCache).reduce((acc, arr) => acc + arr.length, 0);
+                    console.log(`📜 Histórico carregado: ${totalEntradas} entrada(s) do dia`);
+                } else {
+                    // Se não for do mesmo dia, limpar histórico
+                    this.respHistoryCache = {};
+                    this.ultimoResetRespHistory = hoje;
+                    this.salvarRespHistoryDoDia();
+                    console.log('📜 Novo histórico criado para hoje');
+                }
+            } else {
+                // Arquivo não existe, criar novo
+                this.respHistoryCache = {};
+                this.ultimoResetRespHistory = new Date();
+                this.salvarRespHistoryDoDia();
+                console.log('📜 Arquivo resp-history-cache.json criado');
+            }
+        } catch (error: any) {
+            console.log('❌ Erro ao carregar histórico do dia:', error.message);
+            this.respHistoryCache = {};
+            this.ultimoResetRespHistory = new Date();
+        }
+    }
+
+    private salvarRespHistoryDoDia(): void {
+        try {
+            const filePath = path.join(__dirname, '..', 'resp-history-cache.json');
+            const totalEntradas = Object.values(this.respHistoryCache).reduce((acc, arr) => acc + arr.length, 0);
+            
+            const data = {
+                dataReset: this.ultimoResetRespHistory.toISOString(),
+                totalEntradas: totalEntradas,
+                historico: this.respHistoryCache
+            };
+            
+            fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+            console.log(`💾 Histórico salvo: ${totalEntradas} entrada(s)`);
+        } catch (error: any) {
+            console.log('❌ Erro ao salvar histórico do dia:', error.message);
+        }
+    }
+
+    private configurarResetDiarioRespHistory(): void {
+        // Limpar timer anterior se existir
+        if (this.intervalResetRespHistory) {
+            clearTimeout(this.intervalResetRespHistory);
+        }
+
+        // Calcular próximo reset às 06:00 horário de Brasília (UTC-3)
+        const agoraBrasilia = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+        const proximoResetBrasilia = new Date(agoraBrasilia);
+        proximoResetBrasilia.setHours(6, 0, 0, 0);
+
+        // Se já passou das 06:00 hoje em Brasília, definir para amanhã
+        if (agoraBrasilia.getHours() >= 6) {
+            proximoResetBrasilia.setDate(proximoResetBrasilia.getDate() + 1);
+        }
+
+        // Converter de volta para UTC para calcular o tempo de espera
+        const tempoAteReset = proximoResetBrasilia.getTime() - agoraBrasilia.getTime();
+        
+        console.log(`⏰ Próximo reset do Histórico: ${proximoResetBrasilia.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (Horário de Brasília)`);
+        
+        // Configurar timeout para o reset
+        this.intervalResetRespHistory = setTimeout(() => {
+            this.resetarRespHistoryDiario();
+            // Reconfigurar para o próximo dia
+            this.configurarResetDiarioRespHistory();
+        }, tempoAteReset);
+    }
+
+    private resetarRespHistoryDiario(): void {
+        console.log('🌅 06:00 - Resetando Histórico de Respawns diário...');
+        
+        // Resetar cache
+        this.respHistoryCache = {};
+        this.ultimoResetRespHistory = new Date();
+        
+        // Salvar cache limpo
+        this.salvarRespHistoryDoDia();
+        
+        console.log('✅ Histórico resetado para novo dia');
+    }
+
+    private async registrarAbandonoRespawn(codigo: string, nomeRespawn: string, jogador: string, acao: 'leave-antecipado'): Promise<void> {
+        try {
+            const agora = new Date();
+            const horarioFormatado = agora.toLocaleTimeString('pt-BR', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                timeZone: 'America/Sao_Paulo'
+            });
+
+            const novaEntrada: RespHistoryEntry = {
+                codigo: codigo,
+                nomeRespawn: nomeRespawn,
+                jogador: jogador,
+                horario: horarioFormatado,
+                timestamp: agora,
+                acao: acao,
+                detalhes: 'possível abandono sem aviso prévio'
+            };
+
+            // Inicializar array se não existir
+            if (!this.respHistoryCache[codigo]) {
+                this.respHistoryCache[codigo] = [];
+            }
+
+            // Adicionar entrada
+            this.respHistoryCache[codigo].push(novaEntrada);
+
+            // Salvar alterações
+            this.salvarRespHistoryDoDia();
+
+            console.log(`📜 Abandono registrado: ${jogador} saiu de ${codigo.toUpperCase()} às ${horarioFormatado}`);
+
+        } catch (error: any) {
+            console.log('❌ Erro ao registrar abandono:', error.message);
+        }
+    }
+
+    private async processarComandoRespHistory(comando: string, remetente: any): Promise<string> {
+        try {
+            const partes = comando.trim().split(' ');
+            
+            if (partes.length < 2) {
+                return `❌ Formato incorreto!
+📋 Use: !resphistory [código]
+💡 Exemplo: !resphistory g2`;
+            }
+
+            const codigo = partes[1].toLowerCase();
+
+            // Verificar se o código existe na configuração
+            const configRespawns = this.obterConfigRespawns();
+            if (!configRespawns[codigo]) {
+                return `❌ Código "${codigo.toUpperCase()}" não existe!
+📋 Use !help para ver códigos disponíveis`;
+            }
+
+            // Obter histórico do código
+            const historico = this.respHistoryCache[codigo] || [];
+
+            if (historico.length === 0) {
+                return `📜 Nenhum abandono registrado hoje para ${configRespawns[codigo]} (${codigo.toUpperCase()})
+✅ Tudo limpo por enquanto!
+🔄 Histórico reseta diariamente às 06:00`;
+            }
+
+            // Ordenar por horário (crescente)
+            const historicoOrdenado = [...historico].sort((a, b) => {
+                return a.timestamp.getTime() - b.timestamp.getTime();
+            });
+
+            let resposta = `📜 HISTÓRICO DE ABANDONOS - ${configRespawns[codigo]} (${codigo.toUpperCase()})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 Data: ${new Date().toLocaleDateString('pt-BR')}
+📊 Total de abandonos: ${historicoOrdenado.length}
+
+`;
+
+            historicoOrdenado.forEach((entrada, index) => {
+                const numero = (index + 1).toString().padStart(2, '0');
+                resposta += `${numero}. "${entrada.jogador}" saiu do respawn às ${entrada.horario} pelo comando !leave (${entrada.detalhes})
+
+`;
+            });
+
+            resposta += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔄 Histórico reseta às 06:00 AM
+💡 Use !respinfo ${codigo} para status atual`;
+
+            return resposta.trim();
+
+        } catch (error: any) {
+            console.log('❌ Erro no comando resphistory:', error.message);
+            return `❌ Erro interno: ${error.message}`;
         }
     }
 }

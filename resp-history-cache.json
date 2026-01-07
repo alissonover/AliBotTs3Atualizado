@@ -1,0 +1,28 @@
+{
+  "dataReset": "2026-01-07T00:11:02.537Z",
+  "totalEntradas": 2,
+  "historico": {
+    "g2": [
+      {
+        "codigo": "g2",
+        "nomeRespawn": "Crystal Enigma(Tier 3)",
+        "jogador": "Alizord",
+        "horario": "21:12",
+        "timestamp": "2026-01-07T00:12:00.308Z",
+        "acao": "leave-antecipado",
+        "detalhes": "possível abandono sem aviso prévio"
+      }
+    ],
+    "g3": [
+      {
+        "codigo": "g3",
+        "nomeRespawn": "Crystal Enigma Alt(Tier 3)",
+        "jogador": "Alizord",
+        "horario": "21:13",
+        "timestamp": "2026-01-07T00:13:21.641Z",
+        "acao": "leave-antecipado",
+        "detalhes": "possível abandono sem aviso prévio"
+      }
+    ]
+  }
+}
