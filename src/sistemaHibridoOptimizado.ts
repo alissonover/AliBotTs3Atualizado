@@ -102,6 +102,7 @@ class SistemaHibridoOptimizado {
 
     // CACHE DE PERFORMANCE PARA CLAIMEDS
     private cacheClienteIds: Map<string, string> = new Map(); // personagem -> clientId
+    private cacheClienteDescricoes: Map<string, string> = new Map(); // clientId -> descrição
     private ultimaAtualizacaoCache: number = 0;
     private readonly CACHE_VALIDADE_MS = 30000; // Cache válido por 30 segundos
 
@@ -180,6 +181,16 @@ class SistemaHibridoOptimizado {
         });
         console.log('💀 ✅ Serviço de monitoramento de mortes inicializado');
     }
+    
+    // Helper para adicionar timeout em promises (importante para AWS)
+    private async comTimeout<T>(promise: Promise<T>, timeoutMs: number = 5000, operacao: string = 'Operação'): Promise<T> {
+        return Promise.race([
+            promise,
+            new Promise<T>((_, reject) => 
+                setTimeout(() => reject(new Error(`${operacao} excedeu ${timeoutMs}ms`)), timeoutMs)
+            )
+        ]);
+    }
 
     public async iniciar(): Promise<void> {
         try {
@@ -211,13 +222,11 @@ class SistemaHibridoOptimizado {
             this.sistemaAtivo = true;
 
             // Atualizar canal deathlist na inicialização
-            console.log('💀 Atualizando canal Deathlist inicial...');
             try {
                 // Primeiro, listar canais para debug
                 await this.listarCanaisParaDebug();
                 
                 await this.atualizarCanalDeathlist();
-                console.log('✅ Canal Deathlist atualizado na inicialização');
             } catch (error: any) {
                 console.log('⚠️ Erro ao atualizar canal Deathlist na inicialização:', error.message);
             }
@@ -1093,7 +1102,6 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                 
                 if (descricaoAtual.trim() === descricao.trim()) {
                     precisaAtualizar = false;
-                    console.log(`👥 Canal Friendlist já está atualizado (${membrosOnline.length} membros) - sem modificações`);
                 }
             } catch (error) {
                 // Se não conseguir verificar, atualiza mesmo assim
@@ -1110,12 +1118,8 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     channel_description: descricao
                 });
                 
-                console.log(`👥 Canal Friendlist atualizado: ${membrosOnline.length} membros online da guild Missclick`);
-                console.log(`📝 Nome do canal alterado para: ${nomeCanal}`);
-                
                 if (membrosOnline.length > 0) {
                     const levelMedio = Math.round(membrosOnline.reduce((sum, m) => sum + (m.level || 0), 0) / membrosOnline.length);
-                    console.log(`📊 Estatísticas: Level médio ${levelMedio}, ${membrosOnline.length} players online`);
                 }
             }
             
@@ -1132,9 +1136,6 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
 
         try {
             const inicioAtualizacao = Date.now();
-            
-            // STEP 1: Atualizar cache de clientes primeiro (super rápido)
-            await this.atualizarCacheClientesRapido();
             
             const claimedChannelId = "112"; // ID do canal Claimeds
             
@@ -1291,10 +1292,6 @@ ${filasAtivas}`;
                 channel_description: descricao
             });
             
-            const tempoTotal = Date.now() - inicioAtualizacao;
-            const statusTimers = timersAtivos.length > 0 ? `${timersAtivos.length} timers ativos` : 'sem timers';
-            console.log(`⚡ Canal Claimeds atualizado em ${tempoTotal}ms (${statusTimers})`);
-            
         } catch (error: any) {
             console.log('❌ Erro ao atualizar canal Claimeds:', error.message);
             throw error;
@@ -1365,9 +1362,6 @@ ${filasAtivas}`;
             return;
         }
         
-        console.log('⚡ Atualizando cache de clientes para performance máxima...');
-        const inicioCache = Date.now();
-        
         try {
             // Buscar todos os clientes de uma vez
             const clientes = await this.serverQuery.clientList();
@@ -1392,8 +1386,9 @@ ${filasAtivas}`;
             // Aguardar todas as promises em paralelo
             const clientesCompletos = await Promise.all(clientesInfoPromises);
             
-            // Atualizar cache
+            // Atualizar caches
             this.cacheClienteIds.clear();
+            this.cacheClienteDescricoes.clear();
             
             for (const cliente of clientesCompletos) {
                 if (!cliente) continue;
@@ -1408,12 +1403,12 @@ ${filasAtivas}`;
                 if (cliente.description) {
                     const clientId = cliente.uniqueId || cliente.clid.toString();
                     this.cacheClienteIds.set(cliente.description, clientId);
+                    // Cache reverso: clientId -> descrição
+                    this.cacheClienteDescricoes.set(cliente.clid.toString(), cliente.description);
                 }
             }
             
             this.ultimaAtualizacaoCache = agora;
-            const tempoCache = Date.now() - inicioCache;
-            console.log(`⚡ Cache atualizado em ${tempoCache}ms - ${this.cacheClienteIds.size} entradas`);
             
         } catch (error: any) {
             console.log('❌ Erro ao atualizar cache:', error.message);
@@ -1427,7 +1422,6 @@ ${filasAtivas}`;
     // Invalidar cache para forçar atualização rápida após comandos
     private invalidarCache(): void {
         this.ultimaAtualizacaoCache = 0;
-        console.log('🔄 Cache invalidado - próxima atualização será forçada');
     }
 
     private async buscarMembrosOnlineTibia(): Promise<any[] | null> {
@@ -1752,8 +1746,12 @@ ${filasAtivas}`;
                 this.iniciarSistemaTimers();
             }
 
-            // Atualizar canal Claimeds imediatamente (invalidar cache para máxima velocidade)
-            this.invalidarCache();
+            // Atualizar cache em background para garantir que o jogador apareça online
+            this.atualizarCacheClientesRapido().catch(err => 
+                console.log('⚠️ Erro ao atualizar cache:', err.message)
+            );
+
+            // Atualizar canal Claimeds imediatamente
             await this.atualizarCanalClaimeds();
 
             const tempoFormatado = this.formatarTempo(tempoParaUsar!);
@@ -2390,7 +2388,6 @@ ${statusAtual}
                 
                 // Atualizar canal apenas quando necessário
                 if (atualizacaoNecessaria) {
-                    console.log(`⏰ Atualizando canal Claimeds (${Object.keys(this.timersRespawn).length} timers + ${Object.keys(this.nextTimers).length} nexts)`);
                     await this.atualizarCanalClaimeds();
                 }
                 
@@ -2647,18 +2644,9 @@ ${statusAtual}
 
     private async obterNomeJogadorPorDescricao(remetente: any): Promise<{nome: string, valido: boolean, erro?: string}> {
         try {
-            console.log('🔍 Iniciando obterNomeJogadorPorDescricao...');
-            console.log('📋 Dados do remetente:', {
-                invokerid: remetente.invokerid,
-                clid: remetente.clid,
-                clientNickname: remetente.clientNickname,
-                nickname: remetente.nickname
-            });
-
             const clientId = remetente.invokerid || remetente.clid;
             
             if (!clientId) {
-                console.log('❌ ClientId não encontrado');
                 return {
                     nome: 'Desconhecido',
                     valido: false,
@@ -2666,11 +2654,7 @@ ${statusAtual}
                 };
             }
 
-            console.log(`🔍 Buscando informações do cliente ID: ${clientId}`);
-
-            // Verificar se o serverQuery está disponível
             if (!this.serverQuery) {
-                console.log('❌ ServerQuery não está conectado');
                 return {
                     nome: remetente.clientNickname || remetente.nickname || 'Usuário',
                     valido: false,
@@ -2678,54 +2662,54 @@ ${statusAtual}
                 };
             }
 
+            // OTIMIZAÇÃO AWS: Verificar cache primeiro (INSTANTÂNEO)
+            const descricaoCache = this.cacheClienteDescricoes.get(clientId.toString());
+            if (descricaoCache && descricaoCache.trim() !== '') {
+                return {
+                    nome: descricaoCache,
+                    valido: true
+                };
+            }
+
             try {
-                // Método 1: Tentar clientInfo primeiro
-                console.log('📡 Tentativa 1: Chamando clientInfo...');
-                const clientInfoArray = await this.serverQuery.clientInfo(clientId);
-                console.log('📋 ClientInfo array recebido:', clientInfoArray);
-                
-                // ClientInfo retorna um array - pegar o primeiro elemento
+                // Buscar APENAS este cliente (1 chamada rápida com timeout)
+                const clientInfoArray = await this.comTimeout(
+                    this.serverQuery.clientInfo(clientId),
+                    3000,
+                    'clientInfo'
+                );
                 const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
-                console.log('📋 ClientInfo processado:', {
-                    clientNickname: clientInfo?.clientNickname,
-                    clientDescription: clientInfo?.clientDescription,
-                    clid: clientInfo?.clid
-                });
                 
-                // Verificar se existe descrição no clientInfo
                 let descricao = clientInfo?.clientDescription?.trim() || '';
-                console.log(`📝 Descrição do clientInfo: "${descricao}"`);
                 
                 if (descricao && descricao !== '') {
-                    console.log(`✅ Descrição válida encontrada via clientInfo: "${descricao}"`);
+                    // Salvar em AMBOS os caches
+                    this.cacheClienteDescricoes.set(clientId.toString(), descricao);
+                    this.cacheClienteIds.set(descricao, clientId.toString());
                     return {
                         nome: descricao,
                         valido: true
                     };
                 }
 
-                // Método 2: Se clientInfo não tem descrição, usar clientList
-                console.log('📡 Tentativa 2: Buscando via clientList...');
-                const clientes = await this.serverQuery.clientList();
-                console.log(`👥 ${clientes.length} clientes encontrados`);
-                
+                // Fallback: clientList (com timeout)
+                const clientes: any = await this.comTimeout(
+                    this.serverQuery.clientList(),
+                    3000,
+                    'clientList'
+                );
                 const clienteEncontrado = clientes.find((c: any) => {
                     const id = c.clid || c.clientId;
                     return id == clientId;
                 });
 
                 if (clienteEncontrado) {
-                    console.log('📋 Cliente encontrado via clientList:', {
-                        clid: clienteEncontrado.clid,
-                        clientNickname: clienteEncontrado.clientNickname,
-                        clientDescription: clienteEncontrado.clientDescription
-                    });
-                    
                     descricao = clienteEncontrado.clientDescription?.trim() || '';
-                    console.log(`📝 Descrição do clientList: "${descricao}"`);
                     
                     if (descricao && descricao !== '') {
-                        console.log(`✅ Descrição válida encontrada via clientList: "${descricao}"`);
+                        // Salvar em AMBOS os caches
+                        this.cacheClienteDescricoes.set(clientId.toString(), descricao);
+                        this.cacheClienteIds.set(descricao, clientId.toString());
                         return {
                             nome: descricao,
                             valido: true
@@ -2733,8 +2717,7 @@ ${statusAtual}
                     }
                 }
 
-                // Se chegou aqui, não tem descrição
-                console.log('❌ Descrição vazia ou inexistente em ambos os métodos');
+                // Sem descrição
                 const nomeTS = remetente.clientNickname || remetente.nickname || 'Usuário';
                 return {
                     nome: nomeTS,
@@ -2747,13 +2730,10 @@ Entre em contato com a liderança para isto!
                 };
 
             } catch (apiError: any) {
-                console.log('❌ Erro nas chamadas da API:', apiError.message);
                 throw apiError;
             }
 
         } catch (error: any) {
-            console.log(`❌ Erro ao obter descrição do cliente:`, error.message);
-            console.log('🔍 Stack trace:', error.stack);
             const nomeTS = remetente.clientNickname || remetente.nickname || 'Usuário';
             return {
                 nome: nomeTS,
@@ -3565,7 +3545,6 @@ Entre em contato com a liderança para isto!
             const promises = realClients.map(async (client: any) => {
                 try {
                     await this.serverQuery.sendTextMessage(client.clid, 1, mensagem);
-                    console.log(`✅ Notificação enviada para: ${client.nickname} (ID: ${client.clid})`);
                 } catch (error: any) {
                     console.log(`❌ Erro ao enviar notificação para ${client.nickname}:`, error.message);
                 }
@@ -3707,9 +3686,6 @@ Entre em contato com a liderança para isto!
                         channel_name: nomeCanal,
                         channel_description: descricao
                     });
-                    
-                    console.log(`🎯 Canal Huntedlist atualizado: ${huntedsOnline.length} hunteds online de ${this.huntedsList.length} monitorados`);
-                    console.log(`📝 Nome do canal alterado para: ${nomeCanal}`);
                 } catch (updateError: any) {
                     console.log(`❌ Erro ao atualizar canal Huntedlist: ${updateError.message}`);
                     throw updateError;
@@ -3956,8 +3932,6 @@ Bom Game! 🎯✨`;
 💡 Configure sua descrição no TeamSpeak com o nome do seu personagem`;
             }
             const nomePersonagem = infoJogador.nome;
-
-            console.log(`📋 Verificando level do personagem: ${nomePersonagem}`);
 
             // Consultar API do Tibia para obter informações do personagem
             const dadosPersonagem = await this.consultarPersonagemTibia(nomePersonagem);
@@ -5156,8 +5130,6 @@ ${infoLimpeza}
             // Usar o serviço otimizado para verificar mortes
             const novasMortesMap = await this.deathMonitor.checkDeaths(todosPersonagens);
 
-            console.log(`📬 Mortes detectadas: ${novasMortesMap.size} personagens com novas mortes`);
-
             // Processar e notificar mortes encontradas
             for (const [personagem, mortes] of novasMortesMap.entries()) {
                 const tipoPersonagem = friendsDoArquivo.includes(personagem) ? 'Friend' : 'Hunted';
@@ -5377,7 +5349,6 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
                 try {
                     // Enviar poke para cada cliente
                     await this.serverQuery.clientPoke(cliente.clid, mensagem);
-                    console.log(`   ✅ Poke enviado para: ${cliente.clientNickname || cliente.nickname}`);
                 } catch (error: any) {
                     console.log(`   ❌ Erro ao enviar poke para cliente ${cliente.clid}:`, error.message);
                 }
@@ -5418,7 +5389,6 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
                 try {
                     // Enviar poke para cada cliente
                     await this.serverQuery.clientPoke(cliente.clid, mensagem);
-                    console.log(`   ✅ Poke enviado para: ${cliente.clientNickname || cliente.nickname}`);
                 } catch (error: any) {
                     console.log(`   ❌ Erro ao enviar poke para cliente ${cliente.clid}:`, error.message);
                 }
@@ -5443,8 +5413,6 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
         
         // Configurar reset diário às 06:00
         this.configurarResetDiarioDeathlist();
-        
-        console.log('✅ Sistema de Deathlist inicializado');
     }
 
     private carregarDeathlistDoDia(): void {
@@ -5463,20 +5431,17 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
                 if (hoje.toDateString() === dataArquivo.toDateString()) {
                     this.deathListEntries = savedData.mortes || [];
                     this.ultimoResetDeathlist = new Date(savedData.dataReset);
-                    console.log(`💀 Deathlist carregada: ${this.deathListEntries.length} morte(s) do dia`);
                 } else {
                     // Se não for do mesmo dia, limpar lista
                     this.deathListEntries = [];
                     this.ultimoResetDeathlist = hoje;
                     this.salvarDeathlistDoDia();
-                    console.log('💀 Nova deathlist criada para hoje');
                 }
             } else {
                 // Arquivo não existe, criar novo
                 this.deathListEntries = [];
                 this.ultimoResetDeathlist = new Date();
                 this.salvarDeathlistDoDia();
-                console.log('💀 Arquivo deathlist-daily.json criado');
             }
         } catch (error: any) {
             console.log('❌ Erro ao carregar deathlist do dia:', error.message);
@@ -5495,7 +5460,6 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
             };
             
             fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
-            console.log(`💾 Deathlist salva: ${this.deathListEntries.length} morte(s)`);
         } catch (error: any) {
             console.log('❌ Erro ao salvar deathlist do dia:', error.message);
         }

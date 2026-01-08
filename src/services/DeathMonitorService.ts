@@ -241,7 +241,6 @@ export class DeathMonitorService {
     public async checkDeaths(characters: string[]): Promise<Map<string, PlayerDeath[]>> {
         try {
             const timestamp = new Date().toLocaleTimeString();
-            console.log(`💀 [${timestamp}] Verificando mortes de ${characters.length} personagens...`);
 
             // Atualizar cache de online se necessário
             if (this.shouldUpdateOnlineCache()) {
@@ -315,11 +314,6 @@ export class DeathMonitorService {
             console.log(`📊 Resultado: ${successCount} sucessos, ${failureCount} falhas de ${charactersToCheck.length} personagens`);
             
             const totalNewDeaths = Array.from(newDeaths.values()).reduce((sum, deaths) => sum + deaths.length, 0);
-            if (totalNewDeaths > 0) {
-                console.log(`💀 [${timestamp}] ${totalNewDeaths} nova(s) morte(s) encontrada(s)`);
-            } else {
-                console.log(`💀 [${timestamp}] Nenhuma nova morte encontrada`);
-            }
 
             // Salvar cache uma única vez no final
             this.saveDeathCache();
@@ -327,7 +321,6 @@ export class DeathMonitorService {
             return newDeaths;
 
         } catch (error: any) {
-            console.log('❌ Erro geral no monitoramento de mortes:', error.message);
             return new Map();
         }
     }
@@ -354,7 +347,6 @@ export class DeathMonitorService {
                 if (deaths.length === 0) {
                     // NÃO atualizar cache se não há mortes - evita marcar como "verificado"
                     // quando na verdade pode haver mortes que ainda não apareceram na API
-                    console.log(`⏭️ ${characterName}: Sem mortes registradas (cache mantido)`);
                     return [];
                 }
 
@@ -405,18 +397,13 @@ export class DeathMonitorService {
         const recentDeathLimit = this.options.recentDeathLimitMinutes * 60 * 1000;
         const newDeaths: PlayerDeath[] = [];
 
-        // DEBUG: Log do estado atual
-        console.log(`🔍 ${characterName}: lastCheck=${lastCheck.toISOString()}`);
-
         // Verificar primeira morte (mais recente) - otimização
         const firstDeath = deaths[0];
         const firstDeathDate = this.parseDeathTime(firstDeath.time);
 
-        console.log(`🔍 ${characterName}: Morte mais recente=${firstDeath.time} (parsed: ${firstDeathDate.toISOString()})`);
 
         // Se a morte mais recente já foi processada, pular (SEM atualizar cache)
         if (firstDeathDate <= lastCheck) {
-            console.log(`⏭️ ${characterName}: Morte já processada, pulando (sem atualizar cache)`);
             return [];
         }
 
@@ -426,10 +413,8 @@ export class DeathMonitorService {
             const timeSinceDeath = now.getTime() - deathTime.getTime();
             const minutesSinceDeath = Math.round(timeSinceDeath / 60000);
 
-            console.log(`🔍 ${characterName}: Verificando morte de ${death.time} - ${minutesSinceDeath} min atrás`);
 
             if (deathTime > lastCheck && timeSinceDeath <= recentDeathLimit) {
-                console.log(`💀 ✅ ${characterInfo.name} - ${minutesSinceDeath} min atrás - NOVA MORTE!`);
 
                 newDeaths.push({
                     character: {
@@ -441,18 +426,14 @@ export class DeathMonitorService {
                     reason: death.reason || 'Causa desconhecida'
                 });
             } else if (deathTime <= lastCheck) {
-                console.log(`⏭️ Morte antiga (já processada)`);
             } else {
-                console.log(`⏰ Morte muito antiga (>${this.options.recentDeathLimitMinutes} min)`);
             }
         }
 
         // IMPORTANTE: Atualizar cache APENAS se encontrou mortes novas
         if (newDeaths.length > 0) {
-            console.log(`💾 ${characterName}: Atualizando cache com ${newDeaths.length} nova(s) morte(s)`);
             this.updateCharacterCache(characterName, deaths.slice(0, 5));
         } else {
-            console.log(`⏭️ ${characterName}: Sem mortes novas, cache mantido`);
         }
 
         return newDeaths;
@@ -498,7 +479,6 @@ export class DeathMonitorService {
             return deathDate;
 
         } catch (error: any) {
-            console.log(`❌ Erro ao parsear tempo de morte "${timeString}":`, error.message);
             return new Date(0);
         }
     }

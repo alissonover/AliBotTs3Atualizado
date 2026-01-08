@@ -125,8 +125,71 @@
   },
   "Luiizin": {
     "character": "Luiizin",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-08T00:14:14.901Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-08T00:08:41Z",
+        "level": 1714,
+        "killers": [
+          {
+            "name": "Luiizin",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          },
+          {
+            "name": "Echo of Vemiath",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1714 by Luiizin and Echo of Vemiath."
+      },
+      {
+        "time": "2026-01-03T08:59:29Z",
+        "level": 1714,
+        "killers": [
+          {
+            "name": "darklight matter",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1714 by darklight matter."
+      },
+      {
+        "time": "2025-12-28T23:13:26Z",
+        "level": 1716,
+        "killers": [
+          {
+            "name": "Mushroom",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1716 by Mushroom."
+      },
+      {
+        "time": "2025-12-22T00:36:31Z",
+        "level": 1718,
+        "killers": [
+          {
+            "name": "Luiizin",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1718 by Luiizin."
+      }
+    ]
   },
   "Prizs": {
     "character": "Prizs",
@@ -575,8 +638,22 @@
   },
   "Damnification": {
     "character": "Damnification",
-    "lastChecked": "2026-01-06T02:52:14.211Z",
+    "lastChecked": "2026-01-07T13:27:15.592Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-07T13:27:12Z",
+        "level": 843,
+        "killers": [
+          {
+            "name": "dragolisk",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 843 by dragolisk."
+      },
       {
         "time": "2026-01-05T00:40:44Z",
         "level": 838,
@@ -1063,8 +1140,43 @@
   },
   "Churras Princess": {
     "character": "Churras Princess",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-07T03:30:56.046Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-07T03:30:41Z",
+        "level": 1306,
+        "killers": [
+          {
+            "name": "Churras Princess",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          },
+          {
+            "name": "cave chimera",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1306 by Churras Princess and cave chimera."
+      },
+      {
+        "time": "2026-01-06T10:01:45Z",
+        "level": 1307,
+        "killers": [
+          {
+            "name": "demon",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1307 by demon."
+      }
+    ]
   },
   "Dragon Draeno": {
     "character": "Dragon Draeno",
@@ -1702,8 +1814,51 @@
   },
   "Daluz": {
     "character": "Daluz",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-07T20:03:29.112Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-07T20:00:56Z",
+        "level": 559,
+        "killers": [
+          {
+            "name": "cobra scout",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 559 by cobra scout."
+      },
+      {
+        "time": "2025-12-26T01:56:46Z",
+        "level": 541,
+        "killers": [
+          {
+            "name": "cobra assassin",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 541 by cobra assassin."
+      },
+      {
+        "time": "2025-12-21T14:07:38Z",
+        "level": 536,
+        "killers": [
+          {
+            "name": "skeleton elite warrior",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 536 by skeleton elite warrior."
+      }
+    ]
   },
   "Di Zus": {
     "character": "Di Zus",
@@ -1742,8 +1897,22 @@
   },
   "Patty Calistro": {
     "character": "Patty Calistro",
-    "lastChecked": "2026-01-06T00:41:13.576Z",
+    "lastChecked": "2026-01-08T00:37:10.454Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-08T00:24:27Z",
+        "level": 626,
+        "killers": [
+          {
+            "name": "thanatursus",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 626 by thanatursus."
+      },
       {
         "time": "2026-01-05T23:13:55Z",
         "level": 626,
@@ -1799,20 +1968,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 621 by arachnophobica."
-      },
-      {
-        "time": "2025-12-23T22:27:57Z",
-        "level": 619,
-        "killers": [
-          {
-            "name": "crazed summer rearguard",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 619 by crazed summer rearguard."
       }
     ]
   },
@@ -1886,8 +2041,23 @@
   },
   "Royal Eduzeera": {
     "character": "Royal Eduzeera",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-07T15:47:50.452Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-07T15:46:46Z",
+        "level": 1436,
+        "killers": [
+          {
+            "name": "Royal Eduzeera",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1436 by Royal Eduzeera."
+      }
+    ]
   },
   "Sky Megazzord": {
     "character": "Sky Megazzord",
@@ -1955,8 +2125,23 @@
   },
   "Unnathz": {
     "character": "Unnathz",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-07T22:14:53.500Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-07T22:14:45Z",
+        "level": 1116,
+        "killers": [
+          {
+            "name": "crape man",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1116 by crape man."
+      }
+    ]
   },
   "Vi Kirschblute": {
     "character": "Vi Kirschblute",
@@ -2218,8 +2403,65 @@
   },
   "Kuui": {
     "character": "Kuui",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-07T19:10:33.266Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-07T19:05:23Z",
+        "level": 1039,
+        "killers": [
+          {
+            "name": "rage squid",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1039 by rage squid."
+      },
+      {
+        "time": "2026-01-03T19:46:20Z",
+        "level": 1037,
+        "killers": [
+          {
+            "name": "gorerilla",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1037 by gorerilla."
+      },
+      {
+        "time": "2025-12-25T17:15:27Z",
+        "level": 1026,
+        "killers": [
+          {
+            "name": "brain squid",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1026 by brain squid."
+      },
+      {
+        "time": "2025-12-21T12:45:33Z",
+        "level": 1021,
+        "killers": [
+          {
+            "name": "brain squid",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1021 by brain squid."
+      }
+    ]
   },
   "Teko Brand": {
     "character": "Teko Brand",
@@ -2487,8 +2729,57 @@
   },
   "Floquinho Tanagaiola": {
     "character": "Floquinho Tanagaiola",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-07T10:12:37.473Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-07T10:08:58Z",
+        "level": 1209,
+        "killers": [
+          {
+            "name": "undertaker",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1209 by undertaker."
+      },
+      {
+        "time": "2025-12-19T10:22:07Z",
+        "level": 1191,
+        "killers": [
+          {
+            "name": "sulphur spouter",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1191 by sulphur spouter."
+      },
+      {
+        "time": "2025-12-18T00:37:02Z",
+        "level": 1191,
+        "killers": [
+          {
+            "name": "Floquinho Tanagaiola",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          },
+          {
+            "name": "Bakragore",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1191 by Floquinho Tanagaiola and Bakragore."
+      }
+    ]
   },
   "Dhanarin": {
     "character": "Dhanarin",
@@ -2644,8 +2935,22 @@
   },
   "Exalted Ragha": {
     "character": "Exalted Ragha",
-    "lastChecked": "2026-01-06T02:52:07.666Z",
+    "lastChecked": "2026-01-07T20:22:07.827Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-07T20:16:38Z",
+        "level": 853,
+        "killers": [
+          {
+            "name": "crypt fiend",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 853 by crypt fiend."
+      },
       {
         "time": "2026-01-04T03:07:08Z",
         "level": 847,
@@ -3207,8 +3512,22 @@
   },
   "Halzor Megalomaniaco": {
     "character": "Halzor Megalomaniaco",
-    "lastChecked": "2026-01-06T01:07:07.130Z",
+    "lastChecked": "2026-01-07T15:04:35.043Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-07T14:58:29Z",
+        "level": 2087,
+        "killers": [
+          {
+            "name": "vexclaw",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 2087 by vexclaw."
+      },
       {
         "time": "2025-12-19T14:29:38Z",
         "level": 2088,
@@ -4526,8 +4845,22 @@
   },
   "Rhadamanty": {
     "character": "Rhadamanty",
-    "lastChecked": "2026-01-06T02:08:28.540Z",
+    "lastChecked": "2026-01-07T10:23:05.311Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-07T10:17:35Z",
+        "level": 753,
+        "killers": [
+          {
+            "name": "brain squid",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 753 by brain squid."
+      },
       {
         "time": "2025-12-11T17:44:31Z",
         "level": 738,
