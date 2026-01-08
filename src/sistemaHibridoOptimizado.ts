@@ -1751,8 +1751,10 @@ ${filasAtivas}`;
                 console.log('⚠️ Erro ao atualizar cache:', err.message)
             );
 
-            // Atualizar canal Claimeds imediatamente
-            await this.atualizarCanalClaimeds();
+            // Atualizar canal Claimeds em background (não bloquear resposta)
+            this.atualizarCanalClaimeds().catch(err => 
+                console.log('⚠️ Erro ao atualizar canal:', err.message)
+            );
 
             const tempoFormatado = this.formatarTempo(tempoParaUsar!);
             const tipoAceitacao = ehAceitacaoNext ? ' (Next aceito!)' : '';
