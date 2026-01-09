@@ -1043,8 +1043,22 @@
   },
   "Merciless Lena": {
     "character": "Merciless Lena",
-    "lastChecked": "2026-01-06T01:54:21.879Z",
+    "lastChecked": "2026-01-09T01:01:30.518Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-09T00:56:42Z",
+        "level": 826,
+        "killers": [
+          {
+            "name": "cloak of terror",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 826 by cloak of terror."
+      },
       {
         "time": "2025-12-29T22:53:03Z",
         "level": 816,
@@ -1983,8 +1997,23 @@
   },
   "Di Zus": {
     "character": "Di Zus",
-    "lastChecked": "2026-01-06T01:26:08.880Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-09T00:44:58.480Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-08T00:55:52Z",
+        "level": 1282,
+        "killers": [
+          {
+            "name": "vexclaw",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1282 by vexclaw."
+      }
+    ]
   },
   "Fumiijoga": {
     "character": "Fumiijoga",
@@ -2032,8 +2061,23 @@
   },
   "Korzus Koranav": {
     "character": "Korzus Koranav",
-    "lastChecked": "2026-01-06T01:37:17.398Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-09T01:33:37.407Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-09T01:29:59Z",
+        "level": 1614,
+        "killers": [
+          {
+            "name": "death",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1614 by death."
+      }
+    ]
   },
   "Naati Sorcerer": {
     "character": "Naati Sorcerer",
@@ -6514,6 +6558,68 @@
         ],
         "assists": [],
         "reason": "Died at Level 949 by A Greedy Eye."
+      }
+    ]
+  },
+  "Insane Heals": {
+    "character": "Insane Heals",
+    "lastChecked": "2026-01-09T01:32:51.573Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-04T01:19:05Z",
+        "level": 1174,
+        "killers": [
+          {
+            "name": "crape man",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1174 by crape man."
+      },
+      {
+        "time": "2025-12-25T22:26:47Z",
+        "level": 1173,
+        "killers": [
+          {
+            "name": "rhindeer",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1173 by rhindeer."
+      },
+      {
+        "time": "2025-12-20T13:17:50Z",
+        "level": 1171,
+        "killers": [
+          {
+            "name": "crape man",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1171 by crape man."
+      },
+      {
+        "time": "2025-12-15T04:09:09Z",
+        "level": 1171,
+        "killers": [
+          {
+            "name": "rhindeer",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1171 by rhindeer."
       }
     ]
   }

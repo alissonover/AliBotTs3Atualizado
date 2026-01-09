@@ -448,6 +448,10 @@ class SistemaHibridoOptimizado {
             await this.serverQuery.registerEvent('channel');
             console.log('✅ Eventos de canal registrados');
             
+            // Registrar eventos de entrada/saída de clientes (FIX: limpar cache ao desconectar)
+            await this.serverQuery.registerEvent('server');
+            console.log('✅ Eventos de servidor (entrada/saída de clientes) registrados');
+            
         } catch (error: any) {
             console.log('⚠️ Aviso ao configurar notificações:', error.message);
         }
@@ -468,9 +472,33 @@ class SistemaHibridoOptimizado {
             }
         });
 
-        // Monitorar entradas/saídas de clientes (silencioso)
+        // Monitorar entradas/saídas de clientes
         this.serverQuery.on("cliententerview", (ev: any) => {
-            // Evento capturado
+            // Quando cliente conecta, invalidar cache para forçar atualização
+            const clientId = ev?.client?.clid;
+            if (clientId) {
+                console.log(`👤 Cliente conectado (ID: ${clientId}) - cache será atualizado`);
+                this.invalidarCache();
+            }
+        });
+
+        // Limpar cache quando cliente desconecta (FIX: evita usar nome de usuário antigo)
+        this.serverQuery.on("clientleftview", (ev: any) => {
+            const clientId = ev?.client?.clid;
+            if (clientId) {
+                const descricaoRemovida = this.cacheClienteDescricoes.get(clientId.toString());
+                
+                // Remover do cache de descrições
+                this.cacheClienteDescricoes.delete(clientId.toString());
+                
+                // Remover do cache reverso (descrição -> clientId)
+                if (descricaoRemovida) {
+                    this.cacheClienteIds.delete(descricaoRemovida);
+                    console.log(`👋 Cliente desconectado (ID: ${clientId}, Nome: ${descricaoRemovida}) - cache limpo`);
+                } else {
+                    console.log(`👋 Cliente desconectado (ID: ${clientId}) - cache limpo`);
+                }
+            }
         });
 
         // ADICIONAR MONITORAMENTO DE CONEXÃO E AUTO-RECONEXÃO
@@ -1393,18 +1421,19 @@ ${filasAtivas}`;
             for (const cliente of clientesCompletos) {
                 if (!cliente) continue;
                 
+                // Usar SEMPRE clid.toString() para consistência (FIX: evita misturar uniqueId com clid)
+                const clientId = cliente.clid.toString();
+                
                 // Cache por nickname
                 if (cliente.nickname) {
-                    const clientId = cliente.uniqueId || cliente.clid.toString();
                     this.cacheClienteIds.set(cliente.nickname, clientId);
                 }
                 
                 // Cache por descrição (personagem)
                 if (cliente.description) {
-                    const clientId = cliente.uniqueId || cliente.clid.toString();
                     this.cacheClienteIds.set(cliente.description, clientId);
                     // Cache reverso: clientId -> descrição
-                    this.cacheClienteDescricoes.set(cliente.clid.toString(), cliente.description);
+                    this.cacheClienteDescricoes.set(clientId, cliente.description);
                 }
             }
             

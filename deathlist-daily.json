@@ -1,7 +1,25 @@
 {
   "dataReset": "2026-01-08T23:48:01.544Z",
-  "totalMortes": 3,
+  "totalMortes": 5,
   "mortes": [
+    {
+      "nome": "Korzus Koranav",
+      "level": 1613,
+      "vocacao": "Master Sorcerer",
+      "horario": "08/01/2026 22:29",
+      "causa": "Died at Level 1614 by death.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-09T01:34:56.622Z"
+    },
+    {
+      "nome": "Merciless Lena",
+      "level": 826,
+      "vocacao": "Elder Druid",
+      "horario": "08/01/2026 21:56",
+      "causa": "Died at Level 826 by cloak of terror.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-09T01:02:14.813Z"
+    },
     {
       "nome": "Tbombeiw",
       "level": 9,
