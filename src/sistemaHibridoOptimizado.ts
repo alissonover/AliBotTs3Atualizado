@@ -4148,39 +4148,40 @@ ${resultado.removido ? `🗑️ Grupo anterior removido: ${resultado.grupoRemovi
         jaTemGrupo?: boolean;
     }> {
         try {
-            // Lista de todos os SGIDs de grupos de level (para remover os antigos)
+            // Lista COMPLETA de todos os SGIDs de grupos de level (baseada em determinarGrupoLevel)
+            // IMPORTANTE: Esta lista deve conter APENAS grupos de level, nenhum outro tipo de grupo
             const gruposLevel = [
                 6,      // Iniciante
-                2303,  // 100+
-                2304,  // 200+
-                2305,  // 300+
-                1294,  // 400+
-                1296,  // 500+
-                1298,  // 600+
-                1304,  // 700+
-                1309,  // 800+
-                1329,  // 900+
-                1312,  // 1000+
-                1314,  // 1100+
-                1318,  // 1200+
-                1320,  // 1300+
-                1323,  // 1400+
-                1325,  // 1500+
-                1330,  // 1600+
-                1332,  // 1700+
-                1334,  // 1800+
-                1336,  // 1900+
-                1348,  // 2000+
-                2095,  // 2100+
-                2400,  // 2200+
-                2401,  // 2300+
-                2402,  // 2400+
-                2403,  // 2500+
-                2404,  // 2600+
-                2405,  // 2700+
-                2406,  // 2800+
-                2407,  // 2900+
-                2408   // 3000+
+                2303,   // 100+
+                2304,   // 200+
+                2305,   // 300+
+                1294,   // 400+
+                1296,   // 500+
+                1298,   // 600+
+                1304,   // 700+
+                1309,   // 800+
+                1329,   // 900+
+                1312,   // 1000+
+                1314,   // 1100+
+                1318,   // 1200+
+                1320,   // 1300+
+                1323,   // 1400+
+                1325,   // 1500+
+                1330,   // 1600+
+                1332,   // 1700+
+                1334,   // 1800+
+                1336,   // 1900+
+                1348,   // 2000+
+                2095,   // 2100+
+                2096,   // 2200+
+                2097,   // 2300+
+                2098,   // 2400+
+                2100,   // 2500+
+                2402,   // 2600+
+                2403,   // 2700+
+                2404,   // 2800+
+                2405,   // 2900+
+                2406    // 3000+
             ];
             
             // Obter grupos atuais do cliente
@@ -4194,7 +4195,15 @@ ${resultado.removido ? `🗑️ Grupo anterior removido: ${resultado.grupoRemovi
                 clientGroups = clientInfo.clientServergroups.map((g: any) => g.toString());
             }
 
-            console.log(`👥 Grupos atuais do cliente:`, clientGroups);
+            console.log(`👥 Grupos atuais do cliente (${clientGroups.length}):`, clientGroups.join(', '));
+            
+            // Identificar quais são grupos de level
+            const gruposLevelAtuais = clientGroups.filter(g => gruposLevel.includes(parseInt(g)));
+            const outrosGrupos = clientGroups.filter(g => !gruposLevel.includes(parseInt(g)));
+            
+            console.log(`🎖️ Grupos de level atuais (${gruposLevelAtuais.length}):`, gruposLevelAtuais.join(', ') || 'nenhum');
+            console.log(`👥 Outros grupos (${outrosGrupos.length}):`, outrosGrupos.join(', ') || 'nenhum');
+            console.log(`⚠️ IMPORTANTE: Outros grupos NÃO serão modificados!`);
 
             // Verificar se já tem o grupo correto
             if (clientGroups.includes(novoGrupoSgid.toString())) {
@@ -4206,25 +4215,24 @@ ${resultado.removido ? `🗑️ Grupo anterior removido: ${resultado.grupoRemovi
                 };
             }
 
-            // Remover grupos de level antigos
+            // Remover APENAS grupos de level antigos (preserva TODOS os outros grupos)
             let grupoRemovido = '';
             let grupoRemovidoSgid = 0;
             
             for (const sgid of gruposLevel) {
                 if (clientGroups.includes(sgid.toString()) && sgid !== novoGrupoSgid) {
                     try {
-                        console.log(`🗑️ Tentando remover grupo ${sgid} do cliente DB ID ${clientInfo.clientDatabaseId}...`);
+                        console.log(`🗑️ Removendo grupo de level antigo: ${sgid} do cliente DB ID ${clientInfo.clientDatabaseId}...`);
                         
                         // Usar serverGroupDelClient com cldbid
                         await this.serverQuery.serverGroupDelClient(clientInfo.clientDatabaseId, sgid);
                         
                         grupoRemovidoSgid = sgid;
                         grupoRemovido = this.determinarGrupoLevel(this.getLevelByGrupo(sgid)).nome;
-                        console.log(`✅ Grupo ${sgid} (${grupoRemovido}) removido do cliente`);
+                        console.log(`✅ Grupo de level ${sgid} (${grupoRemovido}) removido com sucesso`);
                         
                     } catch (error: any) {
                         console.log(`⚠️ Erro ao remover grupo ${sgid}:`, error.message);
-                        console.log(`📋 Detalhes do erro:`, error);
                         // Continuar tentando adicionar o novo grupo mesmo se falhar a remoção
                     }
                 }
@@ -4257,38 +4265,39 @@ ${resultado.removido ? `🗑️ Grupo anterior removido: ${resultado.grupoRemovi
 
     private getLevelByGrupo(sgid: number): number {
         // Mapeamento inverso: SGID -> Level mínimo da faixa
+        // IMPORTANTE: Deve estar sincronizado com determinarGrupoLevel()
         const mapa: { [key: number]: number } = {
             6: 0,           // Iniciante
-            10544: 100,     // 100+
-            10546: 200,     // 200+
-            10547: 300,     // 300+
-            10548: 400,     // 400+
-            20005: 500,     // 500+
-            20006: 600,     // 600+
-            20007: 700,     // 700+
-            20008: 800,     // 800+
-            20009: 900,     // 900+
-            10570: 1000,    // 1000+
-            10549: 1100,    // 1100+
-            20012: 1200,    // 1200+
-            20013: 1300,    // 1300+
-            20014: 1400,    // 1400+
-            20015: 1500,    // 1500+
-            20016: 1600,    // 1600+
-            20017: 1700,    // 1700+
-            20018: 1800,    // 1800+
-            20019: 1900,    // 1900+
-            20020: 2000,    // 2000+
-            20021: 2100,    // 2100+
-            20022: 2200,    // 2200+
-            20023: 2300,    // 2300+
-            20024: 2400,    // 2400+
-            20025: 2500,    // 2500+
-            20026: 2600,    // 2600+
-            20027: 2700,    // 2700+
-            20028: 2800,    // 2800+
-            20029: 2900,    // 2900+
-            20030: 3000     // 3000+
+            2303: 100,      // 100+
+            2304: 200,      // 200+
+            2305: 300,      // 300+
+            1294: 400,      // 400+
+            1296: 500,      // 500+
+            1298: 600,      // 600+
+            1304: 700,      // 700+
+            1309: 800,      // 800+
+            1329: 900,      // 900+
+            1312: 1000,     // 1000+
+            1314: 1100,     // 1100+
+            1318: 1200,     // 1200+
+            1320: 1300,     // 1300+
+            1323: 1400,     // 1400+
+            1325: 1500,     // 1500+
+            1330: 1600,     // 1600+
+            1332: 1700,     // 1700+
+            1334: 1800,     // 1800+
+            1336: 1900,     // 1900+
+            1348: 2000,     // 2000+
+            2095: 2100,     // 2100+
+            2096: 2200,     // 2200+
+            2097: 2300,     // 2300+
+            2098: 2400,     // 2400+
+            2100: 2500,     // 2500+
+            2402: 2600,     // 2600+
+            2403: 2700,     // 2700+
+            2404: 2800,     // 2800+
+            2405: 2900,     // 2900+
+            2406: 3000      // 3000+
         };
         return mapa[sgid] || 0;
     }
