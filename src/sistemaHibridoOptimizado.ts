@@ -1023,7 +1023,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         }
 
         try {
-            const friendsChannelId = "109"; // ID do canal Friendlist
+            const friendsChannelId = "8"; // ID do canal Friendlist
             
             // Buscar membros online da guild
             const membrosOnline = await this.buscarMembrosOnlineTibia();
@@ -1137,7 +1137,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         try {
             const inicioAtualizacao = Date.now();
             
-            const claimedChannelId = "112"; // ID do canal Claimeds
+            const claimedChannelId = "7"; // ID do canal Claimeds
             
             // Construir descrição base do canal
             let descricao = `[img]https://i.imgur.com/6yPB3ol.png[/img]
@@ -1304,7 +1304,7 @@ ${filasAtivas}`;
         }
 
         try {
-            const respawnsChannelId = "111"; // ID do canal Respawns List - ESPECÍFICO
+            const respawnsChannelId = "9"; // ID do canal Respawns List - ESPECÍFICO
             
             console.log('📋 Definindo conteúdo estático do canal Respawns List...');
             
@@ -3569,7 +3569,7 @@ Entre em contato com a liderança para isto!
         }
 
         try {
-            const huntedsChannelId = "108"; // ID do canal Hunteds - ajustar conforme necessário
+            const huntedsChannelId = "10"; // ID do canal Hunteds - ajustar conforme necessário
             
             console.log('🎯 Iniciando atualização do canal Huntedlist...');
             
@@ -5146,23 +5146,35 @@ ${infoLimpeza}
     private async notificarMortes(personagem: string, mortes: PlayerDeath[], tipoPersonagem: string): Promise<void> {
         try {
             for (const morte of mortes) {
-                const emoji = tipoPersonagem === 'Friend' ? '👥' : '🎯';
-                const cor = tipoPersonagem === 'Friend' ? 'green' : 'red';
-                
-                // Formatar a data da morte para padrão brasileiro: DD/MM/AAAA HH:MM
-                const dataFormatada = this.formatarDataMorte(morte.time);
-                
                 // Selecionar mensagem de zueira aleatória
                 const mensagemZueira = this.mensagensZueira[Math.floor(Math.random() * this.mensagensZueira.length)];
                 
-                const mensagem = `💀 MORTE DETECTADA! 💀
-
-${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
-⚔️ Level: ${morte.character.level} ${morte.character.vocation}
-🕐 Horário: ${dataFormatada}
-💥 Causa: ${morte.reason}
-
-😂 ${mensagemZueira} 😂`;
+                // Parse detalhado da morte
+                const killInfo = this.deathMonitor.parseDeathReason(morte.reason);
+                
+                // Definir cores por tipo
+                // Friend: verde negrito, nome azul céu, causa cinza claro
+                // Hunted: vermelho negrito, nome azul céu, causa cinza claro
+                const corTipo = tipoPersonagem === 'Friend' ? '#00FF00' : '#FF0000';  // Verde ou Vermelho
+                const corNome = '#00BFFF';  // Azul céu
+                const corCausa = '#D3D3D3'; // Cinza claro
+                
+                // Determinar a causa da morte
+                let causaMorte = '';
+                if (killInfo.mainKiller) {
+                    causaMorte = killInfo.mainKiller;
+                    if (killInfo.isPlayerKill) {
+                        causaMorte += ' (PK)';
+                    }
+                    if (killInfo.assistants.length > 0) {
+                        causaMorte += ` + ${killInfo.assistants.join(', ')}`;
+                    }
+                } else {
+                    causaMorte = morte.reason;
+                }
+                
+                // Mensagem em uma linha com cores
+                const mensagem = `💀 [b][color=${corTipo}]${tipoPersonagem}:[/color][/b] [color=${corNome}]${morte.character.name}[/color] morreu no level ${morte.character.level} para [color=${corCausa}]${causaMorte}[/color]\n😂 ${mensagemZueira} 😂`;
 
                 // Enviar poke para todos os usuários online
                 await this.enviarPokeParaTodos(mensagem);
@@ -5197,7 +5209,7 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
 
     private async sincronizarFriendsDoCanal(): Promise<void> {
         try {
-            const friendsChannelId = "109"; // ID do canal Friends - ajustar conforme necessário
+            const friendsChannelId = "8"; // ID do canal Friends - ajustar conforme necessário
             
             console.log(`👥 Sincronizando lista de friends com canal (ID: ${friendsChannelId})...`);
             
@@ -5568,7 +5580,7 @@ ${emoji} [color=${cor}]${tipoPersonagem}[/color]: [b]${morte.character.name}[/b]
         }
 
         try {
-            const deathlistChannelId = "110"; // ID do canal Deathlist - ajustar conforme necessário
+            const deathlistChannelId = "11"; // ID do canal Deathlist - ajustar conforme necessário
             
             console.log(`💀 Atualizando canal Deathlist (ID: ${deathlistChannelId})...`);
             

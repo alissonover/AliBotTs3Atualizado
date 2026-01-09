@@ -1,5 +1,4 @@
 @echo off
-chcp 65001 >nul
 title AliBotTS3 - Sistema Hibrido Otimizado
 
 echo.
