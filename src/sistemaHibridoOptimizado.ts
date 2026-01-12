@@ -112,6 +112,10 @@ class SistemaHibridoOptimizado {
     private confirmacoesLeave: Map<string, { codigo: string; timestamp: number }> = new Map(); // jogador -> { codigo, timestamp }
     private readonly TIMEOUT_CONFIRMACAO_MS = 30000; // Confirmação expira em 30 segundos
 
+    // Sistema de retomada de claimed após leave
+    private temposLeaveRecentes: Map<string, { tempoRestante: number; timestamp: number }> = new Map(); // "jogador:codigo" -> { tempoRestante, timestamp }
+    private readonly TIMEOUT_RETOMADA_MS = 300000; // 5 minutos para retomar o claimed com tempo salvo
+
     // Sistema de histórico de respawns
     private respHistoryCache: RespHistoryCache = {}; // Histórico de movimentações por código
     private ultimoResetRespHistory: Date = new Date(); // Última vez que o histórico foi resetado
@@ -1775,58 +1779,85 @@ ${filasAtivas}`;
                 }
             } else {
                 // Não é aceitação de next, comando normal
-                if (partes.length < 3) {
-                    // Se não especificou tempo, usar tempo padrão baseado no tier
-                    tempoParaUsar = this.obterTempopadrao(codigo);
-                    console.log(`⏰ Tempo padrão aplicado para ${codigo.toUpperCase()}: ${this.formatarTempo(tempoParaUsar)} (baseado no tier)`);
-                } else {
-                    // Jogador especificou tempo
-                    const tempoTexto = partes[2];
-                    tempoParaUsar = this.converterTempoParaSegundos(tempoTexto);
-                    if (tempoParaUsar === null) {
-                        return `❌ Tempo inválido!
+                
+                // VERIFICAR SE HÁ TEMPO SALVO DE LEAVE RECENTE (retomada de claimed)
+                const chaveRetomada = `${nomeJogador}:${codigo}`;
+                const tempoSalvo = this.temposLeaveRecentes.get(chaveRetomada);
+                let usarTempoSalvo = false;
+                
+                if (tempoSalvo) {
+                    const tempoDecorrido = Date.now() - tempoSalvo.timestamp;
+                    
+                    // Verificar se ainda está dentro do prazo de retomada (5 minutos)
+                    if (tempoDecorrido <= this.TIMEOUT_RETOMADA_MS) {
+                        // Verificar se o tempo restante era > 30 minutos (1800 segundos)
+                        if (tempoSalvo.tempoRestante > 1800) {
+                            // Continuar de onde parou
+                            tempoParaUsar = tempoSalvo.tempoRestante;
+                            usarTempoSalvo = true;
+                            console.log(`♻️ Retomando claimed ${codigo.toUpperCase()} - tempo salvo: ${this.formatarTempo(tempoParaUsar)}`);
+                        }
+                        // Se tempo era <= 30min, não usar tempo salvo (resetar)
+                    }
+                    
+                    // Limpar tempo salvo após uso ou expiração
+                    this.temposLeaveRecentes.delete(chaveRetomada);
+                }
+                
+                if (!usarTempoSalvo) {
+                    if (partes.length < 3) {
+                        // Se não especificou tempo, usar tempo padrão baseado no tier
+                        tempoParaUsar = this.obterTempopadrao(codigo);
+                        console.log(`⏰ Tempo padrão aplicado para ${codigo.toUpperCase()}: ${this.formatarTempo(tempoParaUsar)} (baseado no tier)`);
+                    } else {
+                        // Jogador especificou tempo
+                        const tempoTexto = partes[2];
+                        tempoParaUsar = this.converterTempoParaSegundos(tempoTexto);
+                        if (tempoParaUsar === null) {
+                            return `❌ Tempo inválido!
 💡 Formatos aceitos:
    HH:MM → 00:30 = 30 minutos
    HH:MM:SS → 01:30:45 = 1h30min45s
    SSSS → 150 = 150 segundos`;
-                    }
+                        }
 
-                    // Validar tempo mínimo de 01:00 (3600 segundos)
-                    if (tempoParaUsar < 3600) {
-                        return `❌ Tempo muito baixo!
+                        // Validar tempo mínimo de 01:00 (3600 segundos)
+                        if (tempoParaUsar < 3600) {
+                            return `❌ Tempo muito baixo!
 ⏰ Tempo mínimo: 01:00 (1 hora)
 💡 Use formato HH:MM: 01:00, 01:15, 01:30, etc.`;
-                    }
+                        }
 
-                    // Validar incrementos de 15 minutos (900 segundos)
-                    if (tempoParaUsar % 900 !== 0) {
-                        return `❌ Tempo deve ser em incrementos de 15 minutos!
+                        // Validar incrementos de 15 minutos (900 segundos)
+                        if (tempoParaUsar % 900 !== 0) {
+                            return `❌ Tempo deve ser em incrementos de 15 minutos!
 ⏰ Exemplos válidos: 01:00, 01:15, 01:30, 01:45, 02:00, 02:15, etc.
 💡 Use apenas horários que sejam múltiplos de 15 minutos`;
-                    }
+                        }
 
-                    // Validar tempo máximo baseado no tier
-                    const nomeRespawn = this.obterNomeRespawn(codigo).toLowerCase();
-                    let tempoMaximo: number;
-                    let tierInfo: string;
+                        // Validar tempo máximo baseado no tier
+                        const nomeRespawn = this.obterNomeRespawn(codigo).toLowerCase();
+                        let tempoMaximo: number;
+                        let tierInfo: string;
 
-                    if (nomeRespawn.includes('tier 3')) {
-                        tempoMaximo = 11700; // 03:15
-                        tierInfo = "Tier 3 (máx: 03:15)";
-                    } else if (nomeRespawn.includes('tier 1') || nomeRespawn.includes('tier 2')) {
-                        tempoMaximo = 9000; // 02:30
-                        tierInfo = "Tier 1/2 (máx: 02:30)";
-                    } else {
-                        tempoMaximo = 9000; // 02:30 (padrão)
-                        tierInfo = "Padrão (máx: 02:30)";
-                    }
+                        if (nomeRespawn.includes('tier 3')) {
+                            tempoMaximo = 11700; // 03:15
+                            tierInfo = "Tier 3 (máx: 03:15)";
+                        } else if (nomeRespawn.includes('tier 1') || nomeRespawn.includes('tier 2')) {
+                            tempoMaximo = 9000; // 02:30
+                            tierInfo = "Tier 1/2 (máx: 02:30)";
+                        } else {
+                            tempoMaximo = 9000; // 02:30 (padrão)
+                            tierInfo = "Padrão (máx: 02:30)";
+                        }
 
-                    if (tempoParaUsar > tempoMaximo) {
-                        return `❌ Tempo muito alto para este respawn!
+                        if (tempoParaUsar > tempoMaximo) {
+                            return `❌ Tempo muito alto para este respawn!
 ⚔️ ${this.obterNomeRespawn(codigo)} (${codigo.toUpperCase()})
 🎯 ${tierInfo}
 ⏰ Tempo solicitado: ${this.formatarTempo(tempoParaUsar)}
 💡 Reduza o tempo ou use o padrão sem especificar tempo`;
+                        }
                     }
                 }
             }
@@ -1994,6 +2025,13 @@ ${filasAtivas}`;
             if (this.timersRespawn[codigo]) {
                 const timer = this.timersRespawn[codigo];
                 if (timer.jogador === nomeJogador) {
+                    // Salvar tempo restante para possível retomada (chave: "jogador:codigo")
+                    const chaveRetomada = `${nomeJogador}:${codigo}`;
+                    this.temposLeaveRecentes.set(chaveRetomada, {
+                        tempoRestante: timer.tempoRestante,
+                        timestamp: Date.now()
+                    });
+                    
                     // Verificar se há fila para registrar abandono
                     const temFila = this.filasClaimeds[codigo] && this.filasClaimeds[codigo].length > 0;
                     
@@ -3351,7 +3389,9 @@ Entre em contato com a liderança para isto!
     private limparConfirmacoesExpiradas(): void {
         const agora = Date.now();
         let confirmacoesCanceladas = 0;
+        let temposLeaveLimpos = 0;
 
+        // Limpar confirmações de leave expiradas
         for (const [jogador, confirmacao] of this.confirmacoesLeave.entries()) {
             const tempoDecorrido = agora - confirmacao.timestamp;
             if (tempoDecorrido > this.TIMEOUT_CONFIRMACAO_MS) {
@@ -3360,8 +3400,20 @@ Entre em contato com a liderança para isto!
             }
         }
 
+        // Limpar tempos de leave salvos expirados (> 5 minutos)
+        for (const [chave, tempoSalvo] of this.temposLeaveRecentes.entries()) {
+            const tempoDecorrido = agora - tempoSalvo.timestamp;
+            if (tempoDecorrido > this.TIMEOUT_RETOMADA_MS) {
+                this.temposLeaveRecentes.delete(chave);
+                temposLeaveLimpos++;
+            }
+        }
+
         if (confirmacoesCanceladas > 0) {
             console.log(`🧹 Limpeza: ${confirmacoesCanceladas} confirmação(ões) expirada(s) removida(s)`);
+        }
+        if (temposLeaveLimpos > 0) {
+            console.log(`🧹 Limpeza: ${temposLeaveLimpos} tempo(s) de leave expirado(s) removido(s)`);
         }
     }
 
