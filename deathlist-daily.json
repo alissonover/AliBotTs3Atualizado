@@ -1,7 +1,16 @@
 {
   "dataReset": "2026-01-11T09:00:00.666Z",
-  "totalMortes": 19,
+  "totalMortes": 20,
   "mortes": [
+    {
+      "nome": "Djokovic",
+      "level": 903,
+      "vocacao": "Elite Knight",
+      "horario": "22:55:53",
+      "causa": "Died at Level 903 by guardian of tales.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-12T02:00:52.871Z"
+    },
     {
       "nome": "Tbombeiw",
       "level": 8,

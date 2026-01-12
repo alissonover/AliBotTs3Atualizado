@@ -7295,8 +7295,22 @@
   },
   "Djokovic": {
     "character": "Djokovic",
-    "lastChecked": "2026-01-11T11:01:49.279Z",
+    "lastChecked": "2026-01-12T01:59:53.181Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-12T01:55:53Z",
+        "level": 903,
+        "killers": [
+          {
+            "name": "guardian of tales",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 903 by guardian of tales."
+      },
       {
         "time": "2025-12-21T10:49:51Z",
         "level": 890,

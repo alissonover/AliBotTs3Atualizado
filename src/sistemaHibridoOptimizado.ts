@@ -1063,7 +1063,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         }
 
         try {
-            const friendsChannelId = "8"; // ID do canal Friendlist
+            const friendsChannelId = "109"; // ID do canal Friendlist
             
             // Buscar membros online da guild
             const membrosOnline = await this.buscarMembrosOnlineTibia();
@@ -1177,7 +1177,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         try {
             const inicioAtualizacao = Date.now();
             
-            const claimedChannelId = "7"; // ID do canal Claimeds
+            const claimedChannelId = "112"; // ID do canal Claimeds
             
             // Construir descrição base do canal
             let descricao = `[img]https://i.imgur.com/6yPB3ol.png[/img]
@@ -1344,7 +1344,7 @@ ${filasAtivas}`;
         }
 
         try {
-            const respawnsChannelId = "9"; // ID do canal Respawns List - ESPECÍFICO
+            const respawnsChannelId = "111"; // ID do canal Respawns List - ESPECÍFICO
             
             console.log('📋 Definindo conteúdo estático do canal Respawns List...');
             
@@ -3734,7 +3734,7 @@ Entre em contato com a liderança para isto!
         }
 
         try {
-            const huntedsChannelId = "10"; // ID do canal Hunteds - ajustar conforme necessário
+            const huntedsChannelId = "108"; // ID do canal Hunteds - ajustar conforme necessário
             
             console.log('🎯 Iniciando atualização do canal Huntedlist...');
             
@@ -5395,7 +5395,7 @@ ${infoLimpeza}
 
     private async sincronizarFriendsDoCanal(): Promise<void> {
         try {
-            const friendsChannelId = "8"; // ID do canal Friends - ajustar conforme necessário
+            const friendsChannelId = "109"; // ID do canal Friends - ajustar conforme necessário
             
             console.log(`👥 Sincronizando lista de friends com canal (ID: ${friendsChannelId})...`);
             
@@ -5766,7 +5766,7 @@ ${infoLimpeza}
         }
 
         try {
-            const deathlistChannelId = "11"; // ID do canal Deathlist - ajustar conforme necessário
+            const deathlistChannelId = "110"; // ID do canal Deathlist - ajustar conforme necessário
             
             console.log(`💀 Atualizando canal Deathlist (ID: ${deathlistChannelId})...`);
             
