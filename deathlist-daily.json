@@ -1,51 +1,177 @@
 {
-  "dataReset": "2026-01-08T23:48:01.544Z",
-  "totalMortes": 5,
+  "dataReset": "2026-01-11T09:00:00.666Z",
+  "totalMortes": 19,
   "mortes": [
     {
-      "nome": "Korzus Koranav",
-      "level": 1613,
-      "vocacao": "Master Sorcerer",
-      "horario": "08/01/2026 22:29",
-      "causa": "Died at Level 1614 by death.",
+      "nome": "Tbombeiw",
+      "level": 8,
+      "vocacao": "Sorcerer",
+      "horario": "22:32:12",
+      "causa": "Died at Level 8 by cave rat.",
       "tipo": "Friend",
-      "timestamp": "2026-01-09T01:34:56.622Z"
+      "timestamp": "2026-01-12T01:34:16.986Z"
     },
     {
-      "nome": "Merciless Lena",
-      "level": 826,
+      "nome": "Tbombeiw",
+      "level": 8,
+      "vocacao": "Sorcerer",
+      "horario": "22:26:52",
+      "causa": "Died at Level 8 by rat.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-12T01:28:18.449Z"
+    },
+    {
+      "nome": "Tbombeiw",
+      "level": 8,
+      "vocacao": "Sorcerer",
+      "horario": "22:14:32",
+      "causa": "Died at Level 8 by cave rat.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-12T01:16:55.999Z"
+    },
+    {
+      "nome": "Lucaohh",
+      "level": 1352,
+      "vocacao": "Elite Knight",
+      "horario": "21:12:45",
+      "causa": "Died at Level 1354 by grimeleech.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-12T00:17:30.022Z"
+    },
+    {
+      "nome": "Lethalzerahh",
+      "level": 752,
+      "vocacao": "Elite Knight",
+      "horario": "21:08:27",
+      "causa": "Died at Level 752 by bulltaur forgepriest.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-12T00:12:50.188Z"
+    },
+    {
+      "nome": "Summerwave",
+      "level": 797,
+      "vocacao": "Master Sorcerer",
+      "horario": "20:56:26",
+      "causa": "Died at Level 798 by courage leech.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-12T00:01:55.207Z"
+    },
+    {
+      "nome": "Luiizin",
+      "level": 1714,
       "vocacao": "Elder Druid",
-      "horario": "08/01/2026 21:56",
-      "causa": "Died at Level 826 by cloak of terror.",
+      "horario": "20:45:38",
+      "causa": "Died at Level 1716 by oozing carcass.",
       "tipo": "Friend",
-      "timestamp": "2026-01-09T01:02:14.813Z"
+      "timestamp": "2026-01-11T23:53:28.816Z"
     },
     {
-      "nome": "Tbombeiw",
-      "level": 9,
-      "vocacao": "Sorcerer",
-      "horario": "08/01/2026 21:20",
-      "causa": "Died at Level 9 by rat.",
+      "nome": "Viollent Inseto",
+      "level": 1114,
+      "vocacao": "Royal Paladin",
+      "horario": "19:58:40",
+      "causa": "Died at Level 1114 by turbulent elemental.",
       "tipo": "Friend",
-      "timestamp": "2026-01-09T00:22:41.557Z"
+      "timestamp": "2026-01-11T23:03:39.826Z"
     },
     {
-      "nome": "Veld",
-      "level": 754,
+      "nome": "Vic In Debit",
+      "level": 1215,
+      "vocacao": "Elite Knight",
+      "horario": "19:32:03",
+      "causa": "Died at Level 1215 by bony sea devil.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-11T22:32:40.086Z"
+    },
+    {
+      "nome": "Bunny Soul",
+      "level": 971,
       "vocacao": "Master Sorcerer",
-      "horario": "08/01/2026 21:07",
-      "causa": "Died at Level 754 by agony.",
+      "horario": "16:50:31",
+      "causa": "Died at Level 971 by burning book.",
       "tipo": "Friend",
-      "timestamp": "2026-01-09T00:11:55.034Z"
+      "timestamp": "2026-01-11T19:52:32.375Z"
     },
     {
-      "nome": "Tbombeiw",
-      "level": 9,
-      "vocacao": "Sorcerer",
-      "horario": "08/01/2026 21:05",
-      "causa": "Died at Level 9 by rat.",
+      "nome": "Pari Suave",
+      "level": 1407,
+      "vocacao": "Elder Druid",
+      "horario": "16:23:36",
+      "causa": "Died at Level 1407 by rootthing nutshell.",
       "tipo": "Friend",
-      "timestamp": "2026-01-09T00:07:49.881Z"
+      "timestamp": "2026-01-11T19:28:27.747Z"
+    },
+    {
+      "nome": "Lynker Healer",
+      "level": 561,
+      "vocacao": "Elder Druid",
+      "horario": "16:14:16",
+      "causa": "Died at Level 561 by adult goanna.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-11T19:16:23.164Z"
+    },
+    {
+      "nome": "Shoxiez",
+      "level": 2163,
+      "vocacao": "Master Sorcerer",
+      "horario": "14:28:06",
+      "causa": "Died at Level 2163 by nighthunter.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-11T17:31:13.680Z"
+    },
+    {
+      "nome": "Tio dos Cores",
+      "level": 1118,
+      "vocacao": "Royal Paladin",
+      "horario": "14:21:13",
+      "causa": "Killed at Level 1119 by Tio dos Cores.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-11T17:26:27.140Z"
+    },
+    {
+      "nome": "Banshed",
+      "level": 466,
+      "vocacao": "Elder Druid",
+      "horario": "12:57:11",
+      "causa": "Died at Level 467 by mean lost soul.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-11T16:02:41.690Z"
+    },
+    {
+      "nome": "Patty Calistro",
+      "level": 625,
+      "vocacao": "Elite Knight",
+      "horario": "12:05:14",
+      "causa": "Died at Level 625 by thanatursus.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-11T15:07:10.724Z"
+    },
+    {
+      "nome": "Ryan Avatar",
+      "level": 761,
+      "vocacao": "Royal Paladin",
+      "horario": "11:47:28",
+      "causa": "Died at Level 761 by choking fear.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-11T14:51:11.078Z"
+    },
+    {
+      "nome": "Patty Calistro",
+      "level": 625,
+      "vocacao": "Elite Knight",
+      "horario": "11:48:14",
+      "causa": "Died at Level 625 by crazed summer rearguard.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-11T14:51:10.943Z"
+    },
+    {
+      "nome": "Mei re les",
+      "level": 968,
+      "vocacao": "Royal Paladin",
+      "horario": "09:45:51",
+      "causa": "Died at Level 968 by bashmu.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-11T12:50:55.520Z"
     }
   ]
 }

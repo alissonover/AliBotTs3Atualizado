@@ -1,52 +1,52 @@
 {
-  "ultimaAtualizacao": "2026-01-07T09:00:00.084Z",
-  "dataAnterior": "2026-01-06",
+  "ultimaAtualizacao": "2026-01-11T09:00:00.665Z",
+  "dataAnterior": "2026-01-10",
   "totalMortes": 5,
   "mortes": [
     {
-      "nome": "Churras Princess",
-      "level": 1304,
-      "vocacao": "Royal Paladin",
-      "horario": "07/01/2026 00:30",
-      "causa": "Killed at Level 1306 by Churras Princess and cave chimera.",
-      "tipo": "Friend",
-      "timestamp": "2026-01-07T03:31:27.038Z"
-    },
-    {
-      "nome": "Cokito Mclovin",
-      "level": 1103,
+      "nome": "Beattrizz",
+      "level": 887,
       "vocacao": "Elder Druid",
-      "horario": "06/01/2026 23:45",
-      "causa": "Died at Level 1104 by crape man.",
+      "horario": "00:08:50",
+      "causa": "Died at Level 887 by harpy.",
       "tipo": "Friend",
-      "timestamp": "2026-01-07T02:48:01.150Z"
+      "timestamp": "2026-01-11T03:12:52.911Z"
     },
     {
       "nome": "Seriel Tyrus",
-      "level": 648,
+      "level": 649,
       "vocacao": "Elder Druid",
-      "horario": "06/01/2026 23:20",
-      "causa": "Died at Level 648 by corrupt naga.",
+      "horario": "10/01/2026 23:01",
+      "causa": "Died at Level 649 by dragolisk.",
       "tipo": "Friend",
-      "timestamp": "2026-01-07T02:26:22.006Z"
+      "timestamp": "2026-01-11T02:02:18.994Z"
     },
     {
-      "nome": "Trefor Das Sombras",
-      "level": 1207,
-      "vocacao": "Elder Druid",
-      "horario": "06/01/2026 21:23",
-      "causa": "Died at Level 1207 by creepy crawler.",
+      "nome": "Tbombeiw",
+      "level": 8,
+      "vocacao": "Sorcerer",
+      "horario": "10/01/2026 22:50",
+      "causa": "Died at Level 8 by cave rat.",
       "tipo": "Friend",
-      "timestamp": "2026-01-07T00:31:50.145Z"
+      "timestamp": "2026-01-11T01:54:39.779Z"
     },
     {
-      "nome": "Tio dos Cores",
-      "level": 1119,
-      "vocacao": "Royal Paladin",
-      "horario": "06/01/2026 18:37",
-      "causa": "Died at Level 1119 by An Eye.",
+      "nome": "Don Vito Camelone",
+      "level": 234,
+      "vocacao": "Elite Knight",
+      "horario": "10/01/2026 22:03",
+      "causa": "Died at Level 233 by undead dragon.",
       "tipo": "Friend",
-      "timestamp": "2026-01-06T21:47:26.970Z"
+      "timestamp": "2026-01-11T01:07:34.794Z"
+    },
+    {
+      "nome": "Don Vito Camelone",
+      "level": 234,
+      "vocacao": "Elite Knight",
+      "horario": "10/01/2026 21:21",
+      "causa": "Died at Level 234 by wardragon.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-11T00:26:04.279Z"
     }
   ]
 }

@@ -103,6 +103,8 @@ class SistemaHibridoOptimizado {
     // CACHE DE PERFORMANCE PARA CLAIMEDS
     private cacheClienteIds: Map<string, string> = new Map(); // personagem -> clientId
     private cacheClienteDescricoes: Map<string, string> = new Map(); // clientId -> descrição
+    private cacheUniqueIdToClid: Map<string, string> = new Map(); // uniqueId -> clid atual
+    private cacheClienteUniqueIds: Map<string, string> = new Map(); // clid -> uniqueId
     private ultimaAtualizacaoCache: number = 0;
     private readonly CACHE_VALIDADE_MS = 30000; // Cache válido por 30 segundos
 
@@ -124,9 +126,8 @@ class SistemaHibridoOptimizado {
         'Gameplay questionável hein',
         'Foi de base',
         'Visitou o templo',
-        'Temple já conhece',
+        'Henricus já conhece',
         'XP negativa ativada',
-        'Loot virou lenda',
         'Profissional do chão',
         'Especialista em morrer',
         'Dominou o respawn',
@@ -136,12 +137,10 @@ class SistemaHibridoOptimizado {
         'Lag seletivo né',
         'Erro de cálculo',
         'Estratégia inexistente',
-        'Planejamento zero total',
         'Morreu igual lixo',
-        'Muito ruim mesmo',
+        'Muito ruim',
         'Inútil até vivo',
         'Jogou pra morrer',
-        'Vergonha desse char',
         'Delete esse char',
         'Aposenta do Tibia',
         'Volta pro rook',
@@ -150,18 +149,12 @@ class SistemaHibridoOptimizado {
         'Free kill ambulante',
         'Farm de death',
         'Distribuindo frag grátis',
-        'NPC mais forte',
-        'Mob riu disso',
-        'Nem tenta mais',
-        'Fracasso consistente',
-        'Nunca aprende nada',
-        'Morreu previsível',
-        'Zero evolução sempre',
+        'NT = nem tentou',
         'Muito fraco',
-        'Pífio demais',
-        'Ridículo isso',
-        'Patético total',
-        'Horroroso jogando'
+        'Horroroso jogando',
+        'Foda é o skill',
+        'Monstro do bazar',
+        'Disse que caiu a net, mas é mentira'
     ];
 
     constructor() {
@@ -486,18 +479,25 @@ class SistemaHibridoOptimizado {
         this.serverQuery.on("clientleftview", (ev: any) => {
             const clientId = ev?.client?.clid;
             if (clientId) {
-                const descricaoRemovida = this.cacheClienteDescricoes.get(clientId.toString());
+                const clientIdStr = clientId.toString();
+                const descricaoRemovida = this.cacheClienteDescricoes.get(clientIdStr);
+                const uniqueIdRemovido = this.cacheClienteUniqueIds.get(clientIdStr);
                 
                 // Remover do cache de descrições
-                this.cacheClienteDescricoes.delete(clientId.toString());
+                this.cacheClienteDescricoes.delete(clientIdStr);
                 
                 // Remover do cache reverso (descrição -> clientId)
                 if (descricaoRemovida) {
                     this.cacheClienteIds.delete(descricaoRemovida);
-                    console.log(`👋 Cliente desconectado (ID: ${clientId}, Nome: ${descricaoRemovida}) - cache limpo`);
-                } else {
-                    console.log(`👋 Cliente desconectado (ID: ${clientId}) - cache limpo`);
                 }
+                
+                // Remover do cache de uniqueId
+                if (uniqueIdRemovido) {
+                    this.cacheUniqueIdToClid.delete(uniqueIdRemovido);
+                    this.cacheClienteUniqueIds.delete(clientIdStr);
+                }
+                
+                console.log(`👋 Cliente desconectado (ID: ${clientId}, Nome: ${descricaoRemovida || 'N/A'}) - cache limpo`);
             }
         });
 
@@ -891,15 +891,23 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
 
             // Resposta ultra-rápida (apenas se houver conteúdo)
             if (resposta && resposta.trim() !== '') {
-                await this.serverQuery.sendTextMessage(remetente.clid, 1, resposta);
+                // FIX: Obter clid atual para garantir que mensagem vai para o cliente correto
+                const clidAtual = await this.obterClidAtual(remetente);
+                if (clidAtual) {
+                    await this.serverQuery.sendTextMessage(clidAtual, 1, resposta);
+                } else {
+                    console.log('⚠️ Não foi possível enviar resposta - clid não encontrado');
+                }
             }
 
         } catch (error: any) {
             console.log('❌ Erro ao processar comando:', error.message);
             // Tentar enviar erro de volta se possível
             try {
-                if (remetente?.clid) {
-                    await this.serverQuery.sendTextMessage(remetente.clid, 1, `❌ Erro interno: ${error.message}`);
+                // FIX: Obter clid atual para enviar mensagem de erro
+                const clidAtual = await this.obterClidAtual(remetente);
+                if (clidAtual) {
+                    await this.serverQuery.sendTextMessage(clidAtual, 1, `❌ Erro interno: ${error.message}`);
                 }
             } catch (sendError) {
                 console.log('❌ Erro adicional ao enviar mensagem de erro:', sendError);
@@ -1174,9 +1182,9 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚔️ Respawns ⚔️
 📋 Use: [b]!resp [código] [tempo][/b] - Iniciar timer
-🎯 Use: [b]!next [código] [tempo][/b] - Entrar na fila (máx 3 pessoas)
-        ⚠️ [i]Tempo mínimo: 01:00 | Incrementos: 15min | Máx: Tier1/2=02:30, Tier3=03:15[/i]
-        ⚠️ [i]Obs: Caso não informe tempo, resps Tier 1 e 2  serão 02:30, Tier 3 serão 03:15 por padrão![/i]
+🎯 Use: [b]!next [código] [tempo][/b] - Entrar na fila (máx 2 pessoas)
+        ⚠️ [i]Tempo mínimo: 01:00 | Incrementos: 15min | Máx: Tier1=02:30, Tier3=03:15[/i]
+        ⚠️ [i]Obs: Caso não informe tempo, resps Tier 1 serão 02:30, Tier 3 serão 03:15 por padrão![/i]
 🚪 Use: [b]!leave [código][/b] - Sair do respawn
 📊 Use: [b]!respinfo [código][/b] - Ver informações do respawn
 💡 Use: [b]!help[/b] - Lista de comandos
@@ -1232,7 +1240,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         if (fila.length === 1) {
                             // Verificar se o jogador está online
                             const isOnline = this.verificarJogadorOnline(fila[0].jogador);
-                            const clientId = this.obterClientIdDoCache(fila[0].jogador) || fila[0].jogador;
+                            const clientId = this.obterUniqueIdParaLink(fila[0].jogador) || '';
                             const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId, isOnline);
                             const tempoInfo = fila[0].tempoDesejado ? ` (${this.formatarTempo(fila[0].tempoDesejado)})` : '';
                             
@@ -1241,7 +1249,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         } else if (fila.length === 2) {
                             // Verificar se o jogador está online
                             const isOnline = this.verificarJogadorOnline(fila[0].jogador);
-                            const clientId = this.obterClientIdDoCache(fila[0].jogador) || fila[0].jogador;
+                            const clientId = this.obterUniqueIdParaLink(fila[0].jogador) || '';
                             const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId, isOnline);
                             const tempoInfo = fila[0].tempoDesejado ? ` (${this.formatarTempo(fila[0].tempoDesejado)})` : '';
                             
@@ -1264,7 +1272,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     
                     // STEP 3: Verificar se o jogador está online e criar link adequadamente
                     const isJogadorOnline = this.verificarJogadorOnline(timer.jogador);
-                    const clientId = this.obterClientIdDoCache(timer.jogador) || timer.jogador;
+                    const clientId = this.obterUniqueIdParaLink(timer.jogador) || '';
                     const jogadorFormatado = this.criarLinkJogador(timer.jogador, clientId, isJogadorOnline);
                     
                     descricao += `${timer.codigo} - ${tempoFormatado}${nomeFormatado}: ${jogadorFormatado}${infoFila}
@@ -1285,7 +1293,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         for (let i = 0; i < fila.length; i++) {
                             // Verificar se o jogador está online
                             const isOnline = this.verificarJogadorOnline(fila[i].jogador);
-                            const clientId = this.obterClientIdDoCache(fila[i].jogador) || fila[i].jogador;
+                            const clientId = this.obterUniqueIdParaLink(fila[i].jogador) || '';
                             const linkJogador = this.criarLinkJogador(fila[i].jogador, clientId, isOnline);
                             const tempoInfo = fila[i].tempoDesejado ? ` (${this.formatarTempo(fila[i].tempoDesejado!)})` : '';
                             
@@ -1417,12 +1425,15 @@ ${filasAtivas}`;
             // Atualizar caches
             this.cacheClienteIds.clear();
             this.cacheClienteDescricoes.clear();
+            this.cacheUniqueIdToClid.clear();
+            this.cacheClienteUniqueIds.clear();
             
             for (const cliente of clientesCompletos) {
                 if (!cliente) continue;
                 
                 // Usar SEMPRE clid.toString() para consistência (FIX: evita misturar uniqueId com clid)
                 const clientId = cliente.clid.toString();
+                const uniqueId = cliente.uniqueId;
                 
                 // Cache por nickname
                 if (cliente.nickname) {
@@ -1434,6 +1445,12 @@ ${filasAtivas}`;
                     this.cacheClienteIds.set(cliente.description, clientId);
                     // Cache reverso: clientId -> descrição
                     this.cacheClienteDescricoes.set(clientId, cliente.description);
+                }
+                
+                // Cache de uniqueId (FIX: garantir que sempre encontramos o clid correto)
+                if (uniqueId) {
+                    this.cacheUniqueIdToClid.set(uniqueId, clientId);
+                    this.cacheClienteUniqueIds.set(clientId, uniqueId);
                 }
             }
             
@@ -1448,9 +1465,75 @@ ${filasAtivas}`;
         return this.cacheClienteIds.get(personagem) || null;
     }
     
+    // FIX: Obter UniqueID válido para formatação de canais (sem async)
+    // Retorna UniqueID que é permanente e não muda quando cliente reconecta
+    private obterUniqueIdParaLink(nomeJogador: string): string | null {
+        const clientId = this.cacheClienteIds.get(nomeJogador);
+        if (!clientId) {
+            return null;
+        }
+        
+        // Validar que o clid ainda está no cache reverso (cliente ainda conectado)
+        const descricaoDoClid = this.cacheClienteDescricoes.get(clientId);
+        
+        // Se o clid não tem descrição ou a descrição não bate com o jogador, é inválido
+        if (!descricaoDoClid || descricaoDoClid !== nomeJogador) {
+            console.log(`⚠️ clid ${clientId} inválido para ${nomeJogador} (desc: ${descricaoDoClid})`);
+            return null;
+        }
+        
+        // Retornar UniqueID (permanente) em vez de clid (temporário)
+        const uniqueId = this.cacheClienteUniqueIds.get(clientId);
+        if (uniqueId) {
+            console.log(`🔗 Usando UniqueID para ${nomeJogador}: ${uniqueId.substring(0, 20)}...`);
+            return uniqueId;
+        }
+        
+        console.log(`⚠️ UniqueID não encontrado para ${nomeJogador}, usando clid ${clientId}`);
+        return clientId; // Fallback para clid se UniqueID não estiver disponível
+    }
+    
     // Invalidar cache para forçar atualização rápida após comandos
     private invalidarCache(): void {
         this.ultimaAtualizacaoCache = 0;
+    }
+    
+    // FIX: Obter clid atual de um cliente baseado no uniqueId
+    // Isso garante que sempre enviamos mensagens para o cliente correto, mesmo se ele reconectou
+    private async obterClidAtual(remetente: any): Promise<string | null> {
+        try {
+            // Se temos uniqueId no remetente, usar ele diretamente
+            const uniqueId = remetente.uniqueIdentifier || remetente.clientUniqueIdentifier;
+            
+            if (uniqueId) {
+                // Verificar cache primeiro
+                const clidCached = this.cacheUniqueIdToClid.get(uniqueId);
+                if (clidCached) {
+                    return clidCached;
+                }
+                
+                // Se não está no cache, atualizar cache e tentar novamente
+                await this.atualizarCacheClientesRapido();
+                const clidAtualizado = this.cacheUniqueIdToClid.get(uniqueId);
+                if (clidAtualizado) {
+                    return clidAtualizado;
+                }
+            }
+            
+            // Fallback: usar clid do remetente se uniqueId não estiver disponível
+            const clid = remetente.clid || remetente.invokerid;
+            if (clid) {
+                return clid.toString();
+            }
+            
+            console.log('⚠️ Não foi possível determinar clid atual do cliente');
+            return null;
+            
+        } catch (error: any) {
+            console.log('❌ Erro ao obter clid atual:', error.message);
+            // Fallback final: usar clid original
+            return remetente.clid?.toString() || remetente.invokerid?.toString() || null;
+        }
     }
 
     private async buscarMembrosOnlineTibia(): Promise<any[] | null> {
@@ -1870,6 +1953,26 @@ ${filasAtivas}`;
 📋 Responda: [b]y[/b] (sim) ou [b]n[/b] (não)
 ⏰ Esta confirmação expira em 30 segundos`;
             }
+            
+            // Se está na fila E há outros jogadores DEPOIS dele, pedir confirmação
+            if (estaNaFila && this.filasClaimeds[codigo]) {
+                const indiceJogador = this.filasClaimeds[codigo].findIndex(item => item.jogador === nomeJogador);
+                const temJogadoresDepois = indiceJogador !== -1 && indiceJogador < this.filasClaimeds[codigo].length - 1;
+                
+                if (temJogadoresDepois) {
+                    const quantidadeDepois = this.filasClaimeds[codigo].length - indiceJogador - 1;
+                    
+                    // Registrar solicitação de confirmação
+                    this.confirmacoesLeave.set(nomeJogador, {
+                        codigo: codigo,
+                        timestamp: Date.now()
+                    });
+
+                    return `⚠️ Tem ${quantidadeDepois} player(s) na fila depois de você, deseja realmente sair?
+📋 Responda: [b]y[/b] (sim) ou [b]n[/b] (não)
+⏰ Esta confirmação expira em 30 segundos`;
+                }
+            }
 
             // Prosseguir com remoção direta (sem confirmação)
             return await this.executarLeave(codigo, nomeJogador, remetente);
@@ -1926,8 +2029,10 @@ ${filasAtivas}`;
                         mensagemSucesso += `
 🎯 Próximo da fila: ${proximoJogador.jogador} (notificado)`;
                         
-                        // Enviar poke para o próximo jogador
-                        await this.enviarPokeNextIniciado(proximoJogador.jogador, codigo);
+                        // Enviar poke em background (não bloquear)
+                        this.enviarPokeNextIniciado(proximoJogador.jogador, codigo).catch(err =>
+                            console.log(`⚠️ Erro ao enviar poke: ${err.message}`)
+                        );
                     }
                 }
             }
@@ -1963,8 +2068,10 @@ ${filasAtivas}`;
                         mensagemSucesso += `
 🎯 Próximo da fila: ${proximoJogador.jogador} (notificado)`;
                         
-                        // Enviar poke para o próximo jogador
-                        await this.enviarPokeNextIniciado(proximoJogador.jogador, codigo);
+                        // Enviar poke em background (não bloquear)
+                        this.enviarPokeNextIniciado(proximoJogador.jogador, codigo).catch(err =>
+                            console.log(`⚠️ Erro ao enviar poke: ${err.message}`)
+                        );
                     }
                 }
             }
@@ -1994,8 +2101,10 @@ ${filasAtivas}`;
 � Use !respinfo ${codigo} para ver o status atual`;
             }
 
-            // Atualizar canal
-            await this.atualizarCanalClaimeds();
+            // Atualizar canal em background (não bloquear resposta)
+            this.atualizarCanalClaimeds().catch(err => 
+                console.log('⚠️ Erro ao atualizar canal após leave:', err.message)
+            );
 
             return mensagemSucesso;
 
@@ -2693,7 +2802,7 @@ ${statusAtual}
                 };
             }
 
-            // OTIMIZAÇÃO AWS: Verificar cache primeiro (INSTANTÂNEO)
+            // OTIMIZAÇÃO: Verificar cache primeiro (INSTANTÂNEO)
             const descricaoCache = this.cacheClienteDescricoes.get(clientId.toString());
             if (descricaoCache && descricaoCache.trim() !== '') {
                 return {
@@ -2702,16 +2811,28 @@ ${statusAtual}
                 };
             }
 
+            // Se não está no cache, atualizar cache completo (paralelo, apenas 1 vez)
+            await this.atualizarCacheClientesRapido();
+            
+            // Verificar cache novamente após atualização
+            const descricaoAposUpdate = this.cacheClienteDescricoes.get(clientId.toString());
+            if (descricaoAposUpdate && descricaoAposUpdate.trim() !== '') {
+                return {
+                    nome: descricaoAposUpdate,
+                    valido: true
+                };
+            }
+
+            // Se ainda não encontrou, fazer busca individual (última tentativa)
             try {
-                // Buscar APENAS este cliente (1 chamada rápida com timeout)
                 const clientInfoArray = await this.comTimeout(
                     this.serverQuery.clientInfo(clientId),
-                    3000,
+                    2000,
                     'clientInfo'
                 );
                 const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
                 
-                let descricao = clientInfo?.clientDescription?.trim() || '';
+                const descricao = clientInfo?.clientDescription?.trim() || '';
                 
                 if (descricao && descricao !== '') {
                     // Salvar em AMBOS os caches
@@ -2722,47 +2843,21 @@ ${statusAtual}
                         valido: true
                     };
                 }
+            } catch (error: any) {
+                console.log(`⚠️ Timeout ou erro ao buscar clientInfo: ${error.message}`);
+            }
 
-                // Fallback: clientList (com timeout)
-                const clientes: any = await this.comTimeout(
-                    this.serverQuery.clientList(),
-                    3000,
-                    'clientList'
-                );
-                const clienteEncontrado = clientes.find((c: any) => {
-                    const id = c.clid || c.clientId;
-                    return id == clientId;
-                });
-
-                if (clienteEncontrado) {
-                    descricao = clienteEncontrado.clientDescription?.trim() || '';
-                    
-                    if (descricao && descricao !== '') {
-                        // Salvar em AMBOS os caches
-                        this.cacheClienteDescricoes.set(clientId.toString(), descricao);
-                        this.cacheClienteIds.set(descricao, clientId.toString());
-                        return {
-                            nome: descricao,
-                            valido: true
-                        };
-                    }
-                }
-
-                // Sem descrição
-                const nomeTS = remetente.clientNickname || remetente.nickname || 'Usuário';
-                return {
-                    nome: nomeTS,
-                    valido: false,
-                    erro: `❌ ${nomeTS}, você precisa configurar sua descrição no TeamSpeak!
+            // Sem descrição
+            const nomeTS = remetente.clientNickname || remetente.nickname || 'Usuário';
+            return {
+                nome: nomeTS,
+                valido: false,
+                erro: `❌ ${nomeTS}, você precisa configurar sua descrição no TeamSpeak!
 
 Entre em contato com a liderança para isto!
 
 ⚠️ Comandos de claimed não funcionarão sem a descrição configurada!`
-                };
-
-            } catch (apiError: any) {
-                throw apiError;
-            }
+            };
 
         } catch (error: any) {
             const nomeTS = remetente.clientNickname || remetente.nickname || 'Usuário';
@@ -3077,21 +3172,20 @@ Entre em contato com a liderança para isto!
             return nomeJogador; // Retorna apenas o nome se não tiver ID
         }
         
-        console.log(`🔗 Criando link para ${nomeJogador} com ID: ${clientId}`);
+        console.log(`🔗 Criando link para ${nomeJogador} com ID: ${clientId.substring(0, 30)}...`);
         
         // Determinar se é Unique ID (string longa) ou ID numérico (apenas números)
         const isNumericId = /^\d+$/.test(clientId);
         let linkFinal: string;
         
         if (isNumericId) {
-            // Para ID numérico, usar formato client simples
+            // Para ID numérico (fallback), usar formato client simples
             linkFinal = `[client=${clientId}]${nomeJogador}[/client]`;
-            console.log(`🔗 Link com ID numérico criado: ${linkFinal}`);
+            console.log(`🔗 Link com ID numérico (fallback) criado: ${linkFinal}`);
         } else {
-            // Para Unique ID, usar formato URL (melhor compatibilidade)
+            // Para Unique ID (PREFERENCIAL), usar formato URL (melhor compatibilidade e permanente)
             linkFinal = `[url=client://0/${clientId}]${nomeJogador}[/url]`;
-            console.log(`🔗 Link com Unique ID criado: ${linkFinal}`);
-            console.log(`✅ Usando clientUniqueIdentifier para ${nomeJogador} - link clicável otimizado`);
+            console.log(`✅ Link com UniqueID criado - permanente e válido mesmo após reconexão`);
         }
         
         return linkFinal;
@@ -3335,14 +3429,12 @@ Entre em contato com a liderança para isto!
                 return timeString; // Retorna original se não conseguir formatar
             }
             
-            // Formatar para DD/MM/AAAA HH:MM
-            const dia = date.getDate().toString().padStart(2, '0');
-            const mes = (date.getMonth() + 1).toString().padStart(2, '0');
-            const ano = date.getFullYear();
+            // Formatar para HH:MM:SS (apenas horário)
             const hora = date.getHours().toString().padStart(2, '0');
             const minuto = date.getMinutes().toString().padStart(2, '0');
+            const segundo = date.getSeconds().toString().padStart(2, '0');
             
-            return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+            return `${hora}:${minuto}:${segundo}`;
             
         } catch (error: any) {
             console.log(`❌ Erro ao formatar data da morte: ${timeString}`, error.message);
@@ -3551,25 +3643,17 @@ Entre em contato com a liderança para isto!
             console.log(`📢 Enviando notificação de hunted online para ${realClients.length} usuários conectados`);
             
             // Construir mensagem de alerta
-            let mensagem = `🚨 [color=red][b]ALERTA DE HUNTED ONLINE![/b][/color] 🚨
-
-`;
+            let mensagem = '';
             
             if (novosHunteds.length === 1) {
                 const hunted = novosHunteds[0];
-                mensagem += `🎯 [b]${hunted.name}[/b] acabou de ficar online! 📊 Level: ${hunted.level || '?'} ⚔️ Vocação: ${hunted.vocation || 'Unknown'}
-⚠️ [color=orange]Amassa ele bro! 🚜[/color]`;
+                mensagem = `[b][color=red]Hunted:[/color] ${hunted.name} is online. Amassa ele bro! 🚜[/b]`;
             } else {
-                mensagem += `🎯 [b]${novosHunteds.length} hunteds[/b] acabaram de ficar online:
-
-`;
+                mensagem = `[b][color=red]Hunted:[/color] ${novosHunteds.length} players are online:[/b]\n`;
                 novosHunteds.forEach(hunted => {
-                    mensagem += `• [b]${hunted.name}[/b] (Lv.${hunted.level || '?'}) - ${hunted.vocation || 'Unknown'}
-`;
+                    mensagem += `${hunted.name}\n`;
                 });
-                
-                mensagem += `
-⚠️ [color=orange]Amassa ele bro! 🚜[/color]`;
+                mensagem += ``;
             }
 
             // Enviar mensagem privada para cada cliente conectado
@@ -3634,8 +3718,6 @@ Entre em contato com a liderança para isto!
 
 💡 Esta lista é atualizada automaticamente a cada 1 minuto.
 🔄 Sistema monitora hunteds no mundo Kalibra.
-📋 Use !addhunted [nome] para adicionar
-🗑️ Use !delhunted [nome] para remover
 🌐 Fonte: https://api.tibiadata.com/`;
             } else {
                 descricao += `🔥 ${huntedsOnline.length} hunted(s) online:
@@ -3661,8 +3743,7 @@ Entre em contato com a liderança para isto!
                     
                     const iconeVocacao = this.obterIconeVocacao(vocation);
                     
-                    descricao += `${iconeVocacao} Lv.${level} [b][color=red]${nome}[/color][/b] (${vocation})
-`;
+                    descricao += `${iconeVocacao} Lv.${level} [b][color=red]${nome}[/color][/b]`;
                 });
                 
                 // Estatísticas adicionais com validação
@@ -3672,18 +3753,14 @@ Entre em contato com a liderança para isto!
                         Math.round(levelsValidos.reduce((sum, level) => sum + level, 0) / levelsValidos.length) : 0;
                     const levelMaisAlto = levelsValidos.length > 0 ? Math.max(...levelsValidos) : 0;
                     
-                    descricao += `\n📊 [b]ESTATÍSTICAS:[/b]
+                    descricao += `\n\n📊 [b]ESTATÍSTICAS:[/b]
 📈 Level médio: ${levelMedio}
 👑 Level mais alto: ${levelMaisAlto}
 ⏰ Última atualização: ${new Date().toLocaleTimeString('pt-BR')}
 🎯 Mundo: [b]Kalibra[/b]
 🤖 Sistema: AliBot 🧙‍♂️
-📡 API: TibiaData v4
+📡 API: TibiaData v4`;
 
-💡 [b]COMANDOS:[/b]
-📋 !addhunted [nome] - Adicionar à lista
-🗑️ !delhunted [nome] - Remover da lista
-📊 !hunteds - Atualizar lista manualmente`;
                 } catch (statsError) {
                     console.log('⚠️ Erro ao calcular estatísticas, adicionando informações básicas');
                     descricao += `\n⏰ Última atualização: ${new Date().toLocaleTimeString('pt-BR')}
@@ -3935,9 +4012,16 @@ Seja bem-vindo ao AliBot!
 • Configure sua descrição no TeamSpeak com o nome do personagem para usar comandos de claimeds!
 Bom Game! 🎯✨`;
 
-                // Abrir chat privado (targetmode 1 = chat privado)
-                await this.serverQuery.sendTextMessage(remetente.clid, 1, mensagemBoasVindas);
-                console.log(`🤖 Chat privado aberto com ${nomeJogador} (ID: ${remetente.clid})`);
+                // FIX: Obter clid atual para garantir que abrimos chat com o cliente correto
+                const clidAtual = await this.obterClidAtual(remetente);
+                if (clidAtual) {
+                    // Abrir chat privado (targetmode 1 = chat privado)
+                    await this.serverQuery.sendTextMessage(clidAtual, 1, mensagemBoasVindas);
+                    console.log(`🤖 Chat privado aberto com ${nomeJogador} (ID: ${clidAtual})`);
+                } else {
+                    console.log(`⚠️ Não foi possível obter clid para ${nomeJogador}`);
+                    return `❌ Erro ao abrir chat - tente novamente`;
+                }
                 
                 return '';
                 
@@ -5191,28 +5275,40 @@ ${infoLimpeza}
                 const killInfo = this.deathMonitor.parseDeathReason(morte.reason);
                 
                 // Definir cores por tipo
-                // Friend: verde negrito, nome azul céu, causa cinza claro
-                // Hunted: vermelho negrito, nome azul céu, causa cinza claro
-                const corTipo = tipoPersonagem === 'Friend' ? '#00FF00' : '#FF0000';  // Verde ou Vermelho
-                const corNome = '#00BFFF';  // Azul céu
-                const corCausa = '#D3D3D3'; // Cinza claro
+                // Friend: rosa, Hunted: vermelho, nome: azul, causa: cinza
+                const corTipo = tipoPersonagem === 'Friend' ? '#E60598' : '#FF0000';
+                const corNome = '#1d5cad';  // Azul (6 dígitos)
+                const corCausa = '#4d4c50'; // Cinza (6 dígitos)
                 
-                // Determinar a causa da morte
+                // Determinar a causa da morte (extrair apenas o killer, sem o texto "Died at level X by")
                 let causaMorte = '';
                 if (killInfo.mainKiller) {
                     causaMorte = killInfo.mainKiller;
-                    if (killInfo.isPlayerKill) {
-                        causaMorte += ' (PK)';
-                    }
+                    // Servidor non-pvp: não adicionar (PK) mesmo se for player kill
                     if (killInfo.assistants.length > 0) {
                         causaMorte += ` + ${killInfo.assistants.join(', ')}`;
                     }
                 } else {
-                    causaMorte = morte.reason;
+                    // Se não conseguiu fazer parse, extrair apenas o que vem depois de "by "
+                    const match = morte.reason.match(/by (.+)\.?$/i);
+                    causaMorte = match ? match[1] : morte.reason;
                 }
                 
-                // Mensagem em uma linha com cores
-                const mensagem = `💀 [b][color=${corTipo}]${tipoPersonagem}:[/color][/b] [color=${corNome}]${morte.character.name}[/color] morreu no level ${morte.character.level} para [color=${corCausa}]${causaMorte}[/color]\n😂 ${mensagemZueira} 😂`;
+                // Criar link para o perfil do personagem no Tibia.com
+                const nomePersonagem = morte.character.name;
+                const linkPersonagem = `https://www.tibia.com/community/?subtopic=characters&name=${encodeURIComponent(nomePersonagem)}`;
+                
+                // Obter horário da morte (HH:MM)
+                const dataMorte = new Date(morte.time);
+                const horaMorte = dataMorte.getHours().toString().padStart(2, '0');
+                const minutoMorte = dataMorte.getMinutes().toString().padStart(2, '0');
+                const horarioFormatado = `${horaMorte}:${minutoMorte}`;
+                
+                const mensagem =
+                `[b][color=${corTipo}]${tipoPersonagem}: ${horarioFormatado}[/color] ` +
+                `[url=${linkPersonagem}][color=${corNome}]${nomePersonagem}[/color][/url] ` +
+                `[color=${corTipo}]Died at level ${morte.character.level} by [/color]` +
+                `[color=${corCausa}]${causaMorte}[/color][/b] 😂 ${mensagemZueira} 😂`;
 
                 // Enviar poke para todos os usuários online
                 await this.enviarPokeParaTodos(mensagem);
@@ -5655,21 +5751,17 @@ ${infoLimpeza}
 
 `;
 
-                // Adicionar cada morte à lista
-                this.deathListEntries.forEach((morte, index) => {
-                    const numero = (index + 1).toString().padStart(2, '0');
-                    const emojiTipo = morte.tipo === 'Friend' ? '👥' : '🎯';
-                    const corTipo = morte.tipo === 'Friend' ? 'green' : 'red';
+                // Adicionar cada morte à lista no formato compacto
+                this.deathListEntries.forEach((morte) => {
+                    // Criar link para o personagem
+                    const linkPersonagem = `https://www.tibia.com/community/?subtopic=characters&name=${encodeURIComponent(morte.nome)}`;
                     
-                    descricao += `${numero}. [color=${corTipo}]${emojiTipo} ${morte.tipo}[/color]: [b]${morte.nome}[/b]
-     📊 Level ${morte.level} ${morte.vocacao}
-     🕐 ${morte.horario}
-     💥 ${morte.causa}
-
-`;
+                    // Formato: [HH:MM:SS] Nome (linkado) Died at level XXX by causa.
+                    descricao += `[${morte.horario}] [url=${linkPersonagem}]${morte.nome}[/url] Died at level ${morte.level} by ${morte.causa}.\n`;
                 });
 
-                descricao += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                descricao += `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📊 [b]ESTATÍSTICAS DO DIA:[/b]
 💀 Total de mortes: ${this.deathListEntries.length}
 👥 Friends: ${this.deathListEntries.filter(m => m.tipo === 'Friend').length}

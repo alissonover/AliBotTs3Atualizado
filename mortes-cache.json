@@ -11,8 +11,22 @@
   },
   "Shoxiez": {
     "character": "Shoxiez",
-    "lastChecked": "2026-01-06T01:00:15.692Z",
+    "lastChecked": "2026-01-11T17:29:20.796Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T17:28:06Z",
+        "level": 2163,
+        "killers": [
+          {
+            "name": "nighthunter",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 2163 by nighthunter."
+      },
       {
         "time": "2025-12-20T00:53:42Z",
         "level": 2155,
@@ -140,8 +154,22 @@
   },
   "Luiizin": {
     "character": "Luiizin",
-    "lastChecked": "2026-01-08T00:14:14.901Z",
+    "lastChecked": "2026-01-11T23:51:30.974Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T23:45:38Z",
+        "level": 1716,
+        "killers": [
+          {
+            "name": "oozing carcass",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1716 by oozing carcass."
+      },
       {
         "time": "2026-01-08T00:08:41Z",
         "level": 1714,
@@ -223,8 +251,22 @@
   },
   "Angelica Schuyler": {
     "character": "Angelica Schuyler",
-    "lastChecked": "2026-01-06T02:28:04.552Z",
+    "lastChecked": "2026-01-11T11:39:27.081Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-09T09:32:50Z",
+        "level": 1165,
+        "killers": [
+          {
+            "name": "crypt construct",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1165 by crypt construct."
+      },
       {
         "time": "2026-01-05T10:24:01Z",
         "level": 1164,
@@ -439,8 +481,36 @@
   },
   "Beattrizz": {
     "character": "Beattrizz",
-    "lastChecked": "2026-01-06T02:52:10.889Z",
+    "lastChecked": "2026-01-11T03:12:23.100Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T03:08:50Z",
+        "level": 887,
+        "killers": [
+          {
+            "name": "harpy",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 887 by harpy."
+      },
+      {
+        "time": "2026-01-08T19:37:32Z",
+        "level": 888,
+        "killers": [
+          {
+            "name": "hulking prehemoth",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 888 by hulking prehemoth."
+      },
       {
         "time": "2025-12-31T20:32:37Z",
         "level": 883,
@@ -482,40 +552,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 867 by mould phantom."
-      },
-      {
-        "time": "2025-12-11T01:14:32Z",
-        "level": 867,
-        "killers": [
-          {
-            "name": "Beattrizz",
-            "player": true,
-            "traded": false,
-            "summon": ""
-          },
-          {
-            "name": "Goshnar's Megalomania",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Killed at Level 867 by Beattrizz and Goshnar's Megalomania."
-      },
-      {
-        "time": "2025-12-09T17:15:56Z",
-        "level": 868,
-        "killers": [
-          {
-            "name": "The Gravedigger",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 868 by The Gravedigger."
       }
     ]
   },
@@ -653,8 +689,22 @@
   },
   "Damnification": {
     "character": "Damnification",
-    "lastChecked": "2026-01-09T00:14:49.129Z",
+    "lastChecked": "2026-01-10T23:51:25.064Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-10T02:21:29Z",
+        "level": 845,
+        "killers": [
+          {
+            "name": "creepy crawler",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 845 by creepy crawler."
+      },
       {
         "time": "2026-01-08T01:45:15Z",
         "level": 843,
@@ -740,8 +790,23 @@
   },
   "Durahhh": {
     "character": "Durahhh",
-    "lastChecked": "2026-01-06T02:50:29.290Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-11T02:18:41.277Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-10T01:28:19Z",
+        "level": 1067,
+        "killers": [
+          {
+            "name": "death",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1067 by death."
+      }
+    ]
   },
   "Dim Druid": {
     "character": "Dim Druid",
@@ -1043,8 +1108,22 @@
   },
   "Merciless Lena": {
     "character": "Merciless Lena",
-    "lastChecked": "2026-01-09T01:01:30.518Z",
+    "lastChecked": "2026-01-11T18:05:49.415Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-09T02:04:42Z",
+        "level": 825,
+        "killers": [
+          {
+            "name": "courage leech",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 825 by courage leech."
+      },
       {
         "time": "2026-01-09T00:56:42Z",
         "level": 826,
@@ -1082,8 +1161,22 @@
   },
   "Prezord": {
     "character": "Prezord",
-    "lastChecked": "2026-01-06T02:11:15.223Z",
+    "lastChecked": "2026-01-11T00:03:42.034Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-09T20:25:37Z",
+        "level": 833,
+        "killers": [
+          {
+            "name": "biting book",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 833 by biting book."
+      },
       {
         "time": "2026-01-04T15:56:52Z",
         "level": 831,
@@ -1117,18 +1210,62 @@
   },
   "Schwe Healer": {
     "character": "Schwe Healer",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-10T23:52:11.355Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-10T13:47:53Z",
+        "level": 1432,
+        "killers": [
+          {
+            "name": "raubritter marksman",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1432 by raubritter marksman."
+      }
+    ]
   },
   "Vic In Debit": {
     "character": "Vic In Debit",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-11T22:32:22.541Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-11T22:32:03Z",
+        "level": 1215,
+        "killers": [
+          {
+            "name": "bony sea devil",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1215 by bony sea devil."
+      }
+    ]
   },
   "Viollent Inseto": {
     "character": "Viollent Inseto",
-    "lastChecked": "2026-01-09T00:03:51.049Z",
+    "lastChecked": "2026-01-11T23:03:27.475Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T22:58:40Z",
+        "level": 1114,
+        "killers": [
+          {
+            "name": "turbulent elemental",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1114 by turbulent elemental."
+      },
       {
         "time": "2026-01-08T22:18:51Z",
         "level": 1115,
@@ -1190,20 +1327,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 1118 by bloated man-maggot."
-      },
-      {
-        "time": "2025-12-27T18:33:42Z",
-        "level": 1117,
-        "killers": [
-          {
-            "name": "rage squid",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 1117 by rage squid."
       }
     ]
   },
@@ -1255,8 +1378,23 @@
   },
   "Churras Kiing": {
     "character": "Churras Kiing",
-    "lastChecked": "2026-01-06T02:52:14.471Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-11T10:25:56.509Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-09T23:20:45Z",
+        "level": 1863,
+        "killers": [
+          {
+            "name": "Churras Kiing",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1863 by Churras Kiing."
+      }
+    ]
   },
   "Churras Princess": {
     "character": "Churras Princess",
@@ -1444,8 +1582,22 @@
   },
   "Jorgin": {
     "character": "Jorgin",
-    "lastChecked": "2026-01-06T02:52:24.452Z",
+    "lastChecked": "2026-01-10T23:51:45.093Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-10T13:40:09Z",
+        "level": 1027,
+        "killers": [
+          {
+            "name": "headpecker",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1027 by headpecker."
+      },
       {
         "time": "2026-01-05T17:38:28Z",
         "level": 1026,
@@ -1487,20 +1639,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 1016 by wardragon."
-      },
-      {
-        "time": "2025-12-09T19:01:49Z",
-        "level": 1013,
-        "killers": [
-          {
-            "name": "Jorgin",
-            "player": true,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Killed at Level 1013 by Jorgin."
       }
     ]
   },
@@ -1662,8 +1800,37 @@
   },
   "Uil": {
     "character": "Uil",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-11T20:58:42.693Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-10T22:52:01Z",
+        "level": 986,
+        "killers": [
+          {
+            "name": "whirling blades",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 986 by whirling blades."
+      },
+      {
+        "time": "2026-01-06T21:03:02Z",
+        "level": 986,
+        "killers": [
+          {
+            "name": "crazed summer rearguard",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 986 by crazed summer rearguard."
+      }
+    ]
   },
   "Junkz": {
     "character": "Junkz",
@@ -1687,8 +1854,23 @@
   },
   "Hezzorsz": {
     "character": "Hezzorsz",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-11T21:29:33.478Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-09T23:20:45Z",
+        "level": 1800,
+        "killers": [
+          {
+            "name": "Hezzorsz",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1800 by Hezzorsz."
+      }
+    ]
   },
   "Thraphik": {
     "character": "Thraphik",
@@ -1747,11 +1929,11 @@
   },
   "Aluxi": {
     "character": "Aluxi",
-    "lastChecked": "2026-01-06T00:38:04.781Z",
+    "lastChecked": "2026-01-10T23:50:35.429Z",
     "recentDeaths": [
       {
-        "time": "2025-12-09T00:34:52Z",
-        "level": 1782,
+        "time": "2026-01-09T23:20:28Z",
+        "level": 1810,
         "killers": [
           {
             "name": "Aluxi",
@@ -1761,7 +1943,7 @@
           }
         ],
         "assists": [],
-        "reason": "Killed at Level 1782 by Aluxi."
+        "reason": "Killed at Level 1810 by Aluxi."
       }
     ]
   },
@@ -1899,8 +2081,23 @@
   },
   "Grimfrost": {
     "character": "Grimfrost",
-    "lastChecked": "2026-01-06T00:42:33.047Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-11T23:27:42.944Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-06T18:21:03Z",
+        "level": 689,
+        "killers": [
+          {
+            "name": "sopping carcass",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 689 by sopping carcass."
+      }
+    ]
   },
   "Ethan Archer": {
     "character": "Ethan Archer",
@@ -2091,8 +2288,36 @@
   },
   "Patty Calistro": {
     "character": "Patty Calistro",
-    "lastChecked": "2026-01-08T00:37:10.454Z",
+    "lastChecked": "2026-01-11T15:06:34.983Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T15:05:14Z",
+        "level": 625,
+        "killers": [
+          {
+            "name": "thanatursus",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 625 by thanatursus."
+      },
+      {
+        "time": "2026-01-11T14:48:14Z",
+        "level": 625,
+        "killers": [
+          {
+            "name": "crazed summer rearguard",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 625 by crazed summer rearguard."
+      },
       {
         "time": "2026-01-08T00:24:27Z",
         "level": 626,
@@ -2134,34 +2359,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 626 by crazed summer vanguard."
-      },
-      {
-        "time": "2025-12-28T05:09:12Z",
-        "level": 623,
-        "killers": [
-          {
-            "name": "crazed summer vanguard",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 623 by crazed summer vanguard."
-      },
-      {
-        "time": "2025-12-27T07:16:32Z",
-        "level": 621,
-        "killers": [
-          {
-            "name": "arachnophobica",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 621 by arachnophobica."
       }
     ]
   },
@@ -2265,21 +2462,35 @@
   },
   "Snon Litil": {
     "character": "Snon Litil",
-    "lastChecked": "2026-01-06T00:38:21.894Z",
+    "lastChecked": "2026-01-11T11:42:25.410Z",
     "recentDeaths": [
       {
-        "time": "2025-12-10T00:24:27Z",
-        "level": 907,
+        "time": "2026-01-10T22:06:19Z",
+        "level": 913,
         "killers": [
           {
-            "name": "poisoned raubritter",
+            "name": "cobra scout",
             "player": false,
             "traded": false,
             "summon": ""
           }
         ],
         "assists": [],
-        "reason": "Died at Level 907 by poisoned raubritter."
+        "reason": "Died at Level 913 by cobra scout."
+      },
+      {
+        "time": "2026-01-10T01:28:37Z",
+        "level": 914,
+        "killers": [
+          {
+            "name": "frozen raubritter",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 914 by frozen raubritter."
       }
     ]
   },
@@ -2344,8 +2555,22 @@
   },
   "Wizzy Zeryk": {
     "character": "Wizzy Zeryk",
-    "lastChecked": "2026-01-06T02:52:41.059Z",
+    "lastChecked": "2026-01-11T22:09:49.854Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-09T23:13:47Z",
+        "level": 817,
+        "killers": [
+          {
+            "name": "eyeless devourer",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 817 by eyeless devourer."
+      },
       {
         "time": "2026-01-03T20:22:02Z",
         "level": 814,
@@ -2597,8 +2822,22 @@
   },
   "Kuui": {
     "character": "Kuui",
-    "lastChecked": "2026-01-07T19:10:33.266Z",
+    "lastChecked": "2026-01-11T05:02:26.704Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-08T23:20:29Z",
+        "level": 1039,
+        "killers": [
+          {
+            "name": "brain squid",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1039 by brain squid."
+      },
       {
         "time": "2026-01-07T19:05:23Z",
         "level": 1039,
@@ -2767,8 +3006,22 @@
   },
   "Tio dos Cores": {
     "character": "Tio dos Cores",
-    "lastChecked": "2026-01-06T21:45:50.332Z",
+    "lastChecked": "2026-01-11T17:24:40.513Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T17:21:13Z",
+        "level": 1119,
+        "killers": [
+          {
+            "name": "Tio dos Cores",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1119 by Tio dos Cores."
+      },
       {
         "time": "2026-01-06T21:37:56Z",
         "level": 1119,
@@ -2807,8 +3060,37 @@
   },
   "Lazon": {
     "character": "Lazon",
-    "lastChecked": "2026-01-06T01:17:38.999Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-11T05:00:26.135Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-07T01:16:44Z",
+        "level": 1023,
+        "killers": [
+          {
+            "name": "rage squid",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1023 by rage squid."
+      },
+      {
+        "time": "2026-01-06T13:01:05Z",
+        "level": 1024,
+        "killers": [
+          {
+            "name": "energuardian of tales",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1024 by energuardian of tales."
+      }
+    ]
   },
   "Theresa Fisher": {
     "character": "Theresa Fisher",
@@ -2888,8 +3170,43 @@
   },
   "Lord of the Shie": {
     "character": "Lord of the Shie",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-11T09:11:11.545Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-09T13:27:18Z",
+        "level": 1286,
+        "killers": [
+          {
+            "name": "Lord of the Shie",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          },
+          {
+            "name": "Chagorz",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1286 by Lord of the Shie and Chagorz."
+      },
+      {
+        "time": "2026-01-06T16:10:49Z",
+        "level": 1286,
+        "killers": [
+          {
+            "name": "mould phantom",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1286 by mould phantom."
+      }
+    ]
   },
   "Assady": {
     "character": "Assady",
@@ -2903,11 +3220,11 @@
   },
   "Ryan Avatar": {
     "character": "Ryan Avatar",
-    "lastChecked": "2026-01-06T02:19:15.675Z",
+    "lastChecked": "2026-01-11T14:50:50.470Z",
     "recentDeaths": [
       {
-        "time": "2025-12-07T03:08:39Z",
-        "level": 700,
+        "time": "2026-01-11T14:47:28Z",
+        "level": 761,
         "killers": [
           {
             "name": "choking fear",
@@ -2917,7 +3234,7 @@
           }
         ],
         "assists": [],
-        "reason": "Died at Level 700 by choking fear."
+        "reason": "Died at Level 761 by choking fear."
       }
     ]
   },
@@ -3057,8 +3374,22 @@
   },
   "Teagace Vi": {
     "character": "Teagace Vi",
-    "lastChecked": "2026-01-06T05:49:14.660Z",
+    "lastChecked": "2026-01-11T00:39:44.460Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-09T23:41:04Z",
+        "level": 628,
+        "killers": [
+          {
+            "name": "poisoned raubritter",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 628 by poisoned raubritter."
+      },
       {
         "time": "2026-01-06T05:48:45Z",
         "level": 627,
@@ -3183,8 +3514,36 @@
   },
   "Jackiexan Capoeirista": {
     "character": "Jackiexan Capoeirista",
-    "lastChecked": "2026-01-06T00:59:00.714Z",
+    "lastChecked": "2026-01-11T01:36:03.359Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-09T14:45:32Z",
+        "level": 1120,
+        "killers": [
+          {
+            "name": "gorerilla",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1120 by gorerilla."
+      },
+      {
+        "time": "2026-01-06T14:07:02Z",
+        "level": 1119,
+        "killers": [
+          {
+            "name": "emerald tortoise",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1119 by emerald tortoise."
+      },
       {
         "time": "2026-01-04T22:48:41Z",
         "level": 1120,
@@ -3226,34 +3585,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 1118 by gorerilla."
-      },
-      {
-        "time": "2025-12-17T15:00:11Z",
-        "level": 1115,
-        "killers": [
-          {
-            "name": "emerald tortoise",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 1115 by emerald tortoise."
-      },
-      {
-        "time": "2025-12-16T13:17:11Z",
-        "level": 1116,
-        "killers": [
-          {
-            "name": "gorerilla",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 1116 by gorerilla."
       }
     ]
   },
@@ -3284,8 +3615,23 @@
   },
   "Lucaohh": {
     "character": "Lucaohh",
-    "lastChecked": "2026-01-06T00:33:35.706Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-12T00:15:17.151Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-12T00:12:45Z",
+        "level": 1354,
+        "killers": [
+          {
+            "name": "grimeleech",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1354 by grimeleech."
+      }
+    ]
   },
   "Mestre Nolol": {
     "character": "Mestre Nolol",
@@ -3701,8 +4047,51 @@
   },
   "Fa diinha": {
     "character": "Fa diinha",
-    "lastChecked": "2026-01-06T02:52:37.057Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-11T20:03:13.212Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-10T01:37:47Z",
+        "level": 1618,
+        "killers": [
+          {
+            "name": "nighthunter",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1618 by nighthunter."
+      },
+      {
+        "time": "2026-01-09T02:22:03Z",
+        "level": 1620,
+        "killers": [
+          {
+            "name": "sulphider",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1620 by sulphider."
+      },
+      {
+        "time": "2026-01-08T21:20:51Z",
+        "level": 1622,
+        "killers": [
+          {
+            "name": "sopping carcass",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1622 by sopping carcass."
+      }
+    ]
   },
   "Halzor Megalomaniaco": {
     "character": "Halzor Megalomaniaco",
@@ -3760,8 +4149,22 @@
   },
   "Pari Suave": {
     "character": "Pari Suave",
-    "lastChecked": "2026-01-06T02:52:40.072Z",
+    "lastChecked": "2026-01-11T19:26:14.068Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T19:23:36Z",
+        "level": 1407,
+        "killers": [
+          {
+            "name": "rootthing nutshell",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1407 by rootthing nutshell."
+      },
       {
         "time": "2026-01-05T23:54:51Z",
         "level": 1403,
@@ -3824,8 +4227,22 @@
   },
   "Banshed": {
     "character": "Banshed",
-    "lastChecked": "2026-01-06T02:07:39.320Z",
+    "lastChecked": "2026-01-11T16:01:38.377Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T15:57:11Z",
+        "level": 467,
+        "killers": [
+          {
+            "name": "mean lost soul",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 467 by mean lost soul."
+      },
       {
         "time": "2025-12-17T12:26:14Z",
         "level": 405,
@@ -4021,8 +4438,22 @@
   },
   "Dom Inabalavel": {
     "character": "Dom Inabalavel",
-    "lastChecked": "2026-01-06T02:52:17.987Z",
+    "lastChecked": "2026-01-10T23:51:26.851Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-10T19:35:23Z",
+        "level": 792,
+        "killers": [
+          {
+            "name": "squid warden",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 792 by squid warden."
+      },
       {
         "time": "2026-01-03T01:02:12Z",
         "level": 787,
@@ -4078,20 +4509,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 789 by gorger inferniarch."
-      },
-      {
-        "time": "2025-12-13T22:06:16Z",
-        "level": 769,
-        "killers": [
-          {
-            "name": "rage squid",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 769 by rage squid."
       }
     ]
   },
@@ -4189,8 +4606,28 @@
   },
   "Fogareu Branco": {
     "character": "Fogareu Branco",
-    "lastChecked": "2026-01-06T02:52:21.434Z",
+    "lastChecked": "2026-01-11T21:14:32.800Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T20:13:45Z",
+        "level": 719,
+        "killers": [
+          {
+            "name": "Fogareu Branco",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          },
+          {
+            "name": "iks yapunac",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 719 by Fogareu Branco and iks yapunac."
+      },
       {
         "time": "2026-01-05T02:00:18Z",
         "level": 715,
@@ -4324,8 +4761,22 @@
   },
   "Trefor Das Sombras": {
     "character": "Trefor Das Sombras",
-    "lastChecked": "2026-01-07T00:30:10.836Z",
+    "lastChecked": "2026-01-10T23:50:55.181Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-10T15:55:16Z",
+        "level": 1210,
+        "killers": [
+          {
+            "name": "Trefor Das Sombras",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1210 by Trefor Das Sombras."
+      },
       {
         "time": "2026-01-07T00:23:48Z",
         "level": 1207,
@@ -4381,20 +4832,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 1206 by liodile."
-      },
-      {
-        "time": "2025-12-15T23:15:25Z",
-        "level": 1192,
-        "killers": [
-          {
-            "name": "rhindeer",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 1192 by rhindeer."
       }
     ]
   },
@@ -4749,8 +5186,23 @@
   },
   "Xina Healer": {
     "character": "Xina Healer",
-    "lastChecked": "2026-01-06T01:35:20.419Z",
-    "recentDeaths": []
+    "lastChecked": "2026-01-11T15:21:53.281Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-08T22:28:46Z",
+        "level": 983,
+        "killers": [
+          {
+            "name": "Gaz'haragoth",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 983 by Gaz'haragoth."
+      }
+    ]
   },
   "Legolas Gold": {
     "character": "Legolas Gold",
@@ -4808,8 +5260,36 @@
   },
   "Lucas Malinu": {
     "character": "Lucas Malinu",
-    "lastChecked": "2026-01-06T02:46:40.373Z",
+    "lastChecked": "2026-01-11T03:30:43.834Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-10T13:02:46Z",
+        "level": 903,
+        "killers": [
+          {
+            "name": "eyeless devourer",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 903 by eyeless devourer."
+      },
+      {
+        "time": "2026-01-10T04:05:46Z",
+        "level": 904,
+        "killers": [
+          {
+            "name": "lava creature",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 904 by lava creature."
+      },
       {
         "time": "2025-12-15T10:24:28Z",
         "level": 889,
@@ -4857,34 +5337,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 891 by squid warden."
-      },
-      {
-        "time": "2025-12-08T19:06:20Z",
-        "level": 889,
-        "killers": [
-          {
-            "name": "falcon knight",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 889 by falcon knight."
-      },
-      {
-        "time": "2025-12-07T13:20:07Z",
-        "level": 890,
-        "killers": [
-          {
-            "name": "mean lost soul",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 890 by mean lost soul."
       }
     ]
   },
@@ -4895,8 +5347,22 @@
   },
   "Lynker Healer": {
     "character": "Lynker Healer",
-    "lastChecked": "2026-01-06T02:32:58.013Z",
+    "lastChecked": "2026-01-11T19:15:45.343Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T19:14:16Z",
+        "level": 561,
+        "killers": [
+          {
+            "name": "adult goanna",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 561 by adult goanna."
+      },
       {
         "time": "2026-01-06T02:20:01Z",
         "level": 550,
@@ -4938,20 +5404,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 508 by adult goanna."
-      },
-      {
-        "time": "2025-12-07T20:53:58Z",
-        "level": 478,
-        "killers": [
-          {
-            "name": "Morshabaal",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 478 by Morshabaal."
       }
     ]
   },
@@ -5005,8 +5457,50 @@
   },
   "Piscuilaa": {
     "character": "Piscuilaa",
-    "lastChecked": "2026-01-06T00:38:04.779Z",
+    "lastChecked": "2026-01-11T03:32:53.896Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-10T12:54:58Z",
+        "level": 802,
+        "killers": [
+          {
+            "name": "reality reaver",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 802 by reality reaver."
+      },
+      {
+        "time": "2026-01-08T22:27:41Z",
+        "level": 803,
+        "killers": [
+          {
+            "name": "dread intruder",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 803 by dread intruder."
+      },
+      {
+        "time": "2026-01-08T21:46:40Z",
+        "level": 804,
+        "killers": [
+          {
+            "name": "sparkion",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 804 by sparkion."
+      },
       {
         "time": "2026-01-04T12:28:35Z",
         "level": 804,
@@ -5020,20 +5514,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 804 by dread intruder."
-      },
-      {
-        "time": "2025-12-09T03:37:48Z",
-        "level": 793,
-        "killers": [
-          {
-            "name": "sight of surrender",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 793 by sight of surrender."
       }
     ]
   },
@@ -5228,8 +5708,36 @@
   },
   "Summerwave": {
     "character": "Summerwave",
-    "lastChecked": "2026-01-06T02:52:37.959Z",
+    "lastChecked": "2026-01-12T00:01:36.859Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T23:56:26Z",
+        "level": 798,
+        "killers": [
+          {
+            "name": "courage leech",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 798 by courage leech."
+      },
+      {
+        "time": "2026-01-10T15:26:31Z",
+        "level": 797,
+        "killers": [
+          {
+            "name": "crypt warrior",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 797 by crypt warrior."
+      },
       {
         "time": "2025-12-29T23:26:07Z",
         "level": 781,
@@ -5257,48 +5765,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 775 by energetic book."
-      },
-      {
-        "time": "2025-12-10T02:32:46Z",
-        "level": 741,
-        "killers": [
-          {
-            "name": "brain squid",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 741 by brain squid."
-      },
-      {
-        "time": "2025-12-10T00:31:44Z",
-        "level": 742,
-        "killers": [
-          {
-            "name": "brain squid",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 742 by brain squid."
-      },
-      {
-        "time": "2025-12-07T22:07:21Z",
-        "level": 740,
-        "killers": [
-          {
-            "name": "The Gravedigger",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 740 by The Gravedigger."
       }
     ]
   },
@@ -5452,8 +5918,64 @@
   },
   "Tbombeiw": {
     "character": "Tbombeiw",
-    "lastChecked": "2026-01-09T00:22:41.486Z",
+    "lastChecked": "2026-01-12T01:34:16.915Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-12T01:32:12Z",
+        "level": 8,
+        "killers": [
+          {
+            "name": "cave rat",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 8 by cave rat."
+      },
+      {
+        "time": "2026-01-12T01:26:52Z",
+        "level": 8,
+        "killers": [
+          {
+            "name": "rat",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 8 by rat."
+      },
+      {
+        "time": "2026-01-12T01:14:32Z",
+        "level": 8,
+        "killers": [
+          {
+            "name": "cave rat",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 8 by cave rat."
+      },
+      {
+        "time": "2026-01-11T01:50:59Z",
+        "level": 8,
+        "killers": [
+          {
+            "name": "cave rat",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 8 by cave rat."
+      },
       {
         "time": "2026-01-09T00:20:32Z",
         "level": 9,
@@ -5467,62 +5989,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 9 by rat."
-      },
-      {
-        "time": "2026-01-09T00:05:34Z",
-        "level": 9,
-        "killers": [
-          {
-            "name": "rat",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 9 by rat."
-      },
-      {
-        "time": "2026-01-06T02:15:04Z",
-        "level": 9,
-        "killers": [
-          {
-            "name": "rat",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 9 by rat."
-      },
-      {
-        "time": "2026-01-06T02:08:23Z",
-        "level": 9,
-        "killers": [
-          {
-            "name": "rat",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 9 by rat."
-      },
-      {
-        "time": "2026-01-06T00:43:55Z",
-        "level": 10,
-        "killers": [
-          {
-            "name": "rat",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 10 by rat."
       }
     ]
   },
@@ -5727,8 +6193,64 @@
   },
   "Don Vito Camelone": {
     "character": "Don Vito Camelone",
-    "lastChecked": "2026-01-06T02:18:37.458Z",
+    "lastChecked": "2026-01-11T01:06:53.645Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T01:03:14Z",
+        "level": 233,
+        "killers": [
+          {
+            "name": "undead dragon",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 233 by undead dragon."
+      },
+      {
+        "time": "2026-01-11T00:21:48Z",
+        "level": 234,
+        "killers": [
+          {
+            "name": "wardragon",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 234 by wardragon."
+      },
+      {
+        "time": "2026-01-10T04:15:10Z",
+        "level": 230,
+        "killers": [
+          {
+            "name": "grim reaper",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 230 by grim reaper."
+      },
+      {
+        "time": "2026-01-08T17:21:16Z",
+        "level": 227,
+        "killers": [
+          {
+            "name": "choking fear",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 227 by choking fear."
+      },
       {
         "time": "2026-01-04T20:14:06Z",
         "level": 209,
@@ -5742,62 +6264,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 209 by thanatursus."
-      },
-      {
-        "time": "2025-12-19T03:22:50Z",
-        "level": 141,
-        "killers": [
-          {
-            "name": "ravenous lava lurker",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 141 by ravenous lava lurker."
-      },
-      {
-        "time": "2025-12-13T04:39:12Z",
-        "level": 136,
-        "killers": [
-          {
-            "name": "ravenous lava lurker",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 136 by ravenous lava lurker."
-      },
-      {
-        "time": "2025-12-08T22:02:08Z",
-        "level": 131,
-        "killers": [
-          {
-            "name": "fire",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 131 by fire."
-      },
-      {
-        "time": "2025-12-07T18:29:27Z",
-        "level": 129,
-        "killers": [
-          {
-            "name": "quara predator scout",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 129 by quara predator scout."
       }
     ]
   },
@@ -5876,8 +6342,22 @@
   },
   "Soolad": {
     "character": "Soolad",
-    "lastChecked": "2026-01-09T00:04:37.885Z",
+    "lastChecked": "2026-01-10T23:51:08.470Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-10T02:15:09Z",
+        "level": 658,
+        "killers": [
+          {
+            "name": "lavafungus",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 658 by lavafungus."
+      },
       {
         "time": "2026-01-06T18:28:59Z",
         "level": 658,
@@ -6167,8 +6647,22 @@
   },
   "Seriel Tyrus": {
     "character": "Seriel Tyrus",
-    "lastChecked": "2026-01-07T02:26:17.079Z",
+    "lastChecked": "2026-01-11T02:02:18.146Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T02:01:05Z",
+        "level": 649,
+        "killers": [
+          {
+            "name": "dragolisk",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 649 by dragolisk."
+      },
       {
         "time": "2026-01-07T02:20:48Z",
         "level": 648,
@@ -6315,8 +6809,22 @@
   },
   "Wufabo": {
     "character": "Wufabo",
-    "lastChecked": "2026-01-09T00:03:36.310Z",
+    "lastChecked": "2026-01-11T21:32:02.934Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-10T13:49:32Z",
+        "level": 714,
+        "killers": [
+          {
+            "name": "brain squid",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 714 by brain squid."
+      },
       {
         "time": "2025-12-24T11:05:38Z",
         "level": 692,
@@ -6372,20 +6880,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 678 by a trap."
-      },
-      {
-        "time": "2025-12-14T15:08:33Z",
-        "level": 678,
-        "killers": [
-          {
-            "name": "dworc shadowstalker",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 678 by dworc shadowstalker."
       }
     ]
   },
@@ -6515,8 +7009,22 @@
   },
   "Bunny Soul": {
     "character": "Bunny Soul",
-    "lastChecked": "2026-01-09T00:03:50.849Z",
+    "lastChecked": "2026-01-11T19:51:33.769Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-11T19:50:31Z",
+        "level": 971,
+        "killers": [
+          {
+            "name": "burning book",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 971 by burning book."
+      },
       {
         "time": "2026-01-06T12:14:14Z",
         "level": 968,
@@ -6563,8 +7071,22 @@
   },
   "Insane Heals": {
     "character": "Insane Heals",
-    "lastChecked": "2026-01-09T01:32:51.573Z",
+    "lastChecked": "2026-01-11T01:04:35.665Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-09T14:26:59Z",
+        "level": 1174,
+        "killers": [
+          {
+            "name": "bone jaw",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1174 by bone jaw."
+      },
       {
         "time": "2026-01-04T01:19:05Z",
         "level": 1174,
@@ -6620,6 +7142,636 @@
         ],
         "assists": [],
         "reason": "Died at Level 1171 by rhindeer."
+      }
+    ]
+  },
+  "Krunnit": {
+    "character": "Krunnit",
+    "lastChecked": "2026-01-10T23:51:48.894Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-04T19:59:30Z",
+        "level": 596,
+        "killers": [
+          {
+            "name": "true midnight asura",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 596 by true midnight asura."
+      },
+      {
+        "time": "2025-12-12T18:25:24Z",
+        "level": 573,
+        "killers": [
+          {
+            "name": "gazer spectre",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 573 by gazer spectre."
+      }
+    ]
+  },
+  "Kadetao Conversivel": {
+    "character": "Kadetao Conversivel",
+    "lastChecked": "2026-01-10T23:51:52.576Z",
+    "recentDeaths": [
+      {
+        "time": "2025-12-24T21:17:47Z",
+        "level": 671,
+        "killers": [
+          {
+            "name": "dworc shadowstalker",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 671 by dworc shadowstalker."
+      }
+    ]
+  },
+  "Danielz": {
+    "character": "Danielz",
+    "lastChecked": "2026-01-11T00:24:47.232Z",
+    "recentDeaths": [
+      {
+        "time": "2025-12-18T11:24:34Z",
+        "level": 658,
+        "killers": [
+          {
+            "name": "sopping corpus",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 658 by sopping corpus."
+      }
+    ]
+  },
+  "Spirit-Break": {
+    "character": "Spirit-Break",
+    "lastChecked": "2026-01-11T04:22:35.527Z",
+    "recentDeaths": [
+      {
+        "time": "2025-12-15T02:35:59Z",
+        "level": 505,
+        "killers": [
+          {
+            "name": "crazed summer vanguard",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 505 by crazed summer vanguard."
+      }
+    ]
+  },
+  "No Primalrotten": {
+    "character": "No Primalrotten",
+    "lastChecked": "2026-01-11T05:27:27.804Z",
+    "recentDeaths": [
+      {
+        "time": "2025-12-15T15:05:03Z",
+        "level": 1150,
+        "killers": [
+          {
+            "name": "bashmu",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1150 by bashmu."
+      }
+    ]
+  },
+  "Kuikaum Son": {
+    "character": "Kuikaum Son",
+    "lastChecked": "2026-01-11T06:51:08.022Z",
+    "recentDeaths": [
+      {
+        "time": "2025-12-29T20:41:36Z",
+        "level": 790,
+        "killers": [
+          {
+            "name": "arachnophobica",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 790 by arachnophobica."
+      },
+      {
+        "time": "2025-12-25T01:22:56Z",
+        "level": 790,
+        "killers": [
+          {
+            "name": "thanatursus",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 790 by thanatursus."
+      }
+    ]
+  },
+  "Djokovic": {
+    "character": "Djokovic",
+    "lastChecked": "2026-01-11T11:01:49.279Z",
+    "recentDeaths": [
+      {
+        "time": "2025-12-21T10:49:51Z",
+        "level": 890,
+        "killers": [
+          {
+            "name": "squid warden",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 890 by squid warden."
+      }
+    ]
+  },
+  "Lee Crowlley": {
+    "character": "Lee Crowlley",
+    "lastChecked": "2026-01-11T11:19:07.932Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-03T15:40:01Z",
+        "level": 1421,
+        "killers": [
+          {
+            "name": "Lee Crowlley",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          },
+          {
+            "name": "Bakragore",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1421 by Lee Crowlley and Bakragore."
+      }
+    ]
+  },
+  "Vaurian": {
+    "character": "Vaurian",
+    "lastChecked": "2026-01-11T12:10:18.688Z",
+    "recentDeaths": [
+      {
+        "time": "2025-12-30T04:10:39Z",
+        "level": 701,
+        "killers": [
+          {
+            "name": "falcon knight",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 701 by falcon knight."
+      }
+    ]
+  },
+  "Mei re les": {
+    "character": "Mei re les",
+    "lastChecked": "2026-01-11T12:50:37.552Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-11T12:45:51Z",
+        "level": 968,
+        "killers": [
+          {
+            "name": "bashmu",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 968 by bashmu."
+      }
+    ]
+  },
+  "Nexoseero": {
+    "character": "Nexoseero",
+    "lastChecked": "2026-01-11T13:30:50.817Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-08T22:55:05Z",
+        "level": 911,
+        "killers": [
+          {
+            "name": "crape man",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 911 by crape man."
+      },
+      {
+        "time": "2025-12-23T22:18:21Z",
+        "level": 909,
+        "killers": [
+          {
+            "name": "crape man",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 909 by crape man."
+      }
+    ]
+  },
+  "Leffe Stoppmur": {
+    "character": "Leffe Stoppmur",
+    "lastChecked": "2026-01-11T14:00:30.038Z",
+    "recentDeaths": [
+      {
+        "time": "2025-12-26T20:48:22Z",
+        "level": 769,
+        "killers": [
+          {
+            "name": "naga archer",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 769 by naga archer."
+      },
+      {
+        "time": "2025-12-22T12:23:17Z",
+        "level": 765,
+        "killers": [
+          {
+            "name": "naga archer",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 765 by naga archer."
+      }
+    ]
+  },
+  "Vann Insane": {
+    "character": "Vann Insane",
+    "lastChecked": "2026-01-11T14:23:58.986Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-05T15:06:25Z",
+        "level": 564,
+        "killers": [
+          {
+            "name": "crypt warrior",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 564 by crypt warrior."
+      }
+    ]
+  },
+  "Kruniit": {
+    "character": "Kruniit",
+    "lastChecked": "2026-01-11T15:08:01.440Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-05T20:09:39Z",
+        "level": 627,
+        "killers": [
+          {
+            "name": "mitmah scout",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 627 by mitmah scout."
+      },
+      {
+        "time": "2026-01-03T10:17:14Z",
+        "level": 626,
+        "killers": [
+          {
+            "name": "flimsy lost soul",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 626 by flimsy lost soul."
+      },
+      {
+        "time": "2025-12-29T17:49:33Z",
+        "level": 626,
+        "killers": [
+          {
+            "name": "mitmah seer",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 626 by mitmah seer."
+      },
+      {
+        "time": "2025-12-17T20:26:10Z",
+        "level": 615,
+        "killers": [
+          {
+            "name": "flimsy lost soul",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 615 by flimsy lost soul."
+      }
+    ]
+  },
+  "Amnet": {
+    "character": "Amnet",
+    "lastChecked": "2026-01-11T16:17:40.966Z",
+    "recentDeaths": [
+      {
+        "time": "2025-12-25T04:15:10Z",
+        "level": 707,
+        "killers": [
+          {
+            "name": "bulltaur forgepriest",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 707 by bulltaur forgepriest."
+      },
+      {
+        "time": "2025-12-25T02:21:34Z",
+        "level": 707,
+        "killers": [
+          {
+            "name": "norcferatu heartless",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 707 by norcferatu heartless."
+      },
+      {
+        "time": "2025-12-14T10:00:21Z",
+        "level": 696,
+        "killers": [
+          {
+            "name": "squid warden",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 696 by squid warden."
+      }
+    ]
+  },
+  "Spellbox": {
+    "character": "Spellbox",
+    "lastChecked": "2026-01-11T19:26:25.266Z",
+    "recentDeaths": [
+      {
+        "time": "2025-12-22T19:58:11Z",
+        "level": 1240,
+        "killers": [
+          {
+            "name": "rotten man-maggot",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1240 by rotten man-maggot."
+      }
+    ]
+  },
+  "Kalthuz": {
+    "character": "Kalthuz",
+    "lastChecked": "2026-01-11T20:36:54.033Z",
+    "recentDeaths": [
+      {
+        "time": "2025-12-24T12:18:05Z",
+        "level": 442,
+        "killers": [
+          {
+            "name": "ripper spectre",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 442 by ripper spectre."
+      },
+      {
+        "time": "2025-12-13T12:04:36Z",
+        "level": 436,
+        "killers": [
+          {
+            "name": "ripper spectre",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 436 by ripper spectre."
+      }
+    ]
+  },
+  "Jugusz": {
+    "character": "Jugusz",
+    "lastChecked": "2026-01-11T21:29:45.035Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-03T02:30:09Z",
+        "level": 1333,
+        "killers": [
+          {
+            "name": "Jugusz",
+            "player": true,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Killed at Level 1333 by Jugusz."
+      },
+      {
+        "time": "2025-12-28T18:48:46Z",
+        "level": 1331,
+        "killers": [
+          {
+            "name": "death",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1331 by death."
+      },
+      {
+        "time": "2025-12-18T02:34:49Z",
+        "level": 1322,
+        "killers": [
+          {
+            "name": "darklight matter",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1322 by darklight matter."
+      },
+      {
+        "time": "2025-12-13T17:41:32Z",
+        "level": 1320,
+        "killers": [
+          {
+            "name": "cloak of terror",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1320 by cloak of terror."
+      },
+      {
+        "time": "2025-12-12T22:00:23Z",
+        "level": 1322,
+        "killers": [
+          {
+            "name": "many faces",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1322 by many faces."
+      }
+    ]
+  },
+  "Dani Thegreatest": {
+    "character": "Dani Thegreatest",
+    "lastChecked": "2026-01-11T22:59:56.153Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-09T20:47:32Z",
+        "level": 1222,
+        "killers": [
+          {
+            "name": "gloom maw",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1222 by gloom maw."
+      },
+      {
+        "time": "2025-12-28T15:58:07Z",
+        "level": 1220,
+        "killers": [
+          {
+            "name": "varg",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1220 by varg."
+      },
+      {
+        "time": "2025-12-26T20:09:10Z",
+        "level": 1222,
+        "killers": [
+          {
+            "name": "ink blob",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1222 by ink blob."
+      }
+    ]
+  },
+  "Lethalzerahh": {
+    "character": "Lethalzerahh",
+    "lastChecked": "2026-01-12T00:12:15.466Z",
+    "recentDeaths": [
+      {
+        "time": "2026-01-12T00:08:27Z",
+        "level": 752,
+        "killers": [
+          {
+            "name": "bulltaur forgepriest",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 752 by bulltaur forgepriest."
       }
     ]
   }
