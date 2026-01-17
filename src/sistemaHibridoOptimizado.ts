@@ -82,6 +82,7 @@ class SistemaHibridoOptimizado {
     private gerenciadorConexao: GerenciadorConexaoHibrida;
     private sistemaAtivo: boolean = false;
     private serverQuery: any = null;
+    private meuClientId: string | null = null; // ID do próprio bot para filtrar das listas
     private timersRespawn: TimersAtivos = {};
     private filasClaimeds: FilasAtivas = {};
     private nextTimers: NextTimersAtivos = {};
@@ -210,6 +211,15 @@ class SistemaHibridoOptimizado {
             }
 
             console.log('✅ ServerQuery conectado com sucesso!');
+
+            // Obter o ID do próprio bot para filtrar das listas
+            try {
+                const whoami = await this.serverQuery.whoami();
+                this.meuClientId = whoami.clientId?.toString() || null;
+                console.log(`🤖 Meu Client ID: ${this.meuClientId}`);
+            } catch (error: any) {
+                console.log('⚠️ Erro ao obter ID do bot:', error.message);
+            }
 
             // Configurar monitoramento inteligente
             console.log('🧠 Configurando monitoramento inteligente...');
@@ -619,7 +629,11 @@ class SistemaHibridoOptimizado {
                 case '!users':
                     try {
                         const clients = await this.serverQuery.clientList();
-                        const realClients = clients.filter((c: any) => c.type === 0);
+                        const realClients = clients.filter((c: any) => {
+                            const ehClienteReal = c.type === 0;
+                            const naoSouEu = this.meuClientId ? c.clid?.toString() !== this.meuClientId : true;
+                            return ehClienteReal && naoSouEu;
+                        });
                         const userList = realClients.slice(0, 5).map((c: any) => `👤 ${c.nickname}`).join('\n');
                         resposta = `👥 Usuários Online (${realClients.length}):
 ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5) + ' usuários' : ''}`;
@@ -922,7 +936,11 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
     private async verificarClientesConectados(): Promise<void> {
         try {
             const clients = await this.serverQuery.clientList();
-            const realClients = clients.filter((c: any) => c.type === 0); // Apenas clientes reais
+            const realClients = clients.filter((c: any) => {
+                const ehClienteReal = c.type === 0;
+                const naoSouEu = this.meuClientId ? c.clid?.toString() !== this.meuClientId : true;
+                return ehClienteReal && naoSouEu;
+            }); // Apenas clientes reais, excluindo o bot
         } catch (error: any) {
             // Erro silenciado
         }
@@ -1063,7 +1081,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         }
 
         try {
-            const friendsChannelId = "109"; // ID do canal Friendlist
+            const friendsChannelId = "8"; // ID do canal Friendlist
             
             // Buscar membros online da guild
             const membrosOnline = await this.buscarMembrosOnlineTibia();
@@ -1177,7 +1195,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         try {
             const inicioAtualizacao = Date.now();
             
-            const claimedChannelId = "112"; // ID do canal Claimeds
+            const claimedChannelId = "7"; // ID do canal Claimeds
             
             // Construir descrição base do canal
             let descricao = `[img]https://i.imgur.com/6yPB3ol.png[/img]
@@ -1226,8 +1244,8 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
 
 `;
                 
-                // Ordenar timers por tempo restante (menor primeiro)
-                todosTimers.sort((a, b) => a.tempoRestante - b.tempoRestante);
+                // Ordenar timers por ordem alfabética do código (a1, a2, a3, etc)
+                todosTimers.sort((a, b) => a.codigo.localeCompare(b.codigo));
                 
                 // STEP 2: Processar timers usando cache (ultra rápido)
                 for (const timer of todosTimers) {
@@ -1344,7 +1362,7 @@ ${filasAtivas}`;
         }
 
         try {
-            const respawnsChannelId = "111"; // ID do canal Respawns List - ESPECÍFICO
+            const respawnsChannelId = "9"; // ID do canal Respawns List - ESPECÍFICO
             
             console.log('📋 Definindo conteúdo estático do canal Respawns List...');
             
@@ -1405,7 +1423,15 @@ ${filasAtivas}`;
         try {
             // Buscar todos os clientes de uma vez
             const clientes = await this.serverQuery.clientList();
-            const clientesReais = clientes.filter((c: any) => c.type === 0);
+            
+            // Filtrar apenas clientes reais (não ServerQuery) E que não sejam o próprio bot
+            const clientesReais = clientes.filter((c: any) => {
+                const ehClienteReal = c.type === 0;
+                const naoSouEu = this.meuClientId ? c.clid?.toString() !== this.meuClientId : true;
+                return ehClienteReal && naoSouEu;
+            });
+            
+            console.log(`👥 ${clientesReais.length} clientes reais encontrados (excluindo o bot)`);
             
             // Buscar todas as informações em paralelo usando Promise.all
             const clientesInfoPromises = clientesReais.map(async (cliente: any) => {
@@ -2913,9 +2939,13 @@ Entre em contato com a liderança para isto!
             console.log(`🔍 Procurando por: "${nomeJogador}"`);
             console.log(`👥 ${clientes.length} clientes online`);
             
-            // Filtrar apenas clientes reais (não ServerQuery)
-            const clientesReais = clientes.filter((c: any) => c.type === 0);
-            console.log(`👥 ${clientesReais.length} clientes reais online (sem ServerQuery)`);
+            // Filtrar apenas clientes reais (não ServerQuery) E que não sejam o próprio bot
+            const clientesReais = clientes.filter((c: any) => {
+                const ehClienteReal = c.type === 0;
+                const naoSouEu = this.meuClientId ? c.clid?.toString() !== this.meuClientId : true;
+                return ehClienteReal && naoSouEu;
+            });
+            console.log(`👥 ${clientesReais.length} clientes reais online (sem ServerQuery e sem bot)`);
             
             // Log detalhado dos clientes para debug
             console.log(`📋 Clientes disponíveis para busca:`);
@@ -3035,9 +3065,13 @@ Entre em contato com a liderança para isto!
             console.log(`🔍 Procurando cliente por descrição: "${nomePersonagem}"`);
             console.log(`👥 ${clientes.length} clientes online`);
             
-            // Filtrar apenas clientes reais (não ServerQuery)
-            const clientesReais = clientes.filter((c: any) => c.type === 0);
-            console.log(`👥 ${clientesReais.length} clientes reais online (sem ServerQuery)`);
+            // Filtrar apenas clientes reais (não ServerQuery) E que não sejam o próprio bot
+            const clientesReais = clientes.filter((c: any) => {
+                const ehClienteReal = c.type === 0;
+                const naoSouEu = this.meuClientId ? c.clid?.toString() !== this.meuClientId : true;
+                return ehClienteReal && naoSouEu;
+            });
+            console.log(`👥 ${clientesReais.length} clientes reais online (sem ServerQuery e sem bot)`);
             
             // Para buscar por descrição, precisamos verificar clientInfo de cada cliente
             for (const cliente of clientesReais) {
@@ -3690,7 +3724,11 @@ Entre em contato com a liderança para isto!
 
             // Obter lista de todos os clientes conectados
             const clients = await this.serverQuery.clientList();
-            const realClients = clients.filter((c: any) => c.type === 0); // Apenas clientes reais (não bots)
+            const realClients = clients.filter((c: any) => {
+                const ehClienteReal = c.type === 0;
+                const naoSouEu = this.meuClientId ? c.clid?.toString() !== this.meuClientId : true;
+                return ehClienteReal && naoSouEu;
+            }); // Apenas clientes reais, excluindo o bot
             
             console.log(`📢 Enviando notificação de hunted online para ${realClients.length} usuários conectados`);
             
@@ -3734,7 +3772,7 @@ Entre em contato com a liderança para isto!
         }
 
         try {
-            const huntedsChannelId = "108"; // ID do canal Hunteds - ajustar conforme necessário
+            const huntedsChannelId = "10"; // ID do canal Hunteds - ajustar conforme necessário
             
             console.log('🎯 Iniciando atualização do canal Huntedlist...');
             
@@ -5395,7 +5433,7 @@ ${infoLimpeza}
 
     private async sincronizarFriendsDoCanal(): Promise<void> {
         try {
-            const friendsChannelId = "109"; // ID do canal Friends - ajustar conforme necessário
+            const friendsChannelId = "8"; // ID do canal Friends - ajustar conforme necessário
             
             console.log(`👥 Sincronizando lista de friends com canal (ID: ${friendsChannelId})...`);
             
@@ -5531,12 +5569,12 @@ ${infoLimpeza}
             // Obter lista de clientes online
             const clientes = await this.serverQuery.clientList();
             
-            // Filtrar apenas clientes reais (não bots/query)
-            const clientesReais = clientes.filter((cliente: any) => 
-                cliente.type === 0 && // Tipo 0 = cliente normal
-                !cliente.clientNickname?.includes('ServerQuery') && // Não é ServerQuery
-                !cliente.clientNickname?.includes('Bot') // Não é Bot
-            );
+            // Filtrar apenas clientes reais (não bots/query) e excluir o próprio bot
+            const clientesReais = clientes.filter((cliente: any) => {
+                const ehClienteReal = cliente.type === 0;
+                const naoSouEu = this.meuClientId ? cliente.clid?.toString() !== this.meuClientId : true;
+                return ehClienteReal && naoSouEu;
+            });
 
             if (clientesReais.length === 0) {
                 console.log('📭 Nenhum cliente real online para poke');
@@ -5571,12 +5609,12 @@ ${infoLimpeza}
             // Obter lista de clientes online
             const clientes = await this.serverQuery.clientList();
             
-            // Filtrar apenas clientes reais (não bots/query)
-            const clientesReais = clientes.filter((cliente: any) => 
-                cliente.type === 0 && // Tipo 0 = cliente normal
-                !cliente.clientNickname?.includes('ServerQuery') && // Não é ServerQuery
-                !cliente.clientNickname?.includes('Bot') // Não é Bot
-            );
+            // Filtrar apenas clientes reais (não bots/query) e excluir o próprio bot
+            const clientesReais = clientes.filter((cliente: any) => {
+                const ehClienteReal = cliente.type === 0;
+                const naoSouEu = this.meuClientId ? cliente.clid?.toString() !== this.meuClientId : true;
+                return ehClienteReal && naoSouEu;
+            });
 
             if (clientesReais.length === 0) {
                 console.log('📭 Nenhum cliente real online para poke');
@@ -5766,7 +5804,7 @@ ${infoLimpeza}
         }
 
         try {
-            const deathlistChannelId = "110"; // ID do canal Deathlist - ajustar conforme necessário
+            const deathlistChannelId = "11"; // ID do canal Deathlist - ajustar conforme necessário
             
             console.log(`💀 Atualizando canal Deathlist (ID: ${deathlistChannelId})...`);
             
