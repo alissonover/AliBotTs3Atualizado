@@ -3515,12 +3515,14 @@ Entre em contato com a liderança para isto!
                 return timeString; // Retorna original se não conseguir formatar
             }
             
-            // Formatar para HH:MM:SS (apenas horário)
+            // Formatar para DD/MM HH:MM:SS
+            const dia = date.getDate().toString().padStart(2, '0');
+            const mes = (date.getMonth() + 1).toString().padStart(2, '0');
             const hora = date.getHours().toString().padStart(2, '0');
             const minuto = date.getMinutes().toString().padStart(2, '0');
             const segundo = date.getSeconds().toString().padStart(2, '0');
             
-            return `${hora}:${minuto}:${segundo}`;
+            return `${dia}/${mes} ${hora}:${minuto}:${segundo}`;
             
         } catch (error: any) {
             console.log(`❌ Erro ao formatar data da morte: ${timeString}`, error.message);
@@ -5779,9 +5781,9 @@ ${infoLimpeza}
             // Adicionar ao início da lista (mais recente primeiro)
             this.deathListEntries.unshift(novaEntrada);
             
-            // Limitar a 50 mortes por dia para não sobrecarregar
-            if (this.deathListEntries.length > 50) {
-                this.deathListEntries = this.deathListEntries.slice(0, 50);
+            // Limitar a 20 mortes (sempre mostra as 20 mais recentes)
+            if (this.deathListEntries.length > 20) {
+                this.deathListEntries = this.deathListEntries.slice(0, 20);
             }
 
             // Salvar alterações
@@ -5846,8 +5848,8 @@ ${infoLimpeza}
                     // Criar link para o personagem
                     const linkPersonagem = `https://www.tibia.com/community/?subtopic=characters&name=${encodeURIComponent(morte.nome)}`;
                     
-                    // Formato: [HH:MM:SS] Nome (linkado) Died at level XXX by causa.
-                    descricao += `[${morte.horario}] [url=${linkPersonagem}]${morte.nome}[/url] Died at level ${morte.level} by ${morte.causa}.\n`;
+                    // Formato: [HH:MM:SS] Nome (linkado) causa (reason já vem formatado da API)
+                    descricao += `[${morte.horario}] [url=${linkPersonagem}]${morte.nome}[/url] ${morte.causa}\n`;
                 });
 
                 descricao += `
