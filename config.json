@@ -10,6 +10,13 @@
     "virtualServerID": 384,
     "channelId": "4"
   },
+  "channels": {
+    "claimeds": "7",
+    "friends": "8",
+    "respawnsList": "9",
+    "hunteds": "10",
+    "deathlist": "11"
+  },
   "bot": {
     "autoReconnect": true,
     "reconnectDelay": 5000,

@@ -122,6 +122,15 @@ class SistemaHibridoOptimizado {
     private ultimoResetRespHistory: Date = new Date(); // Última vez que o histórico foi resetado
     private intervalResetRespHistory: NodeJS.Timeout | null = null; // Timer para reset diário às 06:00
 
+    // IDs dos canais carregados do config.json
+    private channelIds: {
+        claimeds: string;
+        friends: string;
+        respawnsList: string;
+        hunteds: string;
+        deathlist: string;
+    };
+
     // Mensagens de zueira para pokes de morte
     private readonly mensagensZueira: string[] = [
         'Morreu de novo',
@@ -164,6 +173,19 @@ class SistemaHibridoOptimizado {
 
     constructor() {
         this.gerenciadorConexao = GerenciadorConexaoHibrida.obterInstancia();
+        
+        // Carregar configurações do config.json
+        const configPath = path.join(__dirname, '..', 'config.json');
+        const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        this.channelIds = configData.channels || {
+            claimeds: "7",
+            friends: "8",
+            respawnsList: "9",
+            hunteds: "10",
+            deathlist: "11"
+        };
+        console.log('📋 Channel IDs carregados:', this.channelIds);
+        
         this.carregarRespawnsPersistidos();
         this.carregarHuntedsList();
         this.carregarFriendsList();
@@ -1081,7 +1103,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         }
 
         try {
-            const friendsChannelId = "8"; // ID do canal Friendlist
+            const friendsChannelId = this.channelIds.friends; // ID do canal Friendlist
             
             // Buscar membros online da guild
             const membrosOnline = await this.buscarMembrosOnlineTibia();
@@ -1195,7 +1217,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
         try {
             const inicioAtualizacao = Date.now();
             
-            const claimedChannelId = "7"; // ID do canal Claimeds
+            const claimedChannelId = this.channelIds.claimeds; // ID do canal Claimeds
             
             // Construir descrição base do canal
             let descricao = `[img]https://i.imgur.com/6yPB3ol.png[/img]
@@ -1362,7 +1384,7 @@ ${filasAtivas}`;
         }
 
         try {
-            const respawnsChannelId = "9"; // ID do canal Respawns List - ESPECÍFICO
+            const respawnsChannelId = this.channelIds.respawnsList; // ID do canal Respawns List
             
             console.log('📋 Definindo conteúdo estático do canal Respawns List...');
             
@@ -3774,7 +3796,7 @@ Entre em contato com a liderança para isto!
         }
 
         try {
-            const huntedsChannelId = "10"; // ID do canal Hunteds - ajustar conforme necessário
+            const huntedsChannelId = this.channelIds.hunteds; // ID do canal Hunteds
             
             console.log('🎯 Iniciando atualização do canal Huntedlist...');
             
@@ -5435,7 +5457,7 @@ ${infoLimpeza}
 
     private async sincronizarFriendsDoCanal(): Promise<void> {
         try {
-            const friendsChannelId = "8"; // ID do canal Friends - ajustar conforme necessário
+            const friendsChannelId = this.channelIds.friends; // ID do canal Friends
             
             console.log(`👥 Sincronizando lista de friends com canal (ID: ${friendsChannelId})...`);
             
@@ -5806,7 +5828,7 @@ ${infoLimpeza}
         }
 
         try {
-            const deathlistChannelId = "11"; // ID do canal Deathlist - ajustar conforme necessário
+            const deathlistChannelId = this.channelIds.deathlist; // ID do canal Deathlist
             
             console.log(`💀 Atualizando canal Deathlist (ID: ${deathlistChannelId})...`);
             
