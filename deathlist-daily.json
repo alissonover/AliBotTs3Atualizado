@@ -1,42 +1,5 @@
 {
-  "dataReset": "2026-01-15T21:47:25.524Z",
-  "totalMortes": 4,
-  "mortes": [
-    {
-      "nome": "Patty Calistro",
-      "level": 625,
-      "vocacao": "Elite Knight",
-      "horario": "20:52:01",
-      "causa": "Died at Level 625 by insane siren.",
-      "tipo": "Friend",
-      "timestamp": "2026-01-15T23:58:25.768Z"
-    },
-    {
-      "nome": "Veld",
-      "level": 759,
-      "vocacao": "Master Sorcerer",
-      "horario": "20:06:11",
-      "causa": "Died at Level 759 by ice crawler.",
-      "tipo": "Friend",
-      "timestamp": "2026-01-15T23:11:36.097Z"
-    },
-    {
-      "nome": "Swatzinha Il",
-      "level": 643,
-      "vocacao": "Royal Paladin",
-      "horario": "20:06:19",
-      "causa": "Died at Level 643 by ice crawler.",
-      "tipo": "Friend",
-      "timestamp": "2026-01-15T23:08:26.208Z"
-    },
-    {
-      "nome": "Ra tanah",
-      "level": 839,
-      "vocacao": "Elder Druid",
-      "horario": "19:06:54",
-      "causa": "Died at Level 839 by agony.",
-      "tipo": "Friend",
-      "timestamp": "2026-01-15T22:12:02.479Z"
-    }
-  ]
+  "dataReset": "2026-01-17T19:48:32.931Z",
+  "totalMortes": 0,
+  "mortes": []
 }

@@ -1137,8 +1137,22 @@
   },
   "Merciless Lena": {
     "character": "Merciless Lena",
-    "lastChecked": "2026-01-11T18:05:49.415Z",
+    "lastChecked": "2026-01-17T19:51:11.424Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-17T03:19:33Z",
+        "level": 832,
+        "killers": [
+          {
+            "name": "bone bear",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 832 by bone bear."
+      },
       {
         "time": "2026-01-09T02:04:42Z",
         "level": 825,
@@ -1239,8 +1253,22 @@
   },
   "Schwe Healer": {
     "character": "Schwe Healer",
-    "lastChecked": "2026-01-10T23:52:11.355Z",
+    "lastChecked": "2026-01-17T19:51:53.319Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-16T17:10:52Z",
+        "level": 1431,
+        "killers": [
+          {
+            "name": "trap",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1431 by a trap."
+      },
       {
         "time": "2026-01-10T13:47:53Z",
         "level": 1432,
@@ -5598,8 +5626,22 @@
   },
   "Lucas Malinu": {
     "character": "Lucas Malinu",
-    "lastChecked": "2026-01-11T03:30:43.834Z",
+    "lastChecked": "2026-01-17T19:51:06.632Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-15T11:40:46Z",
+        "level": 904,
+        "killers": [
+          {
+            "name": "knowledge elemental",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 904 by knowledge elemental."
+      },
       {
         "time": "2026-01-10T13:02:46Z",
         "level": 903,
@@ -5627,54 +5669,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 904 by lava creature."
-      },
-      {
-        "time": "2025-12-15T10:24:28Z",
-        "level": 889,
-        "killers": [
-          {
-            "name": "flimsy lost soul",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 889 by flimsy lost soul."
-      },
-      {
-        "time": "2025-12-13T17:14:07Z",
-        "level": 889,
-        "killers": [
-          {
-            "name": "Lucas Malinu",
-            "player": true,
-            "traded": false,
-            "summon": ""
-          },
-          {
-            "name": "tremendous tyrant",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Killed at Level 889 by Lucas Malinu and tremendous tyrant."
-      },
-      {
-        "time": "2025-12-13T09:51:45Z",
-        "level": 891,
-        "killers": [
-          {
-            "name": "squid warden",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 891 by squid warden."
       }
     ]
   },
@@ -6040,21 +6034,21 @@
   },
   "Soul Implacavel": {
     "character": "Soul Implacavel",
-    "lastChecked": "2026-01-06T00:40:27.820Z",
+    "lastChecked": "2026-01-17T19:51:56.872Z",
     "recentDeaths": [
       {
-        "time": "2025-12-13T11:19:47Z",
-        "level": 680,
+        "time": "2026-01-13T23:56:48Z",
+        "level": 713,
         "killers": [
           {
-            "name": "reality reaver",
+            "name": "white weretiger",
             "player": false,
             "traded": false,
             "summon": ""
           }
         ],
         "assists": [],
-        "reason": "Died at Level 680 by reality reaver."
+        "reason": "Died at Level 713 by white weretiger."
       }
     ]
   },
@@ -6723,8 +6717,22 @@
   },
   "Soolad": {
     "character": "Soolad",
-    "lastChecked": "2026-01-10T23:51:08.470Z",
+    "lastChecked": "2026-01-17T19:50:26.574Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-14T16:54:42Z",
+        "level": 658,
+        "killers": [
+          {
+            "name": "dark torturer",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 658 by dark torturer."
+      },
       {
         "time": "2026-01-10T02:15:09Z",
         "level": 658,
@@ -7424,8 +7432,22 @@
   },
   "Insane Heals": {
     "character": "Insane Heals",
-    "lastChecked": "2026-01-11T01:04:35.665Z",
+    "lastChecked": "2026-01-17T19:50:58.963Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-15T11:47:28Z",
+        "level": 1176,
+        "killers": [
+          {
+            "name": "liodile",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1176 by liodile."
+      },
       {
         "time": "2026-01-09T14:26:59Z",
         "level": 1174,
@@ -7481,20 +7503,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 1171 by crape man."
-      },
-      {
-        "time": "2025-12-15T04:09:09Z",
-        "level": 1171,
-        "killers": [
-          {
-            "name": "rhindeer",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 1171 by rhindeer."
       }
     ]
   },
@@ -7782,8 +7790,22 @@
   },
   "Leffe Stoppmur": {
     "character": "Leffe Stoppmur",
-    "lastChecked": "2026-01-11T14:00:30.038Z",
+    "lastChecked": "2026-01-17T19:51:02.956Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-17T19:17:44Z",
+        "level": 782,
+        "killers": [
+          {
+            "name": "deathling scout",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 782 by deathling scout."
+      },
       {
         "time": "2025-12-26T20:48:22Z",
         "level": 769,
