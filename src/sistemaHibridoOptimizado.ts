@@ -3857,7 +3857,7 @@ Entre em contato com a liderança para isto!
                     
                     const iconeVocacao = this.obterIconeVocacao(vocation);
                     
-                    descricao += `${iconeVocacao} Lv.${level} [b][color=red]${nome}[/color][/b]`;
+                    descricao += `${iconeVocacao} Lv.${level} [b][color=red]${nome}[/color][/b]\n`;
                 });
                 
                 // Estatísticas adicionais com validação

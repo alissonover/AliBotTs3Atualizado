@@ -1,5 +1,15 @@
 {
   "dataReset": "2026-01-17T19:48:32.931Z",
-  "totalMortes": 0,
-  "mortes": []
+  "totalMortes": 1,
+  "mortes": [
+    {
+      "nome": "Banshed",
+      "level": 479,
+      "vocacao": "Elder Druid",
+      "horario": "17/01 17:57:56",
+      "causa": "Died at Level 479 by flimsy lost soul.",
+      "tipo": "Friend",
+      "timestamp": "2026-01-17T20:59:35.946Z"
+    }
+  ]
 }
