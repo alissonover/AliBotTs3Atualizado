@@ -101,11 +101,12 @@ class SistemaHibridoOptimizado {
     private ultimoResetDeathlist: Date = new Date(); // Última vez que a lista foi resetada
     private intervalResetDeathlist: NodeJS.Timeout | null = null; // Timer para reset diário às 06:00
 
-    // CACHE DE PERFORMANCE PARA CLAIMEDS
-    private cacheClienteIds: Map<string, string> = new Map(); // personagem -> clientId
-    private cacheClienteDescricoes: Map<string, string> = new Map(); // clientId -> descrição
-    private cacheUniqueIdToClid: Map<string, string> = new Map(); // uniqueId -> clid atual
-    private cacheClienteUniqueIds: Map<string, string> = new Map(); // clid -> uniqueId
+    // CACHE DE PERFORMANCE PARA CLAIMEDS (usando databaseId persistente)
+    private cacheClienteDatabaseIds: Map<string, string> = new Map(); // personagem -> databaseId
+    private cacheDescricoesPorDatabaseId: Map<string, string> = new Map(); // databaseId -> descrição
+    private cacheDatabaseIdToClid: Map<string, string> = new Map(); // databaseId -> clid atual (para envio de mensagens)
+    private cacheDatabaseIdToUniqueId: Map<string, string> = new Map(); // databaseId -> uniqueId (para links clicáveis)
+    private cacheUniqueIdToDatabaseId: Map<string, string> = new Map(); // uniqueId -> databaseId
     private ultimaAtualizacaoCache: number = 0;
     private readonly CACHE_VALIDADE_MS = 30000; // Cache válido por 30 segundos
 
@@ -505,35 +506,41 @@ class SistemaHibridoOptimizado {
         this.serverQuery.on("cliententerview", (ev: any) => {
             // Quando cliente conecta, invalidar cache para forçar atualização
             const clientId = ev?.client?.clid;
+            const databaseId = ev?.client?.clientDatabaseId;
             if (clientId) {
-                console.log(`👤 Cliente conectado (ID: ${clientId}) - cache será atualizado`);
+                console.log(`👤 Cliente conectado (clid: ${clientId}, databaseId: ${databaseId || 'N/A'}) - cache será atualizado`);
                 this.invalidarCache();
             }
         });
 
-        // Limpar cache quando cliente desconecta (FIX: evita usar nome de usuário antigo)
-        this.serverQuery.on("clientleftview", (ev: any) => {
+        // Limpar cache quando cliente desconecta (usando databaseId)
+        this.serverQuery.on("clientleftview", async (ev: any) => {
             const clientId = ev?.client?.clid;
             if (clientId) {
                 const clientIdStr = clientId.toString();
-                const descricaoRemovida = this.cacheClienteDescricoes.get(clientIdStr);
-                const uniqueIdRemovido = this.cacheClienteUniqueIds.get(clientIdStr);
                 
-                // Remover do cache de descrições
-                this.cacheClienteDescricoes.delete(clientIdStr);
+                // IMPORTANTE: Não limpar cache baseado em databaseId pois o databaseId é persistente
+                // Apenas limpar o mapeamento de databaseId -> clid atual
+                // Assim, quando o usuário reconectar, o sistema conseguirá identificá-lo corretamente
                 
-                // Remover do cache reverso (descrição -> clientId)
-                if (descricaoRemovida) {
-                    this.cacheClienteIds.delete(descricaoRemovida);
+                // Procurar o databaseId associado a este clid
+                let databaseIdRemovido: string | null = null;
+                for (const [dbId, clid] of this.cacheDatabaseIdToClid.entries()) {
+                    if (clid === clientIdStr) {
+                        databaseIdRemovido = dbId;
+                        break;
+                    }
                 }
                 
-                // Remover do cache de uniqueId
-                if (uniqueIdRemovido) {
-                    this.cacheUniqueIdToClid.delete(uniqueIdRemovido);
-                    this.cacheClienteUniqueIds.delete(clientIdStr);
+                // Remover apenas o mapeamento databaseId -> clid (não o databaseId em si)
+                if (databaseIdRemovido) {
+                    this.cacheDatabaseIdToClid.delete(databaseIdRemovido);
+                    const descricao = this.cacheDescricoesPorDatabaseId.get(databaseIdRemovido);
+                    console.log(`👋 Cliente desconectado (clid: ${clientId}, databaseId: ${databaseIdRemovido}, nome: ${descricao || 'N/A'})`);
+                    console.log(`✅ Mapeamento databaseId -> clid removido, mas databaseId mantido no cache para reconexão`);
+                } else {
+                    console.log(`👋 Cliente desconectado (clid: ${clientId}) - databaseId não encontrado no cache`);
                 }
-                
-                console.log(`👋 Cliente desconectado (ID: ${clientId}, Nome: ${descricaoRemovida || 'N/A'}) - cache limpo`);
             }
         });
 
@@ -1284,7 +1291,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         if (fila.length === 1) {
                             // Verificar se o jogador está online
                             const isOnline = this.verificarJogadorOnline(fila[0].jogador);
-                            const clientId = this.obterUniqueIdParaLink(fila[0].jogador) || '';
+                            const clientId = this.obterClidParaLink(fila[0].jogador) || '';
                             const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId, isOnline);
                             const tempoInfo = fila[0].tempoDesejado ? ` (${this.formatarTempo(fila[0].tempoDesejado)})` : '';
                             
@@ -1293,7 +1300,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         } else if (fila.length === 2) {
                             // Verificar se o jogador está online
                             const isOnline = this.verificarJogadorOnline(fila[0].jogador);
-                            const clientId = this.obterUniqueIdParaLink(fila[0].jogador) || '';
+                            const clientId = this.obterClidParaLink(fila[0].jogador) || '';
                             const linkJogador = this.criarLinkJogador(fila[0].jogador, clientId, isOnline);
                             const tempoInfo = fila[0].tempoDesejado ? ` (${this.formatarTempo(fila[0].tempoDesejado)})` : '';
                             
@@ -1316,7 +1323,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                     
                     // STEP 3: Verificar se o jogador está online e criar link adequadamente
                     const isJogadorOnline = this.verificarJogadorOnline(timer.jogador);
-                    const clientId = this.obterUniqueIdParaLink(timer.jogador) || '';
+                    const clientId = this.obterClidParaLink(timer.jogador) || '';
                     const jogadorFormatado = this.criarLinkJogador(timer.jogador, clientId, isJogadorOnline);
                     
                     descricao += `${timer.codigo} - ${tempoFormatado}${nomeFormatado}: ${jogadorFormatado}${infoFila}
@@ -1337,7 +1344,7 @@ ${userList}${realClients.length > 5 ? '\n... e mais ' + (realClients.length - 5)
                         for (let i = 0; i < fila.length; i++) {
                             // Verificar se o jogador está online
                             const isOnline = this.verificarJogadorOnline(fila[i].jogador);
-                            const clientId = this.obterUniqueIdParaLink(fila[i].jogador) || '';
+                            const clientId = this.obterClidParaLink(fila[i].jogador) || '';
                             const linkJogador = this.criarLinkJogador(fila[i].jogador, clientId, isOnline);
                             const tempoInfo = fila[i].tempoDesejado ? ` (${this.formatarTempo(fila[i].tempoDesejado!)})` : '';
                             
@@ -1433,7 +1440,7 @@ ${filasAtivas}`;
 
     // ===== FUNÇÕES AUXILIARES =====
     
-    // SISTEMA DE CACHE ULTRA-RÁPIDO PARA CLAIMEDS
+    // SISTEMA DE CACHE ULTRA-RÁPIDO PARA CLAIMEDS (usando databaseId persistente)
     private async atualizarCacheClientesRapido(): Promise<void> {
         const agora = Date.now();
         
@@ -1463,6 +1470,7 @@ ${filasAtivas}`;
                     return {
                         nickname: cliente.clientNickname || cliente.nickname,
                         clid: cliente.clid,
+                        databaseId: clientInfo?.clientDatabaseId || cliente.clientDatabaseId,
                         uniqueId: clientInfo?.clientUniqueIdentifier,
                         description: clientInfo?.clientDescription || ''
                     };
@@ -1474,75 +1482,84 @@ ${filasAtivas}`;
             // Aguardar todas as promises em paralelo
             const clientesCompletos = await Promise.all(clientesInfoPromises);
             
-            // Atualizar caches
-            this.cacheClienteIds.clear();
-            this.cacheClienteDescricoes.clear();
-            this.cacheUniqueIdToClid.clear();
-            this.cacheClienteUniqueIds.clear();
+            // Atualizar caches (usando databaseId como identificador principal)
+            this.cacheClienteDatabaseIds.clear();
+            this.cacheDescricoesPorDatabaseId.clear();
+            this.cacheDatabaseIdToClid.clear();
+            this.cacheDatabaseIdToUniqueId.clear();
+            this.cacheUniqueIdToDatabaseId.clear();
             
             for (const cliente of clientesCompletos) {
-                if (!cliente) continue;
+                if (!cliente || !cliente.databaseId) continue;
                 
-                // Usar SEMPRE clid.toString() para consistência (FIX: evita misturar uniqueId com clid)
-                const clientId = cliente.clid.toString();
+                // Usar databaseId como identificador persistente principal
+                const databaseId = cliente.databaseId.toString();
+                const clid = cliente.clid.toString();
                 const uniqueId = cliente.uniqueId;
                 
-                // Cache por nickname
-                if (cliente.nickname) {
-                    this.cacheClienteIds.set(cliente.nickname, clientId);
-                }
+                // Cache: databaseId -> clid atual (para envio de mensagens)
+                this.cacheDatabaseIdToClid.set(databaseId, clid);
                 
-                // Cache por descrição (personagem)
+                // Cache por descrição (personagem) -> databaseId
                 if (cliente.description) {
-                    this.cacheClienteIds.set(cliente.description, clientId);
-                    // Cache reverso: clientId -> descrição
-                    this.cacheClienteDescricoes.set(clientId, cliente.description);
+                    this.cacheClienteDatabaseIds.set(cliente.description, databaseId);
+                    // Cache reverso: databaseId -> descrição
+                    this.cacheDescricoesPorDatabaseId.set(databaseId, cliente.description);
                 }
                 
-                // Cache de uniqueId (FIX: garantir que sempre encontramos o clid correto)
+                // Cache de uniqueId <-> databaseId (FIX: garantir identificação correta e links clicáveis)
                 if (uniqueId) {
-                    this.cacheUniqueIdToClid.set(uniqueId, clientId);
-                    this.cacheClienteUniqueIds.set(clientId, uniqueId);
+                    this.cacheUniqueIdToDatabaseId.set(uniqueId, databaseId);
+                    this.cacheDatabaseIdToUniqueId.set(databaseId, uniqueId);
                 }
             }
             
             this.ultimaAtualizacaoCache = agora;
+            console.log(`✅ Cache atualizado com ${this.cacheClienteDatabaseIds.size} clientes usando databaseId`);
             
         } catch (error: any) {
             console.log('❌ Erro ao atualizar cache:', error.message);
         }
     }
     
-    private obterClientIdDoCache(personagem: string): string | null {
-        return this.cacheClienteIds.get(personagem) || null;
+    private obterDatabaseIdDoCache(personagem: string): string | null {
+        return this.cacheClienteDatabaseIds.get(personagem) || null;
     }
     
-    // FIX: Obter UniqueID válido para formatação de canais (sem async)
-    // Retorna UniqueID que é permanente e não muda quando cliente reconecta
-    private obterUniqueIdParaLink(nomeJogador: string): string | null {
-        const clientId = this.cacheClienteIds.get(nomeJogador);
-        if (!clientId) {
+    // FIX: Obter uniqueId para formatação de canais com links clicáveis
+    // Usa databaseId internamente para identificação, mas retorna uniqueId para links
+    private obterClidParaLink(nomeJogador: string): string | null {
+        const databaseId = this.cacheClienteDatabaseIds.get(nomeJogador);
+        if (!databaseId) {
+            console.log(`⚠️ databaseId não encontrado no cache para ${nomeJogador}`);
             return null;
         }
         
-        // Validar que o clid ainda está no cache reverso (cliente ainda conectado)
-        const descricaoDoClid = this.cacheClienteDescricoes.get(clientId);
+        // Validar que o databaseId tem uma descrição válida
+        const descricao = this.cacheDescricoesPorDatabaseId.get(databaseId);
         
-        // Se o clid não tem descrição ou a descrição não bate com o jogador, é inválido
-        if (!descricaoDoClid || descricaoDoClid !== nomeJogador) {
-            console.log(`⚠️ clid ${clientId} inválido para ${nomeJogador} (desc: ${descricaoDoClid})`);
+        // Se o databaseId não tem descrição ou a descrição não bate com o jogador, é inválido
+        if (!descricao || descricao !== nomeJogador) {
+            console.log(`⚠️ databaseId ${databaseId} inválido para ${nomeJogador} (desc: ${descricao})`);
             return null;
         }
         
-        // Retornar UniqueID (permanente) em vez de clid (temporário)
-        const uniqueId = this.cacheClienteUniqueIds.get(clientId);
+        // Retornar uniqueId (necessário para links clicáveis no TeamSpeak)
+        const uniqueId = this.cacheDatabaseIdToUniqueId.get(databaseId);
         if (uniqueId) {
-            console.log(`🔗 Usando UniqueID para ${nomeJogador}: ${uniqueId.substring(0, 20)}...`);
+            console.log(`🔗 Usando uniqueId para link de ${nomeJogador}: ${uniqueId.substring(0, 20)}...`);
             return uniqueId;
         }
         
-        console.log(`⚠️ UniqueID não encontrado para ${nomeJogador}, usando clid ${clientId}`);
-        return clientId; // Fallback para clid se UniqueID não estiver disponível
+        // Fallback: tentar retornar clid se uniqueId não estiver disponível
+        const clid = this.cacheDatabaseIdToClid.get(databaseId);
+        if (clid) {
+            console.log(`⚠️ uniqueId não disponível, usando clid como fallback para ${nomeJogador}: ${clid}`);
+            return clid;
+        }
+        
+        console.log(`⚠️ Nem uniqueId nem clid encontrados para ${nomeJogador} (databaseId: ${databaseId})`);
+        return null;
     }
     
     // Invalidar cache para forçar atualização rápida após comandos
@@ -1552,29 +1569,51 @@ ${filasAtivas}`;
     
     // FIX: Obter clid atual de um cliente baseado no uniqueId
     // Isso garante que sempre enviamos mensagens para o cliente correto, mesmo se ele reconectou
+    // FIX: Obter clid atual de um cliente baseado no databaseId (identificador persistente)
+    // Isso garante que sempre enviamos mensagens para o cliente correto, mesmo se ele reconectou
     private async obterClidAtual(remetente: any): Promise<string | null> {
         try {
-            // Se temos uniqueId no remetente, usar ele diretamente
-            const uniqueId = remetente.uniqueIdentifier || remetente.clientUniqueIdentifier;
+            // PRIORIDADE 1: Tentar obter databaseId (identificador persistente)
+            let databaseId = remetente.clientDatabaseId || remetente.databaseId;
             
-            if (uniqueId) {
-                // Verificar cache primeiro
-                const clidCached = this.cacheUniqueIdToClid.get(uniqueId);
+            // Se não temos databaseId direto, tentar via uniqueId no cache
+            if (!databaseId) {
+                const uniqueId = remetente.uniqueIdentifier || remetente.clientUniqueIdentifier;
+                
+                if (uniqueId) {
+                    // Verificar cache de uniqueId -> databaseId
+                    databaseId = this.cacheUniqueIdToDatabaseId.get(uniqueId);
+                    
+                    if (!databaseId) {
+                        // Se não está no cache, atualizar cache e tentar novamente
+                        await this.atualizarCacheClientesRapido();
+                        databaseId = this.cacheUniqueIdToDatabaseId.get(uniqueId);
+                    }
+                }
+            }
+            
+            // Se temos databaseId, buscar o clid atual
+            if (databaseId) {
+                const clidCached = this.cacheDatabaseIdToClid.get(databaseId.toString());
                 if (clidCached) {
+                    console.log(`✅ clid obtido via databaseId ${databaseId}: ${clidCached}`);
                     return clidCached;
                 }
                 
                 // Se não está no cache, atualizar cache e tentar novamente
                 await this.atualizarCacheClientesRapido();
-                const clidAtualizado = this.cacheUniqueIdToClid.get(uniqueId);
+                const clidAtualizado = this.cacheDatabaseIdToClid.get(databaseId.toString());
                 if (clidAtualizado) {
+                    console.log(`✅ clid atualizado via databaseId ${databaseId}: ${clidAtualizado}`);
                     return clidAtualizado;
                 }
             }
             
-            // Fallback: usar clid do remetente se uniqueId não estiver disponível
+            // Fallback: usar clid do remetente se databaseId não estiver disponível
+            // (isto pode ser problemático se o usuário reconectou)
             const clid = remetente.clid || remetente.invokerid;
             if (clid) {
+                console.log(`⚠️ Usando clid direto (fallback): ${clid}`);
                 return clid.toString();
             }
             
@@ -2868,32 +2907,61 @@ ${statusAtual}
         }
     }
 
-    private async obterNomeJogadorPorDescricao(remetente: any): Promise<{nome: string, valido: boolean, erro?: string}> {
+    private async obterNomeJogadorPorDescricao(remetente: any): Promise<{nome: string, valido: boolean, erro?: string, databaseId?: string}> {
         try {
-            const clientId = remetente.invokerid || remetente.clid;
+            // PRIORIDADE 1: Tentar obter databaseId diretamente do remetente
+            let databaseId = remetente.clientDatabaseId || remetente.databaseId;
             
-            if (!clientId) {
-                return {
-                    nome: 'Desconhecido',
-                    valido: false,
-                    erro: '❌ Não foi possível identificar o cliente'
-                };
+            // Se não temos databaseId, precisamos buscar via clientInfo
+            if (!databaseId) {
+                const clientId = remetente.invokerid || remetente.clid;
+                
+                if (!clientId) {
+                    return {
+                        nome: 'Desconhecido',
+                        valido: false,
+                        erro: '❌ Não foi possível identificar o cliente'
+                    };
+                }
+
+                if (!this.serverQuery) {
+                    return {
+                        nome: remetente.clientNickname || remetente.nickname || 'Usuário',
+                        valido: false,
+                        erro: '❌ Conexão com TeamSpeak indisponível'
+                    };
+                }
+                
+                // Buscar clientInfo para obter databaseId
+                try {
+                    const clientInfoArray = await this.comTimeout(
+                        this.serverQuery.clientInfo(clientId),
+                        2000,
+                        'clientInfo'
+                    );
+                    const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
+                    databaseId = clientInfo?.clientDatabaseId;
+                } catch (error: any) {
+                    console.log(`⚠️ Erro ao buscar databaseId: ${error.message}`);
+                }
+                
+                if (!databaseId) {
+                    return {
+                        nome: remetente.clientNickname || remetente.nickname || 'Usuário',
+                        valido: false,
+                        erro: '❌ Não foi possível obter databaseId do cliente'
+                    };
+                }
             }
 
-            if (!this.serverQuery) {
-                return {
-                    nome: remetente.clientNickname || remetente.nickname || 'Usuário',
-                    valido: false,
-                    erro: '❌ Conexão com TeamSpeak indisponível'
-                };
-            }
-
-            // OTIMIZAÇÃO: Verificar cache primeiro (INSTANTÂNEO)
-            const descricaoCache = this.cacheClienteDescricoes.get(clientId.toString());
+            // OTIMIZAÇÃO: Verificar cache primeiro usando databaseId (INSTANTÂNEO)
+            const descricaoCache = this.cacheDescricoesPorDatabaseId.get(databaseId.toString());
             if (descricaoCache && descricaoCache.trim() !== '') {
+                console.log(`✅ Cache hit: databaseId ${databaseId} -> ${descricaoCache}`);
                 return {
                     nome: descricaoCache,
-                    valido: true
+                    valido: true,
+                    databaseId: databaseId.toString()
                 };
             }
 
@@ -2901,36 +2969,44 @@ ${statusAtual}
             await this.atualizarCacheClientesRapido();
             
             // Verificar cache novamente após atualização
-            const descricaoAposUpdate = this.cacheClienteDescricoes.get(clientId.toString());
+            const descricaoAposUpdate = this.cacheDescricoesPorDatabaseId.get(databaseId.toString());
             if (descricaoAposUpdate && descricaoAposUpdate.trim() !== '') {
+                console.log(`✅ Cache atualizado: databaseId ${databaseId} -> ${descricaoAposUpdate}`);
                 return {
                     nome: descricaoAposUpdate,
-                    valido: true
+                    valido: true,
+                    databaseId: databaseId.toString()
                 };
             }
 
             // Se ainda não encontrou, fazer busca individual (última tentativa)
-            try {
-                const clientInfoArray = await this.comTimeout(
-                    this.serverQuery.clientInfo(clientId),
-                    2000,
-                    'clientInfo'
-                );
-                const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
-                
-                const descricao = clientInfo?.clientDescription?.trim() || '';
-                
-                if (descricao && descricao !== '') {
-                    // Salvar em AMBOS os caches
-                    this.cacheClienteDescricoes.set(clientId.toString(), descricao);
-                    this.cacheClienteIds.set(descricao, clientId.toString());
-                    return {
-                        nome: descricao,
-                        valido: true
-                    };
+            // Precisamos obter o clid atual para fazer clientInfo
+            const clid = this.cacheDatabaseIdToClid.get(databaseId.toString());
+            if (clid) {
+                try {
+                    const clientInfoArray = await this.comTimeout(
+                        this.serverQuery.clientInfo(clid),
+                        2000,
+                        'clientInfo'
+                    );
+                    const clientInfo = Array.isArray(clientInfoArray) ? clientInfoArray[0] : clientInfoArray;
+                    
+                    const descricao = clientInfo?.clientDescription?.trim() || '';
+                    
+                    if (descricao && descricao !== '') {
+                        // Salvar em cache usando databaseId
+                        this.cacheDescricoesPorDatabaseId.set(databaseId.toString(), descricao);
+                        this.cacheClienteDatabaseIds.set(descricao, databaseId.toString());
+                        console.log(`✅ Descrição encontrada: databaseId ${databaseId} -> ${descricao}`);
+                        return {
+                            nome: descricao,
+                            valido: true,
+                            databaseId: databaseId.toString()
+                        };
+                    }
+                } catch (error: any) {
+                    console.log(`⚠️ Timeout ou erro ao buscar clientInfo: ${error.message}`);
                 }
-            } catch (error: any) {
-                console.log(`⚠️ Timeout ou erro ao buscar clientInfo: ${error.message}`);
             }
 
             // Sem descrição
@@ -2938,6 +3014,7 @@ ${statusAtual}
             return {
                 nome: nomeTS,
                 valido: false,
+                databaseId: databaseId.toString(),
                 erro: `❌ ${nomeTS}, você precisa configurar sua descrição no TeamSpeak!
 
 Entre em contato com a liderança para isto!
@@ -3083,6 +3160,22 @@ Entre em contato com a liderança para isto!
 
     private async buscarClientePorDescricao(nomePersonagem: string): Promise<any> {
         try {
+            // OTIMIZAÇÃO: Primeiro verificar cache (usando databaseId)
+            const databaseId = this.cacheClienteDatabaseIds.get(nomePersonagem);
+            if (databaseId) {
+                const clid = this.cacheDatabaseIdToClid.get(databaseId);
+                if (clid) {
+                    console.log(`✅ Cliente encontrado no cache: ${nomePersonagem} (databaseId: ${databaseId}, clid: ${clid})`);
+                    // Retornar objeto com databaseId e clid
+                    return {
+                        clid: clid,
+                        databaseId: databaseId,
+                        clientNickname: nomePersonagem,
+                        clientDescription: nomePersonagem
+                    };
+                }
+            }
+            
             const clientes = await this.serverQuery.clientList();
             console.log(`🔍 Procurando cliente por descrição: "${nomePersonagem}"`);
             console.log(`👥 ${clientes.length} clientes online`);
@@ -3105,31 +3198,71 @@ Entre em contato com a liderança para isto!
                     
                     if (clientInfo && clientInfo.clientDescription) {
                         const descricao = clientInfo.clientDescription.trim();
-                        console.log(`📝 Descrição encontrada: "${descricao}"`);
+                        const clientDatabaseId = clientInfo.clientDatabaseId;
+                        console.log(`📝 Descrição encontrada: "${descricao}" (databaseId: ${clientDatabaseId})`);
                         
                         // Verificar match exato
                         if (descricao === nomePersonagem) {
-                            console.log(`✅ Match exato por descrição: "${descricao}" === "${nomePersonagem}"`);
-                            // Copiar Unique ID para o objeto cliente
+                            console.log(`✅ Match exato por descrição: "${descricao}" === "${nomePersonagem}" (databaseId: ${clientDatabaseId})`);
+                            // Atualizar cache com databaseId e uniqueId
+                            if (clientDatabaseId) {
+                                this.cacheClienteDatabaseIds.set(descricao, clientDatabaseId.toString());
+                                this.cacheDescricoesPorDatabaseId.set(clientDatabaseId.toString(), descricao);
+                                this.cacheDatabaseIdToClid.set(clientDatabaseId.toString(), cliente.clid.toString());
+                                // Armazenar uniqueId para links clicáveis
+                                if (clientInfo.clientUniqueIdentifier) {
+                                    this.cacheDatabaseIdToUniqueId.set(clientDatabaseId.toString(), clientInfo.clientUniqueIdentifier);
+                                    this.cacheUniqueIdToDatabaseId.set(clientInfo.clientUniqueIdentifier, clientDatabaseId.toString());
+                                }
+                            }
+                            // Copiar dados importantes para o objeto cliente
                             cliente.clientUniqueIdentifier = clientInfo.clientUniqueIdentifier;
                             cliente.clientDescription = descricao;
+                            cliente.clientDatabaseId = clientDatabaseId;
+                            cliente.databaseId = clientDatabaseId; // Alias para facilitar acesso
                             return cliente;
                         }
                         
                         // Verificar match case-insensitive
                         if (descricao.toLowerCase() === nomePersonagem.toLowerCase()) {
-                            console.log(`✅ Match case-insensitive por descrição: "${descricao}" ≈ "${nomePersonagem}"`);
+                            console.log(`✅ Match case-insensitive por descrição: "${descricao}" ≈ "${nomePersonagem}" (databaseId: ${clientDatabaseId})`);
+                            // Atualizar cache com databaseId e uniqueId
+                            if (clientDatabaseId) {
+                                this.cacheClienteDatabaseIds.set(descricao, clientDatabaseId.toString());
+                                this.cacheDescricoesPorDatabaseId.set(clientDatabaseId.toString(), descricao);
+                                this.cacheDatabaseIdToClid.set(clientDatabaseId.toString(), cliente.clid.toString());
+                                // Armazenar uniqueId para links clicáveis
+                                if (clientInfo.clientUniqueIdentifier) {
+                                    this.cacheDatabaseIdToUniqueId.set(clientDatabaseId.toString(), clientInfo.clientUniqueIdentifier);
+                                    this.cacheUniqueIdToDatabaseId.set(clientInfo.clientUniqueIdentifier, clientDatabaseId.toString());
+                                }
+                            }
                             cliente.clientUniqueIdentifier = clientInfo.clientUniqueIdentifier;
                             cliente.clientDescription = descricao;
+                            cliente.clientDatabaseId = clientDatabaseId;
+                            cliente.databaseId = clientDatabaseId;
                             return cliente;
                         }
                         
                         // Verificar match parcial
                         if (descricao.toLowerCase().includes(nomePersonagem.toLowerCase()) || 
                             nomePersonagem.toLowerCase().includes(descricao.toLowerCase())) {
-                            console.log(`✅ Match parcial por descrição: "${descricao}" ≈ "${nomePersonagem}"`);
+                            console.log(`✅ Match parcial por descrição: "${descricao}" ≈ "${nomePersonagem}" (databaseId: ${clientDatabaseId})`);
+                            // Atualizar cache com databaseId e uniqueId
+                            if (clientDatabaseId) {
+                                this.cacheClienteDatabaseIds.set(descricao, clientDatabaseId.toString());
+                                this.cacheDescricoesPorDatabaseId.set(clientDatabaseId.toString(), descricao);
+                                this.cacheDatabaseIdToClid.set(clientDatabaseId.toString(), cliente.clid.toString());
+                                // Armazenar uniqueId para links clicáveis
+                                if (clientInfo.clientUniqueIdentifier) {
+                                    this.cacheDatabaseIdToUniqueId.set(clientDatabaseId.toString(), clientInfo.clientUniqueIdentifier);
+                                    this.cacheUniqueIdToDatabaseId.set(clientInfo.clientUniqueIdentifier, clientDatabaseId.toString());
+                                }
+                            }
                             cliente.clientUniqueIdentifier = clientInfo.clientUniqueIdentifier;
                             cliente.clientDescription = descricao;
+                            cliente.clientDatabaseId = clientDatabaseId;
+                            cliente.databaseId = clientDatabaseId;
                             return cliente;
                         }
                     } else {
@@ -3286,9 +3419,14 @@ Entre em contato com a liderança para isto!
     }
 
     private verificarJogadorOnline(nomeJogador: string): boolean {
-        // Verificar se o jogador está no cache (significa que está online)
-        const clientId = this.obterClientIdDoCache(nomeJogador);
-        return clientId !== null;
+        // Verificar se o jogador está no cache usando databaseId (significa que está online)
+        const databaseId = this.obterDatabaseIdDoCache(nomeJogador);
+        if (!databaseId) {
+            return false;
+        }
+        // Verificar se existe um clid atual para este databaseId
+        const clid = this.cacheDatabaseIdToClid.get(databaseId);
+        return clid !== null && clid !== undefined;
     }
 
     private async verificarPermissaoAdmin(remetente: any): Promise<{permitido: boolean, erro?: string}> {
