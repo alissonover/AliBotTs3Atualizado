@@ -96,10 +96,9 @@ class SistemaHibridoOptimizado {
     // Serviço otimizado de monitoramento de mortes
     private deathMonitor: DeathMonitorService;
     
-    // Sistema de Deathlist
-    private deathListEntries: DeathListEntry[] = []; // Lista de mortes do dia
-    private ultimoResetDeathlist: Date = new Date(); // Última vez que a lista foi resetada
-    private intervalResetDeathlist: NodeJS.Timeout | null = null; // Timer para reset diário às 06:00
+    // Sistema de Deathlist (Fila Circular de 20 itens)
+    private deathListEntries: DeathListEntry[] = []; // Lista das últimas 20 mortes
+    private readonly MAX_DEATHLIST_ENTRIES = 20; // Máximo de entradas na deathlist
 
     // CACHE DE PERFORMANCE PARA CLAIMEDS (usando databaseId persistente)
     private cacheClienteDatabaseIds: Map<string, string> = new Map(); // personagem -> databaseId
@@ -5806,16 +5805,13 @@ ${infoLimpeza}
     // ========================================
 
     private inicializarSistemaDeathlist(): void {
-        console.log('💀 Inicializando sistema de Deathlist...');
+        console.log('💀 Inicializando sistema de Deathlist (Fila circular de 20 itens)...');
         
-        // Carregar lista de mortes do dia
-        this.carregarDeathlistDoDia();
-        
-        // Configurar reset diário às 06:00
-        this.configurarResetDiarioDeathlist();
+        // Carregar lista de mortes salvas
+        this.carregarDeathlist();
     }
 
-    private carregarDeathlistDoDia(): void {
+    private carregarDeathlist(): void {
         try {
             const filePath = path.join(__dirname, '..', 'deathlist-daily.json');
             
@@ -5823,108 +5819,38 @@ ${infoLimpeza}
                 const data = fs.readFileSync(filePath, 'utf8');
                 const savedData = JSON.parse(data);
                 
-                // Verificar se os dados são do dia atual
-                const hoje = new Date();
-                const dataArquivo = new Date(savedData.dataReset || '1970-01-01');
-                
-                // Se for do mesmo dia, carregar a lista
-                if (hoje.toDateString() === dataArquivo.toDateString()) {
-                    this.deathListEntries = savedData.mortes || [];
-                    this.ultimoResetDeathlist = new Date(savedData.dataReset);
-                } else {
-                    // Se não for do mesmo dia, limpar lista
-                    this.deathListEntries = [];
-                    this.ultimoResetDeathlist = hoje;
-                    this.salvarDeathlistDoDia();
-                }
+                // Carregar até 20 mortes mais recentes
+                this.deathListEntries = (savedData.mortes || []).slice(0, this.MAX_DEATHLIST_ENTRIES);
+                console.log(`✅ ${this.deathListEntries.length} mortes carregadas da deathlist`);
             } else {
                 // Arquivo não existe, criar novo
                 this.deathListEntries = [];
-                this.ultimoResetDeathlist = new Date();
-                this.salvarDeathlistDoDia();
+                this.salvarDeathlist();
+                console.log('📝 Arquivo de deathlist criado');
             }
         } catch (error: any) {
-            console.log('❌ Erro ao carregar deathlist do dia:', error.message);
+            console.log('❌ Erro ao carregar deathlist:', error.message);
             this.deathListEntries = [];
-            this.ultimoResetDeathlist = new Date();
         }
     }
 
-    private salvarDeathlistDoDia(): void {
+    private salvarDeathlist(): void {
         try {
             const filePath = path.join(__dirname, '..', 'deathlist-daily.json');
             const data = {
-                dataReset: this.ultimoResetDeathlist.toISOString(),
+                ultimaAtualizacao: new Date().toISOString(),
                 totalMortes: this.deathListEntries.length,
+                maxEntradas: this.MAX_DEATHLIST_ENTRIES,
                 mortes: this.deathListEntries
             };
             
             fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
         } catch (error: any) {
-            console.log('❌ Erro ao salvar deathlist do dia:', error.message);
+            console.log('❌ Erro ao salvar deathlist:', error.message);
         }
     }
 
-    private configurarResetDiarioDeathlist(): void {
-        // Limpar timer anterior se existir
-        if (this.intervalResetDeathlist) {
-            clearTimeout(this.intervalResetDeathlist);
-        }
 
-        // Calcular próximo reset às 06:00 horário de Brasília (UTC-3)
-        // Obter horário atual em Brasília
-        const agoraBrasilia = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
-        const proximoResetBrasilia = new Date(agoraBrasilia);
-        proximoResetBrasilia.setHours(6, 0, 0, 0);
-
-        // Se já passou das 06:00 hoje em Brasília, definir para amanhã
-        if (agoraBrasilia.getHours() >= 6) {
-            proximoResetBrasilia.setDate(proximoResetBrasilia.getDate() + 1);
-        }
-
-        // Converter de volta para UTC para calcular o tempo de espera
-        const tempoAteReset = proximoResetBrasilia.getTime() - agoraBrasilia.getTime();
-        
-        console.log(`⏰ Próximo reset da Deathlist: ${proximoResetBrasilia.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (Horário de Brasília)`);
-        
-        // Configurar timeout para o reset
-        this.intervalResetDeathlist = setTimeout(() => {
-            this.resetarDeathlistDiaria();
-            // Reconfigurar para o próximo dia
-            this.configurarResetDiarioDeathlist();
-        }, tempoAteReset);
-    }
-
-    private resetarDeathlistDiaria(): void {
-        console.log('🌅 06:00 - Resetando Deathlist diária...');
-        
-        // Salvar backup no arquivo fixo (sempre o mesmo arquivo)
-        const backupPath = path.join(__dirname, '..', 'deathlist-backup.json');
-        try {
-            const backupData = {
-                ultimaAtualizacao: new Date().toISOString(),
-                dataAnterior: this.ultimoResetDeathlist.toISOString().split('T')[0],
-                totalMortes: this.deathListEntries.length,
-                mortes: this.deathListEntries
-            };
-            fs.writeFileSync(backupPath, JSON.stringify(backupData, null, 2));
-            console.log(`📁 Backup atualizado: ${backupPath} (${this.deathListEntries.length} mortes do dia anterior)`);
-        } catch (error: any) {
-            console.log('⚠️ Erro ao atualizar backup da deathlist:', error.message);
-        }
-
-        // Resetar lista
-        this.deathListEntries = [];
-        this.ultimoResetDeathlist = new Date();
-        
-        // Salvar lista limpa
-        this.salvarDeathlistDoDia();
-        
-        // Atualizar canal
-        this.atualizarCanalDeathlist();
-        
-        console.log('✅ Deathlist resetada para novo dia - arquivo de backup reutilizado');
-    }
 
     private async adicionarMorteNaDeathlist(morte: PlayerDeath, tipoPersonagem: 'Friend' | 'Hunted'): Promise<void> {
         try {
@@ -5941,13 +5867,14 @@ ${infoLimpeza}
             // Adicionar ao início da lista (mais recente primeiro)
             this.deathListEntries.unshift(novaEntrada);
             
-            // Limitar a 20 mortes (sempre mostra as 20 mais recentes)
-            if (this.deathListEntries.length > 20) {
-                this.deathListEntries = this.deathListEntries.slice(0, 20);
+            // Manter apenas as 20 mortes mais recentes (fila circular)
+            if (this.deathListEntries.length > this.MAX_DEATHLIST_ENTRIES) {
+                this.deathListEntries.pop(); // Remove a morte mais antiga
+                console.log(`🔄 Morte mais antiga removida - mantendo ${this.MAX_DEATHLIST_ENTRIES} registros`);
             }
 
             // Salvar alterações
-            this.salvarDeathlistDoDia();
+            this.salvarDeathlist();
             
             // Atualizar canal
             await this.atualizarCanalDeathlist();
@@ -5983,18 +5910,18 @@ ${infoLimpeza}
             // Banner fixo
             let descricao = `[img]https://i.imgur.com/UXN95sj.png[/img]
 
-💀 DEATHLIST - MORTES DO DIA 💀
+💀 DEATHLIST - ÚLTIMAS 20 MORTES 💀
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🌍 Mundo: Kalibra
-📅 Data: ${new Date().toLocaleDateString('pt-BR')}
-⏰ Último reset: ${new Date().toLocaleDateString('pt-BR')} às 06:00
+📅 Atualizado: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}
+📊 Máximo: ${this.MAX_DEATHLIST_ENTRIES} registros
 
 `;
 
             if (this.deathListEntries.length === 0) {
-                descricao += `🕊️ [color=green]Nenhuma morte registrada hoje[/color]
+                descricao += `🕊️ [color=green]Nenhuma morte registrada ainda[/color]
 💡 As mortes aparecerão aqui automaticamente
-🔄 Lista reseta diariamente às 06:00 AM
+📝 Mantém as ${this.MAX_DEATHLIST_ENTRIES} mortes mais recentes
 
 ✨ [i]Sistema automático de monitoramento ativo[/i]`;
             } else {
@@ -6014,13 +5941,13 @@ ${infoLimpeza}
 
                 descricao += `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 [b]ESTATÍSTICAS DO DIA:[/b]
-💀 Total de mortes: ${this.deathListEntries.length}
+📊 [b]ESTATÍSTICAS:[/b]
+💀 Mortes registradas: ${this.deathListEntries.length}/${this.MAX_DEATHLIST_ENTRIES}
 👥 Friends: ${this.deathListEntries.filter(m => m.tipo === 'Friend').length}
 🎯 Hunteds: ${this.deathListEntries.filter(m => m.tipo === 'Hunted').length}
-🔄 Próximo reset: Amanhã às 06:00 AM
+🔄 Sistema: Fila circular (sempre as ${this.MAX_DEATHLIST_ENTRIES} mais recentes)
 
-🤖 Sistema: AliBot - Monitor Automático
+🤖 AliBot - Monitor Automático
 📡 Fonte: TibiaData v4`;
             }
 

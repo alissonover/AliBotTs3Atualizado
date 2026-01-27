@@ -467,8 +467,22 @@
   },
   "Beattrizz": {
     "character": "Beattrizz",
-    "lastChecked": "2026-01-15T21:49:22.470Z",
+    "lastChecked": "2026-01-27T01:22:09.414Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-21T13:17:45Z",
+        "level": 896,
+        "killers": [
+          {
+            "name": "rage squid",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 896 by rage squid."
+      },
       {
         "time": "2026-01-12T14:43:57Z",
         "level": 886,
@@ -524,20 +538,6 @@
         ],
         "assists": [],
         "reason": "Died at Level 883 by courage leech."
-      },
-      {
-        "time": "2025-12-31T19:15:38Z",
-        "level": 884,
-        "killers": [
-          {
-            "name": "turbulent elemental",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 884 by turbulent elemental."
       }
     ]
   },
@@ -1096,77 +1096,77 @@
   },
   "Sandalphon": {
     "character": "Sandalphon",
-    "lastChecked": "2026-01-15T23:26:19.817Z",
+    "lastChecked": "2026-01-27T01:23:15.523Z",
     "recentDeaths": [
       {
-        "time": "2026-01-15T01:38:21Z",
-        "level": 1096,
-        "killers": [
-          {
-            "name": "rhindeer",
-            "player": false,
-            "traded": false,
-            "summon": ""
-          }
-        ],
-        "assists": [],
-        "reason": "Died at Level 1096 by rhindeer."
-      },
-      {
-        "time": "2026-01-04T18:10:53Z",
+        "time": "2026-01-26T12:17:55Z",
         "level": 1092,
         "killers": [
           {
-            "name": "walking pillar",
+            "name": "shrieking cry-stal",
             "player": false,
             "traded": false,
             "summon": ""
           }
         ],
         "assists": [],
-        "reason": "Died at Level 1092 by walking pillar."
+        "reason": "Died at Level 1092 by shrieking cry-stal."
       },
       {
-        "time": "2025-12-29T00:18:14Z",
-        "level": 1090,
+        "time": "2026-01-22T00:31:31Z",
+        "level": 1093,
         "killers": [
           {
-            "name": "carnivostrich",
+            "name": "insane siren",
             "player": false,
             "traded": false,
             "summon": ""
           }
         ],
         "assists": [],
-        "reason": "Died at Level 1090 by carnivostrich."
+        "reason": "Died at Level 1093 by insane siren."
       },
       {
-        "time": "2025-12-26T15:48:16Z",
-        "level": 1090,
+        "time": "2026-01-21T04:04:46Z",
+        "level": 1094,
         "killers": [
           {
-            "name": "hulking prehemoth",
+            "name": "Scarlett Etzel",
             "player": false,
             "traded": false,
             "summon": ""
           }
         ],
         "assists": [],
-        "reason": "Died at Level 1090 by hulking prehemoth."
+        "reason": "Died at Level 1094 by Scarlett Etzel."
       },
       {
-        "time": "2025-12-24T17:03:09Z",
-        "level": 1089,
+        "time": "2026-01-19T19:13:53Z",
+        "level": 1095,
         "killers": [
           {
-            "name": "cloak of terror",
+            "name": "branchy crawler",
             "player": false,
             "traded": false,
             "summon": ""
           }
         ],
         "assists": [],
-        "reason": "Died at Level 1089 by cloak of terror."
+        "reason": "Died at Level 1095 by branchy crawler."
+      },
+      {
+        "time": "2026-01-17T18:16:42Z",
+        "level": 1096,
+        "killers": [
+          {
+            "name": "Scarith's Soulcage",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 1096 by Scarith's Soulcage."
       }
     ]
   },
@@ -3948,8 +3948,22 @@
   },
   "Exalted Ragha": {
     "character": "Exalted Ragha",
-    "lastChecked": "2026-01-07T20:22:07.827Z",
+    "lastChecked": "2026-01-27T01:21:59.366Z",
     "recentDeaths": [
+      {
+        "time": "2026-01-19T21:10:13Z",
+        "level": 878,
+        "killers": [
+          {
+            "name": "crypt fiend",
+            "player": false,
+            "traded": false,
+            "summon": ""
+          }
+        ],
+        "assists": [],
+        "reason": "Died at Level 878 by crypt fiend."
+      },
       {
         "time": "2026-01-07T20:16:38Z",
         "level": 853,
